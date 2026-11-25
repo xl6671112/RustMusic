@@ -2,8 +2,6 @@
 
 播放器、AI 伴奏、Studio One 控制、Folia OBS 透明歌词和官网前端。Windows 构建需要 Node.js、Rust、MSVC C++ 构建工具和 WebView2。
 
-本仓库不包含电音助手的任何源码、私有程序文件，以及网站、账号、授权和歌词社区的服务端代码。`src-tauri` 是播放器本机运行所需的代码。
-
 ## 构建
 
 ```powershell
