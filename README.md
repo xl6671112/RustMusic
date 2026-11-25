@@ -1,5 +1,7 @@
 # RustMusic 公开版
 
+成品官网：[www.声卡.com](https://www.声卡.com)
+
 播放器、AI 伴奏、Studio One 控制、Folia OBS 透明歌词和官网前端。Windows 构建需要 Node.js、Rust、MSVC C++ 构建工具和 WebView2。
 
 ## 构建
