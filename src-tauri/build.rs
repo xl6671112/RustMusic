@@ -1,5 +1,6 @@
 fn main() {
     embed_folia_workers();
+    embed_jizura_assets();
     #[cfg(windows)]
     build_studio_one_bridge();
     #[cfg(windows)]
@@ -24,6 +25,30 @@ fn main() {
         ),
     )
     .expect("build player resources")
+}
+
+fn embed_jizura_assets() {
+    let directory = std::path::Path::new("../jizura-overlay/dist");
+    println!("cargo:rerun-if-changed=../jizura-overlay/dist");
+    let mut entries: Vec<_> = std::fs::read_dir(directory)
+        .expect("Build JIZURA assets with npm run build:jizura before compiling")
+        .map(|entry| entry.expect("Read JIZURA asset").path())
+        .filter(|path| path.is_file() && matches!(
+            path.file_name().and_then(|name| name.to_str()),
+            Some("engine.js" | "timeline.js" | "runtime.js" | "runtime.css" | "catalog.json" | "manifest.json")
+        ))
+        .collect();
+    entries.sort();
+    let mut code = String::from("&[");
+    for path in entries {
+        println!("cargo:rerun-if-changed={}", path.display());
+        let name = path.file_name().expect("JIZURA asset name").to_string_lossy();
+        let path = path.canonicalize().expect("JIZURA asset path");
+        code.push_str(&format!("({name:?}, include_bytes!({:?})),\n", path.to_string_lossy()));
+    }
+    code.push(']');
+    let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").expect("Cargo output"));
+    std::fs::write(output.join("jizura-assets.rs"), code).expect("Embed JIZURA assets");
 }
 
 fn embed_folia_workers() {

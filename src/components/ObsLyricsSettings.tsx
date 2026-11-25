@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
 import { defaultStyleValues, initial, loadLyricsSettings, presets, styleFields, styleKey, widgets, type Config, type StyleField } from "../obsLyricsPresets";
@@ -6,14 +6,17 @@ import { fetchStyles, saveLyricsSettings, type StylePack } from "../obsLyricsUpd
 import { buildLyricHtmlDocument, readLyricHtmlSettings, validateLyricHtml } from "../lyricHtml";
 import LyricHtmlGuide, { lyricHtmlExample } from "./WebLyricsCssEditor";
 import LyricsFontPicker from "./LyricsFontPicker";
+import { JIZURA_STYLES, createJizuraSettings } from "../jizuraSettings";
 import { useStore } from "../store";
 import { exportFoliaPackage, importFoliaPackage } from "../foliaPackage";
+const JizuraSettings=lazy(()=>import("./JizuraSettings"));
 export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>void}){
   const lyricsAltMode=useStore(s=>s.lyricsAltMode),setLyricsAltMode=useStore(s=>s.setLyricsAltMode);
   const [pack,setPack]=useState<StylePack>({version:"",styles:[]});
   async function checkStyles(){try{const next=await fetchStyles();setPack(next);setStatus(`官网风格 ${next.version} 已获取，可在歌词风格中选择`)}catch{setStatus("暂时无法获取官网风格，已保存的风格仍可使用")}}
   const [draft,setDraft]=useState(initial),[loaded,setLoaded]=useState(false),[status,setStatus]=useState(""),[saving,setSaving]=useState(false),[foliaDefaults,setFoliaDefaults]=useState<Record<string,Record<string,unknown>>>({});const frame=useRef<HTMLIFrameElement>(null),customPreview=useRef<HTMLIFrameElement>(null),foliaImport=useRef<HTMLInputElement>(null);
   const [foliaExpanded,setFoliaExpanded]=useState(false);
+  const [htmlExpanded,setHtmlExpanded]=useState(false);
   const [foliaHeight,setFoliaHeight]=useState(160);
   const [foliaPackageBusy,setFoliaPackageBusy]=useState(false);
   const foliaPanel=useRef<HTMLIFrameElement>(null);
@@ -62,6 +65,8 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
   useEffect(()=>{frame.current?.contentWindow?.postMessage({type:"obs-preview-settings",settings:draft},"http://127.0.0.1:17842")},[draft,loaded]);
   useEffect(()=>{const receive=(event:MessageEvent)=>{if(event.origin!=="http://127.0.0.1:17842"||event.source!==frame.current?.contentWindow||event.data?.type!=="folia-tuning-defaults"||!event.data.defaults||typeof event.data.defaults!=="object")return;setFoliaDefaults(event.data.defaults)};window.addEventListener("message",receive);return()=>window.removeEventListener("message",receive)},[]);
   const foliaSelected=draft.preset.startsWith("folia-");
+  const jizuraSelected=draft.preset==="jizura";
+  const isolatedSelected=foliaSelected||jizuraSelected;
   const foliaMode=draft.preset.replace(/^folia-/,"");
   const foliaTuning=draft.foliaTunings?.[foliaMode]??foliaDefaults[foliaMode]??{};
   const foliaEnabled=draft.foliaTuningEnabled?.[foliaMode]!==false;
@@ -72,7 +77,7 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
       const saved={...(v.styleSettings||{})},previous=styleKey(v);
       saved[previous]=Object.fromEntries(styleFields.map(key=>[key,v[key]])) as NonNullable<Config["styleSettings"]>[string];
       const style=value.startsWith("official:")?pack.styles.find(x=>`official:${x.id}`===value):undefined;
-      const target=style?{...v,preset:"classic",customHtmlEnabled:false,officialStyleId:style.id,officialStyleVersion:pack.version,officialCss:style.css}:value.startsWith("official:")?v:{...v,preset:value,customHtmlEnabled:value==="custom-html",officialStyleId:"",officialStyleVersion:"",officialCss:""};
+      const target=value.startsWith("jizura:")?{...v,preset:"jizura",jizura:createJizuraSettings(value.slice(7),v.jizura),customHtmlEnabled:false,officialStyleId:"",officialStyleVersion:"",officialCss:""}:style?{...v,preset:"classic",customHtmlEnabled:false,officialStyleId:style.id,officialStyleVersion:pack.version,officialCss:style.css}:value.startsWith("official:")?v:{...v,preset:value,customHtmlEnabled:value==="custom-html",officialStyleId:"",officialStyleVersion:"",officialCss:""};
       const key=styleKey(target),restore=saved[key]||{...Object.fromEntries(styleFields.map(field=>[field,initial[field]])),...defaultStyleValues(style?"official":value)};
       return {...target,...restore,styleSettings:saved};
     });
@@ -102,42 +107,43 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
     finally {setFoliaPackageBusy(false)}
   }
   const lyricsUrl="http://127.0.0.1:17842/lyrics";
-  const previewUrl=`http://127.0.0.1:17842/${foliaSelected?"folia":"lyrics-preview"}`;
+  const previewUrl=`http://127.0.0.1:17842/${foliaSelected?"folia":jizuraSelected?"jizura":"lyrics-preview"}`;
   const customHtmlError=validateLyricHtml(draft.customHtml);
   const customFields=draft.customHtmlEnabled&&!customHtmlError?readLyricHtmlSettings(draft.customHtml):[];
   const customPreviewSrc=customHtmlError||!draft.customHtml.trim()?"":buildLyricHtmlDocument(draft.customHtml,draft.customHtmlValues);
   const postCustomPreview=()=>customPreview.current?.contentWindow?.postMessage({type:"rustmusic-lyrics-state",state:{settings:draft.customHtmlValues,current:{text:"让每句歌词都有自己的光",words:[{text:"让每句",progress:100},{text:"歌词",progress:55},{text:"都有自己的光",progress:0}]},translation:"A little light in every line",next:"跟着旋律继续向前",title:"喜欢的旋律",artist:"RustMusic",playing:true,progress:0.55,preset:"custom",motion:true,mode:"current-next"}},"*");
   return <section className="anim-row glass rounded-2xl p-5" style={{["--row-idx" as string]:9}}>
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><h3 className="text-[14px] font-semibold text-[var(--ink)]">OBS 透明歌词</h3><p className="mt-1 text-[11px] leading-relaxed text-[var(--ink-3)]">{foliaSelected?"Folia 使用独立原版渲染链路；OBS 地址保持不变。":"将下方统一地址添加到 OBS 浏览器来源，普通样式和自定义 HTML 在此编辑。"}</p></div>
+      <div><h3 className="text-[14px] font-semibold text-[var(--ink)]">OBS 透明歌词</h3><p className="mt-1 text-[11px] leading-relaxed text-[var(--ink-3)]">{isolatedSelected?"将下方统一地址添加到 OBS 浏览器来源，保存后生效。":"将下方统一地址添加到 OBS 浏览器来源，普通样式和自定义 HTML 在此编辑。"}</p></div>
       <button type="button" className={ctl+" shrink-0"} onClick={()=>{void navigator.clipboard.writeText(lyricsUrl).then(()=>setStatus("地址已复制")).catch(e=>setStatus(String(e)))}}>复制歌词地址</button>
     </div>
     <code className="mt-3 block break-all rounded-lg border border-[var(--line)] bg-[var(--shade)] px-3 py-2.5 text-[11px] text-[var(--ink-2)]">{lyricsUrl}</code>
-    {!foliaSelected&&<><div className="mt-4 flex flex-wrap items-center gap-2">
+    {!isolatedSelected&&<><div className="mt-4 flex flex-wrap items-center gap-2">
       <button type="button" className={ctl} onClick={()=>void checkStyles()}>获取官网歌词风格</button>
     </div>
     <label className="mt-3 flex items-start gap-2 text-[12px] text-[var(--ink-2)]"><input className="mt-0.5 accent-[var(--accent)]" type="checkbox" checked={draft.autoUpdateStyles!==false} onChange={e=>field("autoUpdateStyles",e.target.checked)}/><span>自动更新已选官网风格<span className="mt-1 block text-[11px] text-[var(--ink-3)]">启动及使用期间自动检查；自定义歌词 HTML 保持不变。更改后点击保存。</span></span></label></>}
     <div className="mt-5 grid grid-cols-2 gap-3 text-[12px] text-[var(--ink-2)]">
       <div className="min-w-0 space-y-1.5">
-        <label className="block">歌词风格<select aria-label="歌词风格" className={ctl+" mt-1.5 block w-full"} value={draft.officialStyleId?`official:${draft.officialStyleId}`:draft.preset} onChange={e=>selectStyle(e.target.value)}>
+        <label className="block">歌词风格<select aria-label="歌词风格" className={ctl+" mt-1.5 block w-full"} value={draft.officialStyleId?`official:${draft.officialStyleId}`:draft.preset==="jizura"?`jizura:${draft.jizura?.project?.style??"noir"}`:draft.preset} onChange={e=>selectStyle(e.target.value)}>
           <optgroup label="播放器歌词样式">{presets.filter(([key])=>!key.startsWith("folia-")).map(([k,n])=><option key={k} value={k}>{n}</option>)}</optgroup>
           <optgroup label="Folia 原版效果">{presets.filter(([key])=>key.startsWith("folia-")).map(([k,n])=><option key={k} value={k}>{n}</option>)}</optgroup>
+          <optgroup label="JIZURA 原版效果">{JIZURA_STYLES.map(style=><option key={style.id} value={`jizura:${style.id}`}>JIZURA · {style.label}</option>)}</optgroup>
           <optgroup label="自定义 HTML"><option value="custom-html">自定义 HTML</option></optgroup>
           {draft.officialStyleId&&!pack.styles.some(x=>x.id===draft.officialStyleId)&&<optgroup label="官网歌词样式"><option value={`official:${draft.officialStyleId}`}>已保存的官网风格</option></optgroup>}
           {pack.styles.length>0&&<optgroup label="官网歌词样式">{pack.styles.map(x=><option key={`official:${x.id}`} value={`official:${x.id}`}>{x.name} · 官网</option>)}</optgroup>}
         </select></label>
-        {!foliaSelected&&<button type="button" className={`${ctl} w-full`} onClick={()=>{setDraft(v=>({...v,preset:"custom-html",customHtmlEnabled:true,officialStyleId:"",officialStyleVersion:"",officialCss:"",customHtml:v.customHtml.trim()?v.customHtml:lyricHtmlExample}));setStatus("自定义歌词样式已新建，检查预览后保存设置")}}>新建歌词样式</button>}
+        {!isolatedSelected&&<button type="button" className={`${ctl} w-full`} onClick={()=>{setDraft(v=>({...v,preset:"custom-html",customHtmlEnabled:true,officialStyleId:"",officialStyleVersion:"",officialCss:"",customHtml:v.customHtml.trim()?v.customHtml:lyricHtmlExample}));setStatus("自定义歌词样式已新建，检查预览后保存设置")}}>新建歌词样式</button>}
       </div>
-      {!foliaSelected&&<>
+      {!isolatedSelected&&<>
       <label className="min-w-0 space-y-1.5">显示方式<select className={ctl+" block w-full"} value={draft.mode} onChange={e=>field("mode",e.target.value)}><option value="current">当前句</option><option value="current-next">当前句＋下一句</option><option value="multi">滚动多行</option></select></label>
       </>}
-      <label className="min-w-0 space-y-1.5">歌词副行<select aria-label="网页歌词副行" className={ctl+" block w-full"} value={lyricsAltMode} onChange={e=>setLyricsAltMode(e.target.value==="romanization"?"romanization":"translation")}><option value="translation">翻译歌词</option><option value="romanization">音译歌词</option></select></label>
-      {!foliaSelected&&<>
+      {!jizuraSelected&&<label className="min-w-0 space-y-1.5">歌词副行<select aria-label="网页歌词副行" className={ctl+" block w-full"} value={lyricsAltMode} onChange={e=>setLyricsAltMode(e.target.value==="romanization"?"romanization":"translation")}><option value="translation">翻译歌词</option><option value="romanization">音译歌词</option></select></label>}
+      {!isolatedSelected&&<>
       <label className="min-w-0 space-y-1.5">歌词时间轴<select aria-label="歌词时间轴" className={ctl+" block w-full"} value={draft.lyricTimeline} onChange={e=>field("lyricTimeline",e.target.value as Config["lyricTimeline"])}><option value="original">原歌词时间轴</option><option value="split">切分时间轴</option></select></label>
-      <label className="col-span-2 min-w-0 space-y-1.5">歌词互动挂件<select aria-label="歌词互动挂件" className={ctl+" block w-full"} value={draft.widget} onChange={e=>field("widget",e.target.value)}>{widgets.map(([k,n])=><option key={k} value={k}>{n}</option>)}</select></label>
+      <label className="col-span-2 min-w-0 space-y-1.5">歌词互动挂件<select aria-label="歌词互动挂件" disabled={draft.htmlTuningEnabled===false} className={ctl+" block w-full"} value={draft.widget} onChange={e=>field("widget",e.target.value)}>{widgets.map(([k,n])=><option key={k} value={k}>{n}</option>)}</select></label>
       </>}
     </div>
-    {foliaSelected?<div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
+    {jizuraSelected?<Suspense fallback={<p role="status" className="mt-4 text-[12px] text-[var(--ink-3)]">正在加载 JIZURA 设置…</p>}><JizuraSettings value={draft.jizura} onChange={value=>field("jizura",value)}/></Suspense>:foliaSelected?<div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div><h4 className="text-[12px] font-semibold text-[var(--ink)]">Folia 歌词样式设置</h4><p className="mt-1 text-[10px] text-[var(--ink-3)]">关闭自定义动画时，当前样式使用原版动画参数。</p></div>
         <div className="flex flex-wrap items-center gap-2">
@@ -155,6 +161,14 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
           onLoad={syncFoliaPanel} className="mt-2 block w-full border-0" style={{height:foliaHeight}} />
       </div>}
     </div>:<>
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-b border-[var(--line)] pb-3">
+      <h4 className="text-[12px] font-semibold text-[var(--ink)]">HTML 歌词样式设置</h4>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className={`${ctl} inline-flex items-center gap-2`}><input type="checkbox" role="switch" className="accent-[var(--accent)]" checked={draft.htmlTuningEnabled!==false} onChange={e=>field("htmlTuningEnabled",e.currentTarget.checked)}/>自定义动画</label>
+        <button type="button" className={ctl} aria-expanded={htmlExpanded} aria-controls="html-settings-panel" onClick={()=>setHtmlExpanded(value=>!value)}>{htmlExpanded?"收起设置":"展开设置"}</button>
+      </div>
+    </div>
+    {htmlExpanded&&<div id="html-settings-panel">
     {draft.customHtmlEnabled&&<div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
       <label htmlFor="settings-custom-lyric-html" className="block text-[12px] font-medium text-[var(--ink-2)]">歌词 HTML</label>
       <textarea id="settings-custom-lyric-html" aria-label="自定义歌词 HTML" disabled={saving} value={draft.customHtml} maxLength={12000} spellCheck={false} onChange={e=>field("customHtml",e.target.value)} placeholder={lyricHtmlExample} className="mt-2 block h-56 min-h-36 max-h-96 w-full min-w-0 resize-y rounded-lg border border-[var(--line)] bg-[var(--bg)] p-3 font-mono text-[11px] leading-5 text-[var(--ink)] disabled:opacity-50" />
@@ -172,6 +186,7 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
       <p className="mt-2 text-[10px] leading-relaxed text-[var(--ink-3)]">预览使用示例歌词；实际网页歌词会自动同步当前歌曲、逐字进度、译文或音译。</p>
     </div>}
     <LyricHtmlGuide />
+    <fieldset disabled={draft.htmlTuningEnabled===false} className="min-w-0 disabled:opacity-50">
     {draft.widget==="bounce"&&<div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
       <div className="grid grid-cols-2 gap-3 text-[11px] text-[var(--ink-2)] sm:grid-cols-3">
         <label className="min-w-0 space-y-1.5">弹跳拖尾<select aria-label="弹跳拖尾类型" className={ctl+" block w-full"} value={draft.bounceTrailType} onChange={e=>field("bounceTrailType",e.target.value as Config["bounceTrailType"])}><option value="none">关闭拖尾</option><option value="double">双线交替</option><option value="single">单线</option><option value="particles">粒子</option></select></label>
@@ -201,6 +216,7 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
     <div className="mt-4 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
       <label className="block text-[11px] text-[var(--ink-2)]">歌词文字 HDR 辉光 · {draft.lyricGlowStrength.toFixed(1)}×<input aria-label="歌词辉光强度" className="mt-2 w-full accent-[var(--accent)]" type="range" min="0" max="10" step="0.1" value={draft.lyricGlowStrength} onChange={e=>field("lyricGlowStrength",+e.target.value)}/></label>
     </div>
+    </fieldset>
     <div className="mt-3 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
       <label className="mb-3 flex items-center gap-2 text-[12px] font-semibold text-[var(--ink)]"><input aria-label="启用原始效果自定义" className="accent-[var(--accent)]" type="checkbox" checked={draft.rawEffectsEnabled} onChange={e=>field("rawEffectsEnabled",e.target.checked)}/> 原始效果自定义</label>
       <div className="grid grid-cols-2 gap-3 text-[11px] text-[var(--ink-2)] sm:grid-cols-3">
@@ -220,10 +236,11 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
       <label>行距 <input className={ctl+" w-full"} type="number" min="1" max="3" step=".05" value={draft.lineHeight} onChange={e=>field("lineHeight",+e.target.value)}/></label><label>字距 <input className={ctl+" w-full"} type="number" min="-2" max="20" step=".5" value={draft.letterSpacing} onChange={e=>field("letterSpacing",+e.target.value)}/></label><label>翻译字号 <input className={ctl+" w-full"} type="number" min="10" max="80" value={draft.translationSize} onChange={e=>field("translationSize",+e.target.value)}/></label><label>显示行数 <input className={ctl+" w-full"} type="number" min="1" max="8" value={draft.rows} onChange={e=>field("rows",+e.target.value)}/></label>
       <label>阴影 <input className={ctl+" w-full"} value={draft.shadow} onChange={e=>field("shadow",e.target.value)}/></label><label>垂直偏移 <input className={ctl+" w-full"} type="number" min="-500" max="500" value={draft.offsetY} onChange={e=>field("offsetY",+e.target.value)}/></label>
     </div>
+    </div>}
     </>}
-    <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-5 text-[var(--ink-3)]"><span className="font-semibold text-[var(--ink-2)]">{foliaSelected?"Folia 原版预览":"实时预览"}</span><span>跟随当前歌曲 · 当前歌词风格立即预览</span></div>
+    <div className="mt-5 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-5 text-[var(--ink-3)]"><span className="font-semibold text-[var(--ink-2)]">{foliaSelected?"Folia 原版预览":jizuraSelected?"JIZURA 实时歌词预览":"实时预览"}</span><span>跟随当前歌曲 · 当前歌词风格立即预览</span></div>
     <div className="mt-2 overflow-hidden rounded-xl border border-[var(--line)]" style={{backgroundColor:"#202127",backgroundImage:"conic-gradient(#2b2c33 25%,transparent 0 50%,#2b2c33 0 75%,transparent 0)",backgroundSize:"20px 20px"}}>
-      <iframe key={foliaSelected?"folia":"lyrics"} ref={frame} title={foliaSelected?"Folia 原版歌词预览":"OBS 歌词预览"} src={previewUrl} onLoad={()=>frame.current?.contentWindow?.postMessage({type:"obs-preview-settings",settings:draft},"http://127.0.0.1:17842")} className="block h-72 w-full border-0" />
+      <iframe key={foliaSelected?"folia":jizuraSelected?"jizura":"lyrics"} ref={frame} title={foliaSelected?"Folia 原版歌词预览":jizuraSelected?"JIZURA 实时歌词预览":"OBS 歌词预览"} src={previewUrl} onLoad={()=>frame.current?.contentWindow?.postMessage({type:"obs-preview-settings",settings:draft},"http://127.0.0.1:17842")} className="block h-72 w-full border-0" />
     </div>
     <p className="mt-2 text-[10px] leading-relaxed text-[var(--ink-3)]">透明网格仅用于预览；没有播放歌曲或当前没有歌词时，此处保持空白。</p>
     <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--line)] pt-4">

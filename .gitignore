@@ -16,6 +16,7 @@ scripts/icon-tool/preview-*.png
 
 # Logs
 *.log
+/outputs/
 
 # OS / editor
 .DS_Store

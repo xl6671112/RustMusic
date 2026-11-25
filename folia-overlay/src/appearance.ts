@@ -15,6 +15,7 @@ export type Appearance = Partial<Pick<Theme,
 >> & {
   lyricsFontScale?: number;
   visualizerOpacity?: number;
+  glowColors?: Record<string, string>;
   showOriginalBackground?: boolean;
   subtitleFontScale?: number;
   subtitleFontInheritsLyrics?: boolean;
@@ -55,6 +56,7 @@ export function resolveTheme(mode: string, appearance: Appearance): Theme {
     primaryColor: primaryColor ?? defaultTheme.primaryColor,
     accentColor: accentColor ?? defaultTheme.accentColor,
     secondaryColor: secondaryColor ?? defaultTheme.secondaryColor,
+    glowColor: /^#[0-9a-f]{6}$/i.test(appearance.glowColors?.[mode] ?? "") ? appearance.glowColors?.[mode] : undefined,
     fontStyle: fontStyle ?? defaultTheme.fontStyle,
     fontFamily: appearance.fontFile ? "RustMusicFoliaLyrics" : fontFamily,
     fontWeight,

@@ -19,6 +19,8 @@ static SETTINGS: OnceLock<Mutex<Value>> = OnceLock::new();
 static SERVER_ERROR: OnceLock<Mutex<Option<String>>> = OnceLock::new();
 const MAX_FONT_BYTES: usize = 20 * 1024 * 1024;
 const FOLIA_WORKERS: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/folia-workers.rs"));
+const JIZURA_ASSETS: &[(&str, &[u8])] = include!(concat!(env!("OUT_DIR"), "/jizura-assets.rs"));
+const JIZURA_PAGE: &str = include_str!("../../jizura-overlay/dist/lyrics.html");
 #[cfg(feature = "acceptance-tests")]
 pub static ACCEPTANCE_DROP_STATE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 #[cfg(feature = "acceptance-tests")]
@@ -38,6 +40,9 @@ fn uses_folia_renderer(value: &Value) -> bool {
         .and_then(Value::as_str)
         .is_some_and(|preset| preset.starts_with("folia-"))
 }
+fn uses_audio_visualizer(value: &Value) -> bool {
+    uses_folia_renderer(value) || value.get("preset").and_then(Value::as_str) == Some("jizura")
+}
 const FOLIA_PAGE: &str = r#"<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/folia.css"><title>Folia Lyrics</title></head><body><div id="root"></div><script type="module" src="/folia.js"></script></body></html>"#;
 fn regular_lyrics_page() -> &'static str {
     include_str!("../../src/obs-lyrics.html")
@@ -45,6 +50,8 @@ fn regular_lyrics_page() -> &'static str {
 fn lyrics_page_for_settings(settings: &Value) -> &'static str {
     if uses_folia_renderer(settings) {
         FOLIA_PAGE
+    } else if settings.get("preset").and_then(Value::as_str) == Some("jizura") {
+        JIZURA_PAGE
     } else {
         regular_lyrics_page()
     }
@@ -83,7 +90,7 @@ pub fn set_obs_lyrics_settings(state: State<'_, AppState>, settings: String) -> 
     validate_settings(&value)?;
     let conn = state.db.lock();
     conn.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", ["obs_lyrics_settings", &settings]).map_err(|e| e.to_string())?;
-    state.engine.fx.set_obs_enabled(uses_folia_renderer(&value));
+    state.engine.fx.set_obs_enabled(uses_audio_visualizer(&value));
     if let Ok(mut cache) = settings_cache().lock() {
         *cache = value;
     }
@@ -186,9 +193,37 @@ fn validate_settings(v: &Value) -> Result<(), String> {
     if o.get("officialCss").is_some_and(|v| v.as_str().map_or(true, |s| s.len()>6000 || ["url","@import","expression","image-set","\\","<",">"].iter().any(|x| s.to_lowercase().contains(x)))) { return Err("官网歌词风格无效".into()); }
     if !matches!(
         o.get("preset").and_then(Value::as_str),
-        Some("classic" | "karaoke" | "neon" | "minimal" | "stage" | "nowplaying" | "nowplaying-liquid" | "nowplaying-skeuo" | "nowplaying-fly" | "aurora" | "hologram" | "ripple" | "danmaku" | "particle-dissolve" | "folia-cadenza" | "folia-cappella" | "folia-claddagh" | "folia-classic" | "folia-diorama" | "folia-fume" | "folia-hanabi" | "folia-lumiere" | "folia-machi" | "folia-metaphor" | "folia-monet" | "folia-nebbia" | "folia-partita" | "folia-pendolo" | "folia-prompt" | "folia-sonnet" | "folia-still" | "folia-tempera" | "folia-tilt")
+        Some("jizura" | "classic" | "karaoke" | "neon" | "minimal" | "stage" | "nowplaying" | "nowplaying-liquid" | "nowplaying-skeuo" | "nowplaying-fly" | "aurora" | "hologram" | "ripple" | "danmaku" | "particle-dissolve" | "folia-cadenza" | "folia-cappella" | "folia-claddagh" | "folia-classic" | "folia-diorama" | "folia-fume" | "folia-hanabi" | "folia-lumiere" | "folia-machi" | "folia-metaphor" | "folia-monet" | "folia-nebbia" | "folia-partita" | "folia-pendolo" | "folia-prompt" | "folia-sonnet" | "folia-still" | "folia-tempera" | "folia-tilt")
     ) {
         return Err("Invalid lyrics preset".into());
+    }
+    if let Some(jizura) = o.get("jizura") {
+        let settings = jizura.as_object().ok_or("Invalid JIZURA settings")?;
+        if jizura.to_string().len() > 8 * 1024 * 1024
+            || settings.get("transparent").is_some_and(|value| !value.is_boolean())
+            || settings.get("project").is_some_and(|value| !value.is_object())
+            || settings.get("lineEffectsTrackKey").is_some_and(|value| !value.is_string())
+        {
+            return Err("Invalid JIZURA project data".into());
+        }
+        if let Some(fonts) = settings.get("fontFiles") {
+            let fonts = fonts.as_object().ok_or("Invalid JIZURA fonts")?;
+            if fonts.len() > 100 || fonts.values().any(|value| value.as_str().and_then(font_mime).is_none()) {
+                return Err("Invalid JIZURA font file".into());
+            }
+        }
+        if let Some(analysis) = settings.get("analysis") {
+            let analysis = analysis.as_object().ok_or("Invalid JIZURA audio analysis")?;
+            for key in ["beats", "energy"] {
+                if analysis.get(key).is_some_and(|value| {
+                    value.as_array().map_or(true, |values| {
+                        values.len() > 1_000_000 || values.iter().any(|value| value.as_f64().is_none())
+                    })
+                }) {
+                    return Err("Invalid JIZURA analysis samples".into());
+                }
+            }
+        }
     }
     if let Some(tunings) = o.get("foliaTunings") {
         let values = tunings.as_object().ok_or("Invalid Folia tunings")?;
@@ -207,6 +242,13 @@ fn validate_settings(v: &Value) -> Result<(), String> {
     }
     if let Some(appearance) = o.get("foliaAppearance") {
         let appearance = appearance.as_object().ok_or("Folia 外观格式有误")?;
+        if appearance.get("glowColors").is_some_and(|colors| colors.as_object().map_or(true, |colors| {
+            colors.len() > 20 || colors.values().any(|value| !value.as_str().is_some_and(|color| {
+                color.len() == 7 && color.starts_with('#') && color[1..].bytes().all(|c| c.is_ascii_hexdigit())
+            }))
+        })) {
+            return Err("Folia 光晕颜色格式有误".into());
+        }
         for field in ["fontFile", "subtitleFontFile"] {
             if appearance.get(field).is_some_and(|value| value.as_str().and_then(font_mime).is_none()) {
                 return Err("Folia 字体文件格式有误".into());
@@ -244,6 +286,7 @@ fn validate_settings(v: &Value) -> Result<(), String> {
         return Err("Invalid lyrics display mode".into());
     }
     if o.get("motion").and_then(Value::as_bool).is_none()
+        || o.get("htmlTuningEnabled").is_some_and(|value| !value.is_boolean())
         || o.get("css")
             .and_then(Value::as_str)
             .map_or(true, |s| s.len() > 60_000)
@@ -342,7 +385,7 @@ fn validate_settings(v: &Value) -> Result<(), String> {
 pub fn start_server(engine: std::sync::Arc<crate::engine::Engine>, initial_settings: String, font_directory: PathBuf) {
     if let Ok(value) = serde_json::from_str::<Value>(&initial_settings) {
         if validate_settings(&value).is_ok() {
-            engine.fx.set_obs_enabled(uses_folia_renderer(&value));
+            engine.fx.set_obs_enabled(uses_audio_visualizer(&value));
             if let Ok(mut cache) = settings_cache().lock() {
                 *cache = value;
             }
@@ -416,6 +459,28 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
         serve_asset(&mut stream, asset);
         return;
     }
+    if let Some(name) = path.strip_prefix("/jizura-assets/") {
+        let asset = JIZURA_ASSETS.iter().find(|(asset, _)| *asset == name)
+            .map(|(_, bytes)| {
+                let mime = if name.ends_with(".js") {
+                    "text/javascript; charset=utf-8"
+                } else if name.ends_with(".css") {
+                    "text/css; charset=utf-8"
+                } else if name.ends_with(".json") {
+                    "application/json"
+                } else {
+                    "text/plain; charset=utf-8"
+                };
+                (mime, bytes.to_vec())
+            });
+        if let Some((mime, bytes)) = asset {
+            let _ = write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: {mime}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nAccess-Control-Allow-Origin: *\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n", bytes.len());
+            let _ = stream.write_all(&bytes);
+        } else {
+            let _ = write!(stream, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        }
+        return;
+    }
     let (mime, body) = match path {
         "/lyrics" | "/lyrics/" => {
             let settings = settings_cache()
@@ -436,6 +501,7 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
             "text/html; charset=utf-8",
             FOLIA_PAGE.into(),
         ),
+        "/jizura" | "/jizura/" => ("text/html; charset=utf-8", JIZURA_PAGE.into()),
         "/folia.js" => (
             "text/javascript; charset=utf-8",
             include_str!("../../folia-overlay/dist/folia.js").to_string(),
@@ -459,6 +525,7 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
                 .map(|s| s.clone())
                 .unwrap_or_else(|_| json!({}));
             v["audioSpectrum"] = crate::fx::latest_frame();
+            v["playbackRate"] = json!(engine.speed());
             let native = engine.current.read().clone();
             if let Some(t) = native {
                 let id =
@@ -491,15 +558,16 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
         }
         _ => ("text/plain", "Not found".into()),
     };
-    let status = if matches!(path, "/lyrics" | "/lyrics/" | "/lyrics-preview" | "/state" | "/custom-lyrics" | "/folia" | "/folia/" | "/folia.js" | "/folia.css") {
+    let status = if matches!(path, "/lyrics" | "/lyrics/" | "/lyrics-preview" | "/state" | "/custom-lyrics" | "/folia" | "/folia/" | "/folia.js" | "/folia.css" | "/jizura" | "/jizura/") {
         "200 OK"
     } else {
         "404 Not Found"
     };
+    let cors = if path == "/state" { "Access-Control-Allow-Origin: *\r\n" } else { "" };
     if path == "/custom-lyrics" {
         let _ = write!(stream, "HTTP/1.1 {status}\r\nContent-Type: {mime}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nContent-Security-Policy: default-src 'none'; script-src 'unsafe-inline' http: https:; style-src 'unsafe-inline' http: https:; img-src data: blob: http: https:; font-src data: blob: http: https:; connect-src http: https:; media-src data: blob: http: https:; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'none'\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n{body}", body.len());
     } else {
-        let _ = write!(stream, "HTTP/1.1 {status}\r\nContent-Type: {mime}\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{body}", body.len());
+        let _ = write!(stream, "HTTP/1.1 {status}\r\nContent-Type: {mime}\r\nContent-Length: {}\r\nCache-Control: no-store\r\n{cors}Connection: close\r\n\r\n{body}", body.len());
     }
 }
 
@@ -515,6 +583,47 @@ mod tests {
             "strokeWidth": 0, "lineHeight": 1.25, "letterSpacing": 0,
             "translationSize": 23, "rows": 3, "offsetY": 0
         })
+    }
+
+    #[test]
+    fn jizura_projects_preserve_original_combinations_without_changing_other_styles() {
+        let mut settings = test_settings("jizura");
+        let project = json!({
+            "style": "noir", "seed": 135,
+            "enabled": {"enter": {"assemble": true}, "exit": {"explode": true}},
+            "overrides": {"2": {"lock": true, "customParameters": {"amount": 1.5}}}
+        });
+        settings["jizura"] = json!({"project": project, "transparent": true});
+        assert!(validate_settings(&settings).is_ok());
+        settings["preset"] = json!("folia-hanabi");
+        assert!(validate_settings(&settings).is_ok(), "inactive JIZURA settings must survive switching styles");
+        settings["jizura"]["transparent"] = json!("true");
+        assert!(validate_settings(&settings).is_err());
+        settings["jizura"] = json!({"project": "invalid"});
+        assert!(validate_settings(&settings).is_err());
+        settings["jizura"] = json!({"fontFiles": {"custom": "../secret.ttf"}});
+        assert!(validate_settings(&settings).is_err(), "custom fonts must use imported file hashes");
+        settings["jizura"] = json!({"analysis": {"beats": ["invalid"]}});
+        assert!(validate_settings(&settings).is_err());
+        settings["jizura"] = json!({"lineEffectsTrackKey": 12});
+        assert!(validate_settings(&settings).is_err(), "per-line effects must be bound to a track key");
+    }
+
+    #[test]
+    fn jizura_folia_and_html_have_separate_render_documents() {
+        let jizura = lyrics_page_for_settings(&test_settings("jizura"));
+        assert_eq!(jizura, JIZURA_PAGE);
+        assert_ne!(jizura, lyrics_page_for_settings(&test_settings("folia-hanabi")));
+        assert_ne!(jizura, regular_lyrics_page());
+        assert!(!jizura.contains("/folia.js"));
+    }
+
+    #[test]
+    fn audio_reactive_lyrics_enable_spectrum_without_enabling_it_for_html() {
+        assert!(uses_audio_visualizer(&test_settings("jizura")));
+        assert!(uses_audio_visualizer(&test_settings("folia-hanabi")));
+        assert!(!uses_audio_visualizer(&test_settings("classic")));
+        assert!(!uses_audio_visualizer(&test_settings("custom-html")));
     }
 
     #[test]
@@ -645,6 +754,19 @@ mod tests {
         assert!(validate_settings(&settings).is_ok(), "glow intensity can be fully disabled while preserving the particle glow toggle");
         settings["particleGlowStrength"] = json!(100);
         assert!(validate_settings(&settings).is_ok(), "maximum glow intensity can be saved");
+    }
+
+    #[test]
+    fn custom_animation_and_folia_glow_settings_survive_validation() {
+        let mut settings = test_settings("classic");
+        settings["htmlTuningEnabled"] = json!(false);
+        settings["foliaAppearance"] = json!({"glowColors":{"partita":"#ff2244","monet":"#123abc"}});
+        assert!(validate_settings(&settings).is_ok(), "disabling customization must preserve each style's saved colors");
+        settings["htmlTuningEnabled"] = json!("false");
+        assert!(validate_settings(&settings).is_err(), "a text value must not silently enable customization");
+        settings["htmlTuningEnabled"] = json!(true);
+        settings["foliaAppearance"]["glowColors"]["partita"] = json!("red");
+        assert!(validate_settings(&settings).is_err(), "only colors supported by the picker may be stored");
     }
 
     #[test]

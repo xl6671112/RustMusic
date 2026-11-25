@@ -311,7 +311,7 @@ function FoliaOverlay({ state, live }: {
               coverUrl={rendererProps.coverUrl} seed={rendererProps.seed} isDaylight={false}
               paused={rendererProps.paused ?? false} staticMode={false} />
           </Suspense></div>}
-          <div className="absolute inset-0" style={{ transform: `scale(${fitScale})`, transformOrigin: "center", opacity: appearance?.visualizerOpacity }}>
+          <div className="absolute inset-0" style={{ transform: `scale(${fitScale})`, transformOrigin: "center", opacity: appearance?.visualizerOpacity, ["--folia-glow-color" as string]: theme.glowColor }}>
             <Suspense fallback={null}>{visualizer}</Suspense>
             <VisualizerHarmonyOverlay
               currentTime={currentTime}

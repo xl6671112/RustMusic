@@ -22,6 +22,7 @@ const tabs = [
   { id: "global", label: "全局" },
 ];
 const colorFields = [["primaryColor", "主文本"], ["accentColor", "强调色"], ["secondaryColor", "辅助色"]] as const;
+const glowModes = new Set(["classic", "partita", "claddagh", "monet", "fume", "cadenza", "diorama", "lumiere", "hanabi", "pendolo"]);
 const fontOptions = [
   { value: "sans", label: "无衬线" }, { value: "serif", label: "衬线" }, { value: "mono", label: "等宽" },
 ] as const;
@@ -180,7 +181,12 @@ export default function Settings() {
       patch({ foliaTunings: next });
     } else {
       const next = { ...appearance };
+      if (tab === "colors") {
+        next.glowColors = { ...next.glowColors };
+        delete next.glowColors[mode];
+      }
       for (const key of Object.keys(next) as (keyof Appearance)[]) {
+        if (key === "glowColors") continue;
         const group = key.startsWith("subtitle") || key === "hideTranslationSubtitle" || key === "showHarmonySubtitle" || key === "harmonySubtitleBackground"
           ? "subtitles" : key.endsWith("Color") ? "colors" : key === "renderQuality" || key === "showOriginalBackground" ? "global" : "fonts";
         if (group === tab) delete next[key];
@@ -209,6 +215,10 @@ export default function Settings() {
           {colorFields.map(([key, label]) => <Row key={key} label={label}>
             <input aria-label={label} type="color" value={theme[key]} onChange={e => update(key, e.target.value)} />
           </Row>)}
+          {glowModes.has(mode) && <Row label="光晕颜色">
+            <input aria-label="光晕颜色" type="color" value={theme.glowColor ?? theme.accentColor} onChange={e => update("glowColors", { ...appearance.glowColors, [mode]: e.target.value })} />
+            <Button onClick={() => { const next = { ...appearance.glowColors }; delete next[mode]; update("glowColors", next); }}>原版光晕配色</Button>
+          </Row>}
         </Group>}
         {tab === "fonts" && <Group def={{ id: "folia-fonts", titleKey: "options.previewCommonSettings" }}>
           {font(false)}

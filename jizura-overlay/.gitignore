@@ -1,0 +1,3 @@
+dist/
+upstream/__pycache__/
+upstream/app/__pycache__/

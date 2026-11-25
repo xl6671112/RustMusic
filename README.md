@@ -17,8 +17,11 @@ cargo build --release --features custom-protocol
 
 ## 上游项目与许可
 
+构建会在固定的 Folia 子模块上校验并应用 `patches/folia-glow-colors.patch`，保留原版光晕动画并支持独立选色。补丁可重复应用，无需更换子模块来源。
+
 - 播放器框架来自 [LingyunStudio/RustMusic](https://github.com/LingyunStudio/RustMusic)。
 - 歌词渲染器来自 [folia-ce/folia-web](https://github.com/folia-ce/folia-web)，源码固定在 Git 子模块所记录的提交。
+- JIZURA 渲染器和效果组合来自 [852wa/JIZURA](https://github.com/852wa/JIZURA)，固定来源和构建方式见 [集成说明](jizura-overlay/README.md)，保留原始 MIT 许可。
 - 依赖项目和作者信息见 [开源署名](src/openSourceNotices.json)。
 
 公开版源码使用 [AGPL-3.0](LICENSE)，保留 [RustMusic 上游 Apache-2.0 许可](docs/RustMusic-Upstream-Apache-2.0-LICENSE.txt)和 [Folia AGPL-3.0 许可](docs/Folia-AGPL-3.0-LICENSE.txt)。

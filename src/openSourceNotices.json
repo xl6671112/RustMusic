@@ -5811,6 +5811,26 @@
     "group": "构建工具"
   },
   {
+    "name": "JIZURA",
+    "version": "0.13.0 · 4c8278cef161",
+    "authors": [
+      "hakoniwa"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/852wa/JIZURA",
+    "group": "歌词视觉效果"
+  },
+  {
+    "name": "mp4-muxer",
+    "version": "5.2.2",
+    "authors": [
+      "Vanilagy"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/Vanilagy/mp4-muxer",
+    "group": "歌词视觉效果"
+  },
+  {
     "name": "Folia Web",
     "version": "0.7.29 · 095e7f84738e",
     "authors": [

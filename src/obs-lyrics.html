@@ -244,6 +244,7 @@ function applySettings(x={}){
  }
 }
 const applyBaseSettings=applySettings;applySettings=function(x={}){
+ if(x.htmlTuningEnabled===false)x={...x,motion:true,widget:'preset',particleDissolve:false,lyricGlowStrength:0,bounceTrailType:'double',bounceTrailDuration:500,bounceTrailLength:160};
  applyBaseSettings(x);
  activeSettings=x||{};const legacyParticle=x.preset==='particle-dissolve',count=Math.max(1,Math.min(100,Math.round(Number(x.particleCount)||60))),size=Math.max(.2,Math.min(20,Number(x.particleSize)||5)),glowStrength=Math.max(0,Math.min(100,Number(x.particleGlowStrength??60))),colorIntensity=Math.max(0,Math.min(10,Number(x.particleColorIntensity??1))),fragmentation=Math.max(0,Math.min(100,Number(x.particleFragmentation??55))),lifetime=Math.max(200,Math.min(3000,Number(x.particleLifetime)||900)),speed=Math.max(.5,Math.min(2.5,Number(x.particleSpeed)||1)),color=/^#[0-9a-f]{6}$/i.test(x.particleColor||'')?x.particleColor:'#ffe5a6';
  root.dataset.preset=legacyParticle?'classic':x.preset||'classic';root.dataset.particleDissolve=x.particleDissolve===true||legacyParticle?'true':'false';root.dataset.lyricTimeline=x.lyricTimeline==='split'?'split':'original';root.dataset.particleCount=String(count);root.dataset.particleEdge=x.particleEdgeHighlight===false?'false':'true';root.dataset.particleFragmentation=String(fragmentation);root.dataset.particleColorIntensity=String(colorIntensity);
@@ -256,5 +257,5 @@ const applyBaseSettings=applySettings;applySettings=function(x={}){
 };
 addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='obs-preview-settings'||!e.data.settings)return;previewSettings=e.data.settings;styleSignature='';applySettings(previewSettings)});
 const WEB_LYRICS_FRAME_INTERVAL_MS=33;
-async function tick(){const startedAt=performance.now();try{const r=await fetch('/state',{cache:'no-store'});const s=await r.json();if(!previewSettings&&location.pathname==='/lyrics'&&s.settings?.preset?.startsWith('folia-')){location.reload();return}if(!previewSettings)applySettings(s.settings);render(s)}catch{}setTimeout(tick,Math.max(0,WEB_LYRICS_FRAME_INTERVAL_MS-(performance.now()-startedAt)))}tick();
+async function tick(){const startedAt=performance.now();try{const r=await fetch('/state',{cache:'no-store'});const s=await r.json();if(!previewSettings&&(location.pathname==='/lyrics'||location.pathname==='/lyrics/')&&(s.settings?.preset?.startsWith('folia-')||s.settings?.preset==='jizura')){location.reload();return}if(!previewSettings)applySettings(s.settings);render(s)}catch{}setTimeout(tick,Math.max(0,WEB_LYRICS_FRAME_INTERVAL_MS-(performance.now()-startedAt)))}tick();
 </script></body></html>

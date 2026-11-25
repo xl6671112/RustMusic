@@ -1,0 +1,337 @@
+diff --git a/src/components/visualizer/GlowWord.tsx b/src/components/visualizer/GlowWord.tsx
+index 5920f65..a185611 100644
+--- a/src/components/visualizer/GlowWord.tsx
++++ b/src/components/visualizer/GlowWord.tsx
+@@ -84,6 +84,7 @@ export const GlowWord = <TConfig extends { id: string }>({
+         >
+             {/* Glow Layer - Handles Text Shadow - Absolute Position */}
+             <span
++                key={theme.glowColor ?? 'original'}
+                 className="absolute inset-0 select-none pointer-events-none block"
+                 aria-hidden="true"
+             >
+@@ -94,7 +95,7 @@ export const GlowWord = <TConfig extends { id: string }>({
+                             variants={wordGlowVariants}
+                             custom={{
+                                 config,
+-                                activeColor,
++                                activeColor: theme.glowColor ?? activeColor,
+                                 baseColor,
+                                 duration,
+                                 index,
+@@ -111,7 +112,7 @@ export const GlowWord = <TConfig extends { id: string }>({
+                 ) : (
+                     <motion.span
+                         variants={wordGlowVariants}
+-                        custom={{ config, activeColor, baseColor, duration, wordRevealMode: renderProfile.wordRevealMode }}
++                        custom={{ config, activeColor: theme.glowColor ?? activeColor, baseColor, duration, wordRevealMode: renderProfile.wordRevealMode }}
+                     >
+                         {word.text}
+                     </motion.span>
+diff --git a/src/components/visualizer/cadenza/VisualizerCadenza.tsx b/src/components/visualizer/cadenza/VisualizerCadenza.tsx
+index eef7298..7d5706e 100644
+--- a/src/components/visualizer/cadenza/VisualizerCadenza.tsx
++++ b/src/components/visualizer/cadenza/VisualizerCadenza.tsx
+@@ -464,13 +464,13 @@ const VisualizerCadenza: React.FC<VisualizerProps> = (props) => {
+                                 placement.wordGraphemeTimings,
+                             ) * clamp(animatedState.glowAlpha, 0, 1) * Math.max(tuning.glowIntensity, 0);
+ 
+-                            writeOverlayGlyphShadow(overlayWord, glyphIndex, buildDomTextShadow(placement.color, intensity, blurScale));
++                            writeOverlayGlyphShadow(overlayWord, glyphIndex, buildDomTextShadow(theme.glowColor ?? placement.color, intensity, blurScale));
+                         }
+                     } else if (overlayWord.glyphSpans[0]) {
+                         const intensity = getClassicGlowEnvelope(time, lineTiming, placement.word)
+                             * clamp(animatedState.glowAlpha, 0, 1)
+                             * Math.max(tuning.glowIntensity, 0);
+-                        writeOverlayGlyphShadow(overlayWord, 0, buildDomTextShadow(placement.color, intensity, blurScale));
++                        writeOverlayGlyphShadow(overlayWord, 0, buildDomTextShadow(theme.glowColor ?? placement.color, intensity, blurScale));
+                     }
+ 
+                 }
+diff --git a/src/components/visualizer/claddagh/CladdaghRingLine.tsx b/src/components/visualizer/claddagh/CladdaghRingLine.tsx
+index c2b03e4..29e48a3 100644
+--- a/src/components/visualizer/claddagh/CladdaghRingLine.tsx
++++ b/src/components/visualizer/claddagh/CladdaghRingLine.tsx
+@@ -485,12 +485,13 @@ export const RingLine: React.FC<RingLineProps> = ({
+ 
+                 if (currentGlowRadius > 0.5 && shadowFade > 0.01) {
+                     // Fade the target color's alpha to ensure the outer shadow vanishes seamlessly
+-                    const fadedTargetColor = mixColors(targetColor, targetColor, 0, currentAlpha * shadowFade);
++                    const haloColor = theme.glowColor ?? targetColor;
++                    const fadedTargetColor = mixColors(haloColor, haloColor, 0, currentAlpha * shadowFade);
+ 
+                     if (glowAsFilter) {
+                         glowFilter = buildCladdaghGlowFilter(
+-                            targetColor,
+-                            theme.primaryColor || '#ffffff',
++                            haloColor,
++                            theme.glowColor ?? (theme.primaryColor || '#ffffff'),
+                             currentGlowRadius,
+                             currentAlpha,
+                             shadowFade,
+@@ -500,7 +501,7 @@ export const RingLine: React.FC<RingLineProps> = ({
+                         // Blend targetColor with the theme's primary text color to create a bright inner core.
+                         // We use shadowFade directly as the alpha so it blooms beautifully at 1.0 near the center,
+                         // but fades to invisible at the edges.
+-                        const innerGlowColor = mixColors(targetColor, theme.primaryColor || '#ffffff', 0.65, shadowFade);
++                        const innerGlowColor = mixColors(haloColor, theme.glowColor ?? (theme.primaryColor || '#ffffff'), 0.65, shadowFade);
+                         
+                         // Restored exact multiplier ratios from Image 1 (0.35, 1.0, 1.6)
+                         textShadow = `0 0 ${quantizeShadowBlur(currentGlowRadius * 0.35)}px ${innerGlowColor}, 0 0 ${quantizeShadowBlur(currentGlowRadius)}px ${fadedTargetColor}, 0 0 ${quantizeShadowBlur(currentGlowRadius * 1.6)}px ${fadedTargetColor}`;
+diff --git a/src/components/visualizer/claddagh/VisualizerCladdagh.tsx b/src/components/visualizer/claddagh/VisualizerCladdagh.tsx
+index 077b8ce..ee447bc 100644
+--- a/src/components/visualizer/claddagh/VisualizerCladdagh.tsx
++++ b/src/components/visualizer/claddagh/VisualizerCladdagh.tsx
+@@ -138,7 +138,7 @@ const VisualizerCladdagh: React.FC<VisualizerSharedProps> = (props) => {
+             const glowIntensity = glowIntensityRef.current;
+             if (glowIntensity > 0.001) {
+                 const glowSize = (4 + bassPower * 12) * glowIntensity;
+-                const glowColor = colorWithAlpha(mixed, glowIntensity);
++                const glowColor = colorWithAlpha(theme.glowColor ?? mixed, glowIntensity);
+                 lineEl.style.filter = `drop-shadow(0 0 ${glowSize.toFixed(1)}px ${glowColor})`;
+             } else {
+                 lineEl.style.filter = 'none';
+diff --git a/src/components/visualizer/diorama/DioramaParticleField.tsx b/src/components/visualizer/diorama/DioramaParticleField.tsx
+index 7fb3fc2..7c9290d 100644
+--- a/src/components/visualizer/diorama/DioramaParticleField.tsx
++++ b/src/components/visualizer/diorama/DioramaParticleField.tsx
+@@ -57,6 +57,7 @@ import {
+ // Under 智能动感模式, once the track's beats are in, beat_this' beats spawn the bass and mid ripples
+ // and drive the breath instead (dioramaBeatRipples.ts); the treble ripples stay on the band.
+ interface DioramaParticleFieldProps {
++    glowColor?: string;
+     mode: DioramaGeometryMode;
+     clusters: DioramaParticleClusterAnchor[];
+     corridorSpans: DioramaParticleCorridorSpan[];
+@@ -184,6 +185,7 @@ const CLOUD_MAX_SWELL = MAX_WAVE * CLOUD_SWELL;
+ const CORRIDOR_MAX_SWELL_REACH = MAX_WAVE * CORRIDOR_MAX_SWELL;
+ 
+ export const DioramaParticleField: React.FC<DioramaParticleFieldProps> = ({
++    glowColor,
+     mode,
+     clusters,
+     corridorSpans,
+@@ -219,6 +221,9 @@ export const DioramaParticleField: React.FC<DioramaParticleFieldProps> = ({
+         accent: new THREE.Color(accentColor),
+         secondary: new THREE.Color(secondaryColor),
+     }, new THREE.Color(backgroundColor)), [primaryColor, accentColor, secondaryColor, backgroundColor]);
++    const glowColors = useMemo(() => glowColor ? {
++        primary: new THREE.Color(glowColor), accent: new THREE.Color(glowColor), secondary: new THREE.Color(glowColor),
++    } : targetColors, [glowColor, targetColors]);
+     // Materials are created ONCE; their colours chase the theme via lerp each frame (see useFrame), and
+     // the glow intensity is pushed by the effect below. Lazy refs, not useMemo: useMemo is a cache React
+     // is explicitly allowed to discard and rebuild, and these own GPU resources - "must exist exactly
+@@ -400,7 +405,7 @@ export const DioramaParticleField: React.FC<DioramaParticleFieldProps> = ({
+             u.uPulse.value = elasticPulse;
+             u.uSpectralCentroid.value = centroid;
+             u.uViewportHeight.value = viewportHeight;
+-            lerpDioramaParticleMaterialColors(target, targetColors, colorAmount);
++            lerpDioramaParticleMaterialColors(target, target === glowMaterial ? glowColors : targetColors, colorAmount);
+         }
+     });
+ 
+diff --git a/src/components/visualizer/diorama/DioramaScene.tsx b/src/components/visualizer/diorama/DioramaScene.tsx
+index 07d0ee9..fd55814 100644
+--- a/src/components/visualizer/diorama/DioramaScene.tsx
++++ b/src/components/visualizer/diorama/DioramaScene.tsx
+@@ -545,6 +545,7 @@ const DioramaScene: React.FC<DioramaSceneProps> = ({
+             });
+             const breath = 0.9 + 0.1 * Math.sin(frameState.clock.elapsedTime * 1.9);
+             updateDioramaActiveUnits({
++                glowColor: theme.glowColor,
+                 activeLineUnits,
+                 planes: unitPlanesRef.current,
+                 lightVals: unitLightValsRef.current,
+@@ -600,6 +601,7 @@ const DioramaScene: React.FC<DioramaSceneProps> = ({
+                     audioBands={audioBands}
+                     audioLevel={motion.audioLevel}
+                     primaryColor={colors.primary}
++                    glowColor={theme.glowColor}
+                     accentColor={colors.accent}
+                     secondaryColor={colors.secondary}
+                     backgroundColor={theme.backgroundColor}
+diff --git a/src/components/visualizer/diorama/dioramaSceneFrame.ts b/src/components/visualizer/diorama/dioramaSceneFrame.ts
+index 22ba428..fce89aa 100644
+--- a/src/components/visualizer/diorama/dioramaSceneFrame.ts
++++ b/src/components/visualizer/diorama/dioramaSceneFrame.ts
+@@ -135,6 +135,7 @@ export interface DioramaUnitPlanes {
+ }
+ 
+ export interface DioramaActiveUnitsInput {
++    glowColor?: string;
+     activeLineUnits: readonly LyricUnit[];
+     planes: DioramaUnitPlanes;
+     lightVals: Float32Array | null;
+@@ -159,7 +160,7 @@ export interface DioramaActiveUnitsInput {
+  */
+ export const updateDioramaActiveUnits = ({
+     activeLineUnits, planes, lightVals, soulVals, now, delta, life, breath, powerEnv, damped,
+-    keywordUnitColors, glowIntensity, soulIntensity, soulActiveEnabled, gradientIntensity,
++    keywordUnitColors, glowIntensity, soulIntensity, soulActiveEnabled, gradientIntensity, glowColor,
+ }: DioramaActiveUnitsInput) => {
+     // 渐变跟唱 strength tier. There is deliberately no line-level gate: each unit owns its own
+     // wake (resolveGradientEnergy), so a line hands over to the next simply by its units running
+@@ -246,7 +247,8 @@ export const updateDioramaActiveUnits = ({
+         const glowMesh = planes.glowMeshes[i];
+         if (glowMat) {
+             glowMat.opacity = Math.min(1, UNIT_GLOW_MAX_OPACITY * glowLevel);
+-            glowMat.color.copy(baseMat.color);
++            if (glowColor) glowMat.color.set(glowColor);
++            else glowMat.color.copy(baseMat.color);
+         }
+         if (glowMesh) {
+             glowMesh.visible = glowLevel > 0.012;
+diff --git a/src/components/visualizer/fume/fumeBlockFrame.ts b/src/components/visualizer/fume/fumeBlockFrame.ts
+index 13a8594..37cbe05 100644
+--- a/src/components/visualizer/fume/fumeBlockFrame.ts
++++ b/src/components/visualizer/fume/fumeBlockFrame.ts
+@@ -144,7 +144,7 @@ export const resolveFumeStaticLayers = <T>(
+             : (2 + block.fontPx * 0.1) * 0.65 * passedGlowBase * passedStyle.glowMultiplier,
+         shadowColor: staticState === 'waiting'
+             ? 'transparent'
+-            : colorWithAlpha(theme.primaryColor, passedStyle.shadowAlphaBase),
++            : colorWithAlpha(theme.glowColor ?? theme.primaryColor, passedStyle.shadowAlphaBase),
+     });
+     if (!snapshot) return null;
+ 
+@@ -157,7 +157,7 @@ export const resolveFumeStaticLayers = <T>(
+             key: `${block.id}:passed:standard:${snapshotScale}`,
+             fill: colorWithAlpha(theme.primaryColor, standardStyle.opacity),
+             shadowBlur: (2 + block.fontPx * 0.1) * 0.65 * passedGlowBase * standardStyle.glowMultiplier,
+-            shadowColor: colorWithAlpha(theme.primaryColor, standardStyle.shadowAlphaBase),
++            shadowColor: colorWithAlpha(theme.glowColor ?? theme.primaryColor, standardStyle.shadowAlphaBase),
+         });
+ 
+         if (standardSnapshot) {
+diff --git a/src/components/visualizer/fume/fumeCanvasText.ts b/src/components/visualizer/fume/fumeCanvasText.ts
+index 1c989d0..a5e0be6 100644
+--- a/src/components/visualizer/fume/fumeCanvasText.ts
++++ b/src/components/visualizer/fume/fumeCanvasText.ts
+@@ -161,14 +161,14 @@ export const drawFumeLiveBlock = (
+             (block.variant === 'hero' ? 12 : 8)
+             + lineGlowEnvelope * (block.fontPx * (block.variant === 'hero' ? 0.7 : 0.52))
+         ) * glowIntensity;
+-        const lineGlowColor = colorWithAlpha(theme.accentColor, lineGlowAlpha);
++        const lineGlowColor = colorWithAlpha(theme.glowColor ?? theme.accentColor, lineGlowAlpha);
+ 
+         context.save();
+         context.fillStyle = lineGlowColor;
+         setCanvasTextGlow(
+             context,
+             roundShadowBlur(lineGlowBlur),
+-            colorWithAlpha(theme.accentColor, lineGlowAlpha * 1.35),
++            colorWithAlpha(theme.glowColor ?? theme.accentColor, lineGlowAlpha * 1.35),
+         );
+ 
+         for (const renderLine of block.renderLines) {
+@@ -281,7 +281,7 @@ export const drawFumeLiveBlock = (
+                         fillStyle = mixColors(activeColor, theme.primaryColor, 0.18 + colorTrailProgress * 0.82, alpha);
+                         shadowBlur = (2 + block.fontPx * 0.1) * (1 - colorTrailProgress * 0.35) * passedGlowBase * transitionPassedStyle.glowMultiplier;
+                         shadowColor = colorWithAlpha(
+-                            mixColors(activeColor, theme.primaryColor, 0.55 + colorTrailProgress * 0.45),
++                            theme.glowColor ?? mixColors(activeColor, theme.primaryColor, 0.55 + colorTrailProgress * 0.45),
+                             transitionPassedStyle.shadowAlphaBase + (1 - colorTrailProgress) * transitionPassedStyle.shadowAlphaTrail,
+                         );
+                     } else if (time < range.word.startTime) {
+@@ -291,13 +291,13 @@ export const drawFumeLiveBlock = (
+                         alpha = mix(waitingOpacity, activeOpacity, easedGlyphProgress);
+                         fillStyle = mixColors(theme.primaryColor, activeColor, 0.22 + easedGlyphProgress * 0.78, alpha);
+                         shadowBlur = (4 + block.fontPx * 0.22) * easedGlyphProgress * activeGlowBoost;
+-                        shadowColor = colorWithAlpha(activeColor, 0.4 + easedGlyphProgress * 0.44);
++                        shadowColor = colorWithAlpha(theme.glowColor ?? activeColor, 0.4 + easedGlyphProgress * 0.44);
+                     } else {
+                         alpha = mix(activeOpacity, transitionPassedStyle.opacity, colorTrailProgress);
+                         fillStyle = mixColors(activeColor, theme.primaryColor, 0.18 + colorTrailProgress * 0.82, alpha);
+                         shadowBlur = (2 + block.fontPx * 0.1) * (1 - colorTrailProgress * 0.35) * passedGlowBase * transitionPassedStyle.glowMultiplier;
+                         shadowColor = colorWithAlpha(
+-                            mixColors(activeColor, theme.primaryColor, 0.55 + colorTrailProgress * 0.45),
++                            theme.glowColor ?? mixColors(activeColor, theme.primaryColor, 0.55 + colorTrailProgress * 0.45),
+                             transitionPassedStyle.shadowAlphaBase + (1 - colorTrailProgress) * transitionPassedStyle.shadowAlphaTrail,
+                         );
+                     }
+@@ -363,7 +363,7 @@ export const drawFumeLiveBlock = (
+                                 context.save();
+                                 context.fillStyle = colorWithAlpha(activeColor, activationBlockAlpha);
+                                 context.shadowBlur = activationBlockBlur;
+-                                context.shadowColor = colorWithAlpha(activeColor, 0.56 * blockPulse);
++                                context.shadowColor = colorWithAlpha(theme.glowColor ?? activeColor, 0.56 * blockPulse);
+                                 context.fillRect(
+                                     blockLeft,
+                                     activationBlockY - activationBlockHeight * 0.5,
+diff --git a/src/components/visualizer/fume/useFumeCanvasStage.ts b/src/components/visualizer/fume/useFumeCanvasStage.ts
+index 6972944..0843ff7 100644
+--- a/src/components/visualizer/fume/useFumeCanvasStage.ts
++++ b/src/components/visualizer/fume/useFumeCanvasStage.ts
+@@ -52,6 +52,7 @@ export const useFumeCanvasStage = (
+         theme.primaryColor,
+         theme.secondaryColor,
+         theme.accentColor,
++        theme.glowColor,
+         theme.fontStyle,
+         theme.fontFamily,
+         theme.fontFamilyStack,
+diff --git a/src/components/visualizer/hanabi/color.ts b/src/components/visualizer/hanabi/color.ts
+index d5cf9f4..d32c31f 100644
+--- a/src/components/visualizer/hanabi/color.ts
++++ b/src/components/visualizer/hanabi/color.ts
+@@ -261,6 +261,6 @@ export const resolveHanabiPalette = (role: PaletteRole, theme: Theme, colorMode:
+         blocks: colors.blocks.map(block => separate(block, ink)),
+         sparks: colors.sparks,
+         accent: colors.accent,
+-        glow: colors.glow,
++        glow: theme.glowColor ? hexOfCss(theme.glowColor, colors.glow) : colors.glow,
+     };
+ };
+diff --git a/src/components/visualizer/lumiere/scene.ts b/src/components/visualizer/lumiere/scene.ts
+index 6933e72..43bdf33 100644
+--- a/src/components/visualizer/lumiere/scene.ts
++++ b/src/components/visualizer/lumiere/scene.ts
+@@ -147,8 +147,8 @@ export const resolveLumierePalette = (theme: Theme, themeMix = 0): LumierePalett
+     const peak = Math.max(...light, 1e-3);
+     light = scaleRgb(light, 1 / peak);
+     const warmLit = mixRgb(light, WHITE, 0.2);
+-    const primary = glowOf(rgbOf(theme.primaryColor, warmLit), warmLit);
+-    const secondary = theme.secondaryColor ? glowOf(rgbOf(theme.secondaryColor, primary), primary) : primary;
++    const primary = glowOf(rgbOf(theme.glowColor ?? theme.primaryColor, warmLit), warmLit);
++    const secondary = theme.glowColor ? primary : theme.secondaryColor ? glowOf(rgbOf(theme.secondaryColor, primary), primary) : primary;
+     return {
+         light,
+         lit: mixRgb(warmLit, mixRgb(primary, WHITE, 0.2), mix),
+diff --git a/src/components/visualizer/monet/MonetRailTokens.tsx b/src/components/visualizer/monet/MonetRailTokens.tsx
+index ebaeab1..678ba87 100644
+--- a/src/components/visualizer/monet/MonetRailTokens.tsx
++++ b/src/components/visualizer/monet/MonetRailTokens.tsx
+@@ -191,7 +191,7 @@ const MonetWordSweep: React.FC<{
+             const radiusOne = Math.round(fontPx * (isChorus ? 0.45 : 0.28));
+             const radiusTwo = Math.round(fontPx * (isChorus ? 0.90 : 0.65));
+             const glowColor = mixColors(baseColor, wordColor, 1, isChorus ? 1.0 : 0.88);
+-            return `0 0 ${radiusOne}px ${glowColor}, 0 0 ${radiusTwo}px ${glowColor}`;
++            return `0 0 ${radiusOne}px var(--folia-glow-color, ${glowColor}), 0 0 ${radiusTwo}px var(--folia-glow-color, ${glowColor})`;
+         }, [baseColor, fontPx, isChorus, wordColor]);
+ 
+         // Glyphs with deep descenders (g, j, p, y, and many CJK forms) sit below the line box
+diff --git a/src/components/visualizer/pendolo/PendoloActiveLyricSweep.tsx b/src/components/visualizer/pendolo/PendoloActiveLyricSweep.tsx
+index 7ff552e..fefebd7 100644
+--- a/src/components/visualizer/pendolo/PendoloActiveLyricSweep.tsx
++++ b/src/components/visualizer/pendolo/PendoloActiveLyricSweep.tsx
+@@ -184,7 +184,7 @@ const PendoloActiveLyricSweep: React.FC<PendoloActiveLyricSweepProps> = ({
+     );
+     // CSS masks clip text-shadow to the glyph layer; filters run after masking and preserve the glow.
+     const glowFilter = isChorus
+-        ? `drop-shadow(0 0 ${Math.round(fontPx * 0.3 * chorusGlowMultiplier)}px ${colorWithAlpha(fillColor, 0.72)}) drop-shadow(0 0 ${Math.round(fontPx * 0.62 * chorusGlowMultiplier)}px ${colorWithAlpha(accentTextColor, 0.28)})`
++        ? `drop-shadow(0 0 ${Math.round(fontPx * 0.3 * chorusGlowMultiplier)}px var(--folia-glow-color, ${colorWithAlpha(fillColor, 0.72)})) drop-shadow(0 0 ${Math.round(fontPx * 0.62 * chorusGlowMultiplier)}px var(--folia-glow-color, ${colorWithAlpha(accentTextColor, 0.28)}))`
+         : undefined;
+     const glowPaddingPx = isChorus
+         ? Math.ceil(fontPx * 0.7 * chorusGlowMultiplier + 10)
+diff --git a/src/types.ts b/src/types.ts
+index 63d8edb..03870d5 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -109,6 +109,7 @@ export interface LyricData {
+ }
+ 
+ export interface Theme {
++  glowColor?: string;
+   name: string;
+   backgroundColor: string;
+   primaryColor: string;
