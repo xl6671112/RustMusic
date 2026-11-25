@@ -1,0 +1,394 @@
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+
+use parking_lot::RwLock;
+use rodio::Source;
+
+use crate::fx::FxShared;
+
+pub const BAND_FREQS: [f64; 10] = [
+    31.0, 62.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0,
+];
+
+/// 均衡器参数（引擎与 UI 共享）
+pub struct EqShared {
+    pub gains: RwLock<[f32; 10]>,
+    pub enabled: AtomicBool,
+    pub version: AtomicU64,
+}
+
+impl EqShared {
+    pub fn new(gains: [f32; 10], enabled: bool) -> Self {
+        Self {
+            gains: RwLock::new(gains),
+            enabled: AtomicBool::new(enabled),
+            version: AtomicU64::new(1),
+        }
+    }
+
+    pub fn set(&self, gains: [f32; 10], enabled: bool) {
+        *self.gains.write() = gains;
+        self.enabled.store(enabled, Ordering::Relaxed);
+        self.version.fetch_add(1, Ordering::Relaxed);
+    }
+}
+
+#[derive(Clone, Copy, Default)]
+struct Biquad {
+    x1: f64,
+    x2: f64,
+    y1: f64,
+    y2: f64,
+}
+
+impl Biquad {
+    #[inline]
+    fn process(&mut self, c: &[f64; 5], x: f64) -> f64 {
+        let y = c[0] * x + c[1] * self.x1 + c[2] * self.x2 - c[3] * self.y1 - c[4] * self.y2;
+        self.x2 = self.x1;
+        self.x1 = x;
+        self.y2 = self.y1;
+        self.y1 = y;
+        y
+    }
+
+    fn reset(&mut self) {
+        *self = Biquad::default();
+    }
+}
+
+/// RBJ cookbook 双二阶滤波器系数：[b0, b1, b2, a1, a2]（已按 a0 归一化）
+fn design_band(i: usize, sr: f64, gain_db: f64) -> [f64; 5] {
+    let f0 = BAND_FREQS[i].min(sr * 0.45).max(10.0);
+    let w0 = 2.0 * std::f64::consts::PI * f0 / sr;
+    let cosw = w0.cos();
+    let sinw = w0.sin();
+    let a = 10f64.powf(gain_db / 40.0);
+    let sq = a.sqrt();
+
+    let (b0, b1, b2, a0, a1, a2);
+    if i == 0 {
+        // lowshelf，S=1
+        let alpha = sinw / 2.0 * std::f64::consts::SQRT_2;
+        b0 = a * ((a + 1.0) - (a - 1.0) * cosw + 2.0 * sq * alpha);
+        b1 = 2.0 * a * ((a - 1.0) - (a + 1.0) * cosw);
+        b2 = a * ((a + 1.0) - (a - 1.0) * cosw - 2.0 * sq * alpha);
+        a0 = (a + 1.0) + (a - 1.0) * cosw + 2.0 * sq * alpha;
+        a1 = -2.0 * ((a - 1.0) + (a + 1.0) * cosw);
+        a2 = (a + 1.0) + (a - 1.0) * cosw - 2.0 * sq * alpha;
+    } else if i == 9 {
+        // highshelf，S=1
+        let alpha = sinw / 2.0 * std::f64::consts::SQRT_2;
+        b0 = a * ((a + 1.0) + (a - 1.0) * cosw + 2.0 * sq * alpha);
+        b1 = -2.0 * a * ((a - 1.0) + (a + 1.0) * cosw);
+        b2 = a * ((a + 1.0) + (a - 1.0) * cosw - 2.0 * sq * alpha);
+        a0 = (a + 1.0) - (a - 1.0) * cosw + 2.0 * sq * alpha;
+        a1 = 2.0 * ((a - 1.0) - (a + 1.0) * cosw);
+        a2 = (a + 1.0) - (a - 1.0) * cosw - 2.0 * sq * alpha;
+    } else {
+        // peaking，约一个倍频程带宽
+        let q = 1.414;
+        let alpha = sinw / (2.0 * q);
+        b0 = 1.0 + alpha * a;
+        b1 = -2.0 * cosw;
+        b2 = 1.0 - alpha * a;
+        a0 = 1.0 + alpha / a;
+        a1 = -2.0 * cosw;
+        a2 = 1.0 - alpha / a;
+    }
+    [b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0]
+}
+
+/// 包裹 rodio 音源的 10 段均衡器，同时负责播放位置统计（供进度条/SMTC 使用）
+/// 与皮肤律动采样分接（FxShared，见 fx.rs）
+pub struct EqSource<S> {
+    inner: S,
+    /// 底层解码器的真实声道数（5.1 全景声为 6，7.1 为 8）
+    in_channels: usize,
+    /// 对外输出的声道数（>2 的多声道环绕声在 EqSource 内按 ITU-R BS.775 下混为立体声 2 声道，
+    /// 避免 rodio 丢弃中置人声/环绕声道，同时保证立体声 DAC 独占模式正常握手）
+    channels: usize,
+    cur: usize,
+    pending_r: Option<f32>,
+    sr: f64,
+    shared: Arc<EqShared>,
+    ver: u64,
+    coeffs: Vec<[f64; 5]>,
+    states: Vec<Vec<Biquad>>,
+    frames: u64,
+    base_ms: f64,
+    pos_ms: Arc<AtomicU64>,
+    fx: Option<Arc<FxShared>>,
+    /// 当前帧（跨声道）样本和，帧满时取均值推入 fx
+    frame_sum: f32,
+}
+
+impl<S: Source> EqSource<S> {
+    pub fn new(inner: S, shared: Arc<EqShared>, pos_ms: Arc<AtomicU64>) -> Self {
+        Self::with_base(inner, shared, pos_ms, 0.0)
+    }
+
+    /// base_ms：流起始的时间偏移（skip_duration 跳过的部分）
+    pub fn with_base(
+        inner: S,
+        shared: Arc<EqShared>,
+        pos_ms: Arc<AtomicU64>,
+        base_ms: f64,
+    ) -> Self {
+        let in_channels = (u16::from(inner.channels()) as usize).max(1);
+        let channels = if in_channels > 2 { 2 } else { in_channels };
+        let sr = f64::from(u32::from(inner.sample_rate()));
+        let mut s = Self {
+            inner,
+            in_channels,
+            channels,
+            cur: 0,
+            pending_r: None,
+            sr,
+            shared,
+            ver: u64::MAX,
+            coeffs: Vec::new(),
+            states: Vec::new(),
+            frames: 0,
+            base_ms,
+            pos_ms,
+            fx: None,
+            frame_sum: 0.0,
+        };
+        s.refresh();
+        s
+    }
+
+    /// 挂接皮肤律动采样分接（分析的是 EQ 后的实际输出）
+    pub fn with_fx(mut self, fx: Arc<FxShared>) -> Self {
+        fx.set_rate(self.sr);
+        self.fx = Some(fx);
+        self
+    }
+
+    fn refresh(&mut self) {
+        let v = self.shared.version.load(Ordering::Relaxed);
+        if v != self.ver {
+            let gains = *self.shared.gains.read();
+            self.coeffs = (0..10)
+                .map(|i| design_band(i, self.sr, gains[i] as f64))
+                .collect();
+            // 只换系数、保留滤波器状态：播放中拖动滑块时每个中间增益都会
+            // 走到这里，清零状态会丢弃滤波器记忆产生输出跳变（咔哒声）
+            if self.states.len() != self.channels {
+                self.states = vec![vec![Biquad::default(); 10]; self.channels];
+            }
+            self.ver = v;
+        }
+    }
+}
+
+impl<S: Source> Iterator for EqSource<S> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<f32> {
+        let x = if self.in_channels <= 2 {
+            self.inner.next()?
+        } else if let Some(r) = self.pending_r.take() {
+            r
+        } else {
+            // 多声道环绕声（如 QQ 臻品全景声 5.1 / 酷狗蝰蛇全景声 5.1）：
+            // 按 ITU-R BS.775 矩阵把一帧多声道下混为 L/R，完整保留中置人声(FC)、低音(LFE)与环绕(SL/SR)
+            let mut raw = [0.0f32; 16];
+            let n = self.in_channels.min(16);
+            for i in 0..self.in_channels {
+                let s = self.inner.next()?;
+                if i < n {
+                    raw[i] = s;
+                }
+            }
+            let (l, r) = match self.in_channels {
+                6 => {
+                    // 5.1 FLAC 声道序：FL, FR, FC, LFE, BL/SL, BR/SR
+                    let inv_sqrt2 = std::f32::consts::FRAC_1_SQRT_2;
+                    let c = inv_sqrt2 * raw[2] + 0.5 * raw[3];
+                    (
+                        (raw[0] + c + inv_sqrt2 * raw[4]) * 0.58578644,
+                        (raw[1] + c + inv_sqrt2 * raw[5]) * 0.58578644,
+                    )
+                }
+                8 => {
+                    // 7.1 声道序：FL, FR, FC, LFE, BL, BR, SL, SR
+                    let inv_sqrt2 = std::f32::consts::FRAC_1_SQRT_2;
+                    let c = inv_sqrt2 * raw[2] + 0.5 * raw[3];
+                    (
+                        (raw[0] + c + 0.5 * (raw[4] + raw[6])) * 0.55,
+                        (raw[1] + c + 0.5 * (raw[5] + raw[7])) * 0.55,
+                    )
+                }
+                _ => {
+                    let mut l_sum = 0.0f32;
+                    let mut r_sum = 0.0f32;
+                    for i in 0..n {
+                        if i % 2 == 0 {
+                            l_sum += raw[i];
+                        } else {
+                            r_sum += raw[i];
+                        }
+                    }
+                    let scale = 2.0 / (n as f32);
+                    (l_sum * scale, r_sum * scale)
+                }
+            };
+            self.pending_r = Some(r);
+            l
+        };
+        let out = if self.shared.enabled.load(Ordering::Relaxed) {
+            self.refresh();
+            let mut s = x as f64;
+            let ch = self.cur;
+            let coeffs = &self.coeffs;
+            for (b, c) in self.states[ch].iter_mut().zip(coeffs.iter()) {
+                s = b.process(c, s);
+            }
+            s as f32
+        } else {
+            x
+        };
+        self.frame_sum += out;
+        self.cur += 1;
+        if self.cur >= self.channels {
+            self.cur = 0;
+            // 帧满：声道平均 → 单声道样本推给律动分析（音频线程安全：无锁无分配）
+            if let Some(fx) = &self.fx {
+                fx.push(self.frame_sum / self.channels as f32);
+            }
+            self.frame_sum = 0.0;
+            self.frames += 1;
+            let pos = self.base_ms + self.frames as f64 * 1000.0 / self.sr;
+            self.pos_ms.store(pos.max(0.0) as u64, Ordering::Relaxed);
+        }
+        Some(out)
+    }
+}
+
+impl<S: Source> Source for EqSource<S> {
+    fn current_span_len(&self) -> Option<usize> {
+        let ch = self.channels.max(1);
+        let fallback = 512 * ch;
+        if self.in_channels != self.channels {
+            Some(fallback)
+        } else {
+            self.inner
+                .current_span_len()
+                .filter(|&len| len > 0 && len % ch == 0)
+                .or(Some(fallback))
+        }
+    }
+
+    fn channels(&self) -> rodio::ChannelCount {
+        rodio::ChannelCount::new(self.channels as u16)
+            .unwrap_or(rodio::ChannelCount::new(2).unwrap())
+    }
+
+    fn sample_rate(&self) -> rodio::SampleRate {
+        rodio::SampleRate::new(self.sr as u32).unwrap_or(rodio::SampleRate::new(48000).unwrap())
+    }
+
+    fn total_duration(&self) -> Option<Duration> {
+        self.inner.total_duration()
+    }
+
+    fn try_seek(&mut self, pos: Duration) -> Result<(), rodio::source::SeekError> {
+        self.inner.try_seek(pos)?;
+        self.base_ms = pos.as_secs_f64() * 1000.0;
+        self.frames = 0;
+        self.cur = 0;
+        self.pending_r = None;
+        self.frame_sum = 0.0;
+        for ch in &mut self.states {
+            for b in ch {
+                b.reset();
+            }
+        }
+        self.pos_ms.store(self.base_ms as u64, Ordering::Relaxed);
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rodio::buffer::SamplesBuffer;
+    use rodio::mixer;
+    use rodio::Player;
+    use rodio::{ChannelCount, SampleRate};
+    use std::sync::atomic::{AtomicBool, AtomicUsize};
+    use std::thread;
+
+    #[test]
+    fn test_eq_source_atmos_to_hires_resampling() {
+        let (mixer, mut mixer_rx) = mixer::mixer(
+            ChannelCount::new(2).unwrap(),
+            SampleRate::new(48000).unwrap(),
+        );
+        let player = Arc::new(Player::connect_new(&mixer));
+
+        let running = Arc::new(AtomicBool::new(true));
+        let count_96 = Arc::new(AtomicUsize::new(0));
+
+        let running_clone = running.clone();
+        let count_clone = count_96.clone();
+        let audio_thread = thread::spawn(move || {
+            while running_clone.load(Ordering::Relaxed) {
+                if let Some(s) = mixer_rx.next() {
+                    if s > 0.15 {
+                        count_clone.fetch_add(1, Ordering::Relaxed);
+                    }
+                } else {
+                    break;
+                }
+            }
+        });
+
+        // 1. Play 6-channel 44.1kHz track (Viper Atmos downmixed)
+        let ch6 = ChannelCount::new(6).unwrap();
+        let sr44 = SampleRate::new(44100).unwrap();
+        let data6 = vec![0.01f32; 6 * 2000];
+        let src6 = SamplesBuffer::new(ch6, sr44, data6);
+        let shared = Arc::new(EqShared::new([0.0; 10], false));
+        let pos = Arc::new(AtomicU64::new(0));
+        let eq6 = EqSource::new(src6, shared.clone(), pos.clone());
+
+        player.append(eq6);
+        player.play();
+
+        thread::sleep(Duration::from_millis(50));
+
+        // 2. Now user switches to 2-channel 96kHz (Viper Clear / Master)
+        player.clear();
+
+        let ch2 = ChannelCount::new(2).unwrap();
+        let sr96 = SampleRate::new(96000).unwrap();
+        // 96000 Hz: 96000 frames = 1 second = 192000 samples
+        let data2 = vec![0.2f32; 2 * 96000];
+        let src2 = SamplesBuffer::new(ch2, sr96, data2);
+        let eq2 = EqSource::new(src2, shared.clone(), pos.clone());
+
+        player.append(eq2);
+        player.play();
+
+        // Wait until src2 finishes
+        while !player.empty() {
+            thread::sleep(Duration::from_millis(10));
+        }
+        thread::sleep(Duration::from_millis(50));
+        running.store(false, Ordering::Relaxed);
+        let _ = audio_thread.join();
+
+        let count = count_96.load(Ordering::Relaxed);
+        println!("Output samples count from 96kHz source: {}", count);
+        // At 48kHz output, 1s of audio is exactly 48000 * 2 = 96000 samples!
+        // Allow tiny tolerance for filter delay (+- 500 samples)
+        assert!(
+            (count as i64 - 96000).abs() < 500,
+            "Expected ~96000 samples, but got {count}! Resampler was STUCK in 44.1kHz!",
+        );
+    }
+}

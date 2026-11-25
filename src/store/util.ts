@@ -1,0 +1,73 @@
+//! store 内部共享的小工具（无领域归属）。
+import {
+  loadDesktopLyricsColors,
+  loadDesktopLyricsStyle,
+  type DesktopLyricsColors,
+  type DesktopLyricsStyle,
+} from "../theme";
+import type { Store } from "./contract";
+import { syncMenubarLyrics } from "./menubar";
+import { syncTaskbarLyrics } from "./taskbar";
+
+/** 逐字节比较（挂起恢复的刷新用）：数据未变化时保持旧引用，避免整页重渲染闪烁 */
+export function jsonEq(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+/** 推一帧歌词/进度给桌面歌词窗口（事件式，窗口不存在时 emit 静默无副作用）。
+ *  歌词行数组只在变化时随帧携带（逐字歌词可达几十 KB，250ms 一帧全量序列化
+ *  是持续的 GC 压力）；歌词窗口对缺失的 lines 字段沿用上一次的值。
+ *  菜单栏歌词（Linux）与任务栏歌词（Windows）吃同一批状态帧：
+ *  行变化才 IPC，与悬浮窗独立。 */
+let lastPushedLines: unknown = undefined; // undefined = 尚未推过（下次必带 lines）
+export async function pushDesktopLyrics(
+  s: Pick<
+    Store,
+    | "lyrics"
+    | "pos"
+    | "dur"
+    | "playing"
+    | "current"
+    | "desktopLyricsOn"
+    | "speed"
+    | "lyricOffsetMs"
+    | "lyricsAltMode"
+  > & {
+    dlyricsColors?: DesktopLyricsColors;
+    dlyricsStyle?: DesktopLyricsStyle;
+  }
+) {
+  syncMenubarLyrics(s);
+  syncTaskbarLyrics(s);
+  if (!s.desktopLyricsOn) return;
+  try {
+    const lines = s.lyrics?.lines ?? null;
+    const includeLines = lines !== lastPushedLines;
+    lastPushedLines = lines;
+    const { emit } = await import("@tauri-apps/api/event");
+    emit(
+      "dlyrics://push",
+      {
+        ...(includeLines ? { lines } : {}),
+        synced: s.lyrics?.synced ?? false,
+        pos: s.pos,
+        dur: s.dur,
+        playing: s.playing,
+        speed: s.speed ?? 1,
+        lyricOffsetMs: s.lyricOffsetMs ?? 0,
+        altMode: s.lyricsAltMode,
+        title: s.current?.title ?? "",
+        artist: s.current?.artist ?? "",
+        colors: s.dlyricsColors ?? loadDesktopLyricsColors(),
+        style: s.dlyricsStyle ?? loadDesktopLyricsStyle(),
+      } as Record<string, unknown>
+    );
+  } catch {
+    // 桌面歌词窗口未开/已关：忽略
+  }
+}
+
+/** 桌面歌词窗口就绪/新开后强制下一帧携带完整歌词 */
+export function resetDesktopLyricsFrame() {
+  lastPushedLines = undefined;
+}

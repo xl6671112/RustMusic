@@ -1,0 +1,418 @@
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::hash::{Hash, Hasher};
+use std::path::{Path, PathBuf};
+
+use lofty::config::{ParseOptions, ParsingMode};
+use lofty::prelude::*;
+use rayon::prelude::*;
+
+use tauri::{AppHandle, Emitter, Manager};
+use walkdir::WalkDir;
+
+use crate::db::{self, NewTrack};
+use crate::AppState;
+
+pub const AUDIO_EXTS: [&str; 9] = [
+    "mp3", "flac", "wav", "ogg", "oga", "m4a", "aac", "mp4", "m4b",
+];
+
+pub fn is_audio(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .map(|e| AUDIO_EXTS.contains(&e.to_lowercase().as_str()))
+        .unwrap_or(false)
+}
+
+/// 规范化路径（去掉 Windows \\?\ 前缀），统一用反斜杠。
+/// 网络映射盘 canonicalize 后是 \\?\UNC\server\share\...，剥 \\?\ 会剩下
+/// 非法的 "UNC\server\share"（扫描打不开、静默 0 首）→ 还原成 \\server\share
+pub fn norm_path(p: &Path) -> String {
+    let s = fs::canonicalize(p)
+        .unwrap_or_else(|_| p.to_path_buf())
+        .to_string_lossy()
+        .into_owned();
+    if let Some(rest) = s.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{rest}");
+    }
+    s.strip_prefix(r"\\?\").unwrap_or(&s).to_string()
+}
+
+/// 扫描进行中标志 + 补扫请求：add_folder/remove_folder/rescan/drop_paths 都会
+/// 触发扫描，快速连点会并发跑多份 run_scan（进度事件交错、delete_missing
+/// 后写者胜、解析与 IO 全部翻倍）。已在跑时只登记一次补扫，结束后重跑一轮。
+static SCAN_RUNNING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static SCAN_RERUN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn spawn_scan(app: &AppHandle) {
+    use std::sync::atomic::Ordering;
+    if SCAN_RUNNING.swap(true, Ordering::SeqCst) {
+        SCAN_RERUN.store(true, Ordering::SeqCst);
+        return;
+    }
+    let a = app.clone();
+    std::thread::spawn(move || {
+        loop {
+            run_scan(a.clone());
+            if !SCAN_RERUN.swap(false, Ordering::SeqCst) {
+                // 收尾竞态：swap 读到 false 之后、RUNNING 置 false 之前，
+                // 新调用方可能登记 RERUN 后离开——置 false 后复查一次，
+                // 有人登记就接管继续跑（lost wakeup 防护）
+                SCAN_RUNNING.store(false, Ordering::SeqCst);
+                if SCAN_RERUN.load(Ordering::SeqCst) && !SCAN_RUNNING.swap(true, Ordering::SeqCst) {
+                    continue;
+                }
+                break;
+            }
+        }
+    });
+}
+
+pub fn run_scan(app: AppHandle) {
+    let st = app.state::<AppState>();
+    let folders = {
+        let conn = st.db.lock();
+        db::list_folders(&conn)
+    };
+    let prefixes: Vec<String> = folders.iter().map(|f| f.path.clone()).collect();
+
+    let emit = |done: usize, total: usize, active: bool| {
+        let payload = serde_json::json!({ "done": done, "total": total, "active": active });
+        // 快照留给挂起恢复后的补发（webview://resumed → get_scan_state）
+        if let Some(st) = app.try_state::<AppState>() {
+            *st.scan_last.lock() = payload.clone();
+        }
+        let _ = app.emit("scan://progress", payload);
+    };
+
+    if folders.is_empty() {
+        // 没有监控文件夹时不再清空全库：拖拽入库的单曲不在任何监控目录里，
+        // 此时的“扫描”对它们没有管辖权（delete_missing 同样按前缀过滤）
+        emit(0, 0, true);
+        emit(0, 0, false);
+        return;
+    }
+
+    // 收集音频文件（mtime/size 直接取目录枚举自带的 metadata，
+    // 免去每个文件再单独 open 一次；大目录扫描时间约省三分之一）
+    struct Found {
+        path: PathBuf,
+        mtime: i64,
+        size: i64,
+    }
+    let mut files: Vec<Found> = Vec::new();
+    for f in &folders {
+        for entry in WalkDir::new(&f.path)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            if entry.file_type().is_file() && is_audio(entry.path()) {
+                let (mtime, size) = match entry.metadata() {
+                    Ok(m) => (
+                        m.modified()
+                            .ok()
+                            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                            .map(|d| d.as_secs() as i64)
+                            .unwrap_or(0),
+                        m.len() as i64,
+                    ),
+                    Err(_) => (0, 0),
+                };
+                files.push(Found {
+                    path: entry.into_path(),
+                    mtime,
+                    size,
+                });
+            }
+        }
+    }
+    let total = files.len();
+    emit(0, total, true);
+
+    // 现有库记录
+    let existing: HashMap<String, (i64, i64, f64)> = {
+        let conn = st.db.lock();
+        db::track_paths(&conn)
+            .into_iter()
+            .map(|(p, mt, sz, dur)| (p, (mt, sz, dur)))
+            .collect()
+    };
+
+    let mut seen: HashSet<String> = HashSet::with_capacity(files.len());
+    let mut to_parse: Vec<PathBuf> = Vec::new();
+    for f in &files {
+        let np = norm_path(&f.path);
+        seen.insert(np.clone());
+        match existing.get(&np) {
+            // duration<=0 说明上次元数据解析失败（标签里一个坏字段会让 lofty 整体报错），
+            // 文件未变也重新解析，让历史坏记录在下次扫描时自愈
+            Some((emt, esz, edur)) if *emt == f.mtime && *esz == f.size && *edur > 0.0 => {}
+            _ => to_parse.push(f.path.clone()),
+        }
+    }
+
+    // 并行解析 + 分批入库。
+    // 用小线程池而非全局池：parse_track 会把内嵌封面整图解码（一张大图可占
+    // 数十 MB），并发度 = 核数时扫描期内存峰值可达数百 MB；4 线程把峰值压到
+    // 可控范围，扫描本身以 IO/解码为主，收益远大于速度损失
+    static PARSE_POOL: std::sync::OnceLock<rayon::ThreadPool> = std::sync::OnceLock::new();
+    let pool = PARSE_POOL.get_or_init(|| {
+        let n = std::thread::available_parallelism()
+            .map(|n| n.get().min(4))
+            .unwrap_or(4);
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(n)
+            .build()
+            .expect("build parse pool")
+    });
+    let mut done = total - to_parse.len();
+    emit(done, total, true);
+    for chunk in to_parse.chunks(24) {
+        let app_data = st.app_data.clone();
+        let parsed: Vec<Option<NewTrack>> = pool.install(|| {
+            chunk
+                .par_iter()
+                .map(|p| parse_track(p, &app_data))
+                .collect()
+        });
+        {
+            let conn = st.db.lock();
+            // 攒批单事务：一批 24 条共享一次提交（fsync），替代逐条隐式事务。
+            // 事务开启失败（理论上仅 IO 故障）回退逐条写入
+            match conn.unchecked_transaction() {
+                Ok(tx) => {
+                    for t in parsed.into_iter().flatten() {
+                        db::upsert_track(&tx, &t);
+                    }
+                    if let Err(e) = tx.commit() {
+                        eprintln!("[library] 入库事务提交失败: {e}");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[library] 开启入库事务失败，回退逐条写入: {e}");
+                    for t in parsed.into_iter().flatten() {
+                        db::upsert_track(&conn, &t);
+                    }
+                }
+            };
+        }
+        done += chunk.len();
+        emit(done, total, true);
+    }
+
+    // 清理已删除文件
+    {
+        let conn = st.db.lock();
+        db::delete_missing(&conn, &seen, &prefixes);
+    }
+    emit(total, total, false);
+}
+
+fn file_stat(p: &Path) -> (i64, i64) {
+    match fs::metadata(p) {
+        Ok(m) => (
+            m.modified()
+                .ok()
+                .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|d| d.as_secs() as i64)
+                .unwrap_or(0),
+            m.len() as i64,
+        ),
+        Err(_) => (0, 0),
+    }
+}
+
+pub fn parse_track(path: &Path, app_data: &Path) -> Option<NewTrack> {
+    let np = norm_path(path);
+    let (mtime, size) = file_stat(path);
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+    let format = match ext.as_str() {
+        "mp3" => "MP3",
+        "flac" => "FLAC",
+        "wav" => "WAV",
+        "ogg" | "oga" => "OGG",
+        "m4a" | "mp4" | "m4b" => "M4A",
+        "aac" => "AAC",
+        _ => "AUDIO",
+    }
+    .to_string();
+
+    let (mut title, mut artist, mut album, mut album_artist) =
+        (String::new(), String::new(), String::new(), String::new());
+    let (mut track_no, mut disc, mut year) = (0i64, 0i64, 0i64);
+    let (mut duration, mut bitrate, mut sample_rate, mut bit_depth) = (0f64, 0i64, 0i64, 0i64);
+    let mut cover = String::new();
+
+    let mut lrc_path = String::new();
+    let lrc_candidate = path.with_extension("lrc");
+    if lrc_candidate.exists() {
+        lrc_path = lrc_candidate.to_string_lossy().into_owned();
+    }
+
+    // Relaxed：个别文件内嵌标签字段不规范（如年份非 4 位数字），默认模式整体
+    // 解析失败导致时长/标签全丢，宽松模式跳过坏字段照常出结果
+    let tagged = lofty::probe::Probe::open(path)
+        .and_then(|p| {
+            p.options(ParseOptions::new().parsing_mode(ParsingMode::Relaxed))
+                .read()
+        })
+        .ok();
+    if let Some(tagged) = &tagged {
+        let tag = tagged.primary_tag().or_else(|| tagged.first_tag());
+        if let Some(tag) = tag {
+            title = tag.title().map(|s| s.to_string()).unwrap_or_default();
+            artist = tag.artist().map(|s| s.to_string()).unwrap_or_default();
+            album = tag.album().map(|s| s.to_string()).unwrap_or_default();
+            album_artist = tag
+                .get_string(&lofty::tag::ItemKey::AlbumArtist)
+                .unwrap_or("")
+                .to_string();
+            track_no = tag.track().map(|v| v as i64).unwrap_or(0);
+            disc = tag.disk().map(|v| v as i64).unwrap_or(0);
+            year = tag
+                .get_string(&lofty::tag::ItemKey::Year)
+                .and_then(|s| s.chars().take(4).collect::<String>().parse().ok())
+                .unwrap_or(0);
+
+            let pic = tag
+                .pictures()
+                .iter()
+                .find(|p| p.pic_type() == lofty::picture::PictureType::CoverFront)
+                .or_else(|| tag.pictures().first());
+            if let Some(pic) = pic {
+                cover = save_cover(app_data, &np, pic.data(), pic.mime_type()).unwrap_or_default();
+            }
+        }
+        let props = tagged.properties();
+        duration = props.duration().as_secs_f64();
+        bitrate = props.audio_bitrate().map(|v| v as i64).unwrap_or(0);
+        sample_rate = props.sample_rate().map(|v| v as i64).unwrap_or(0);
+        bit_depth = props.bit_depth().map(|v| v as i64).unwrap_or(0);
+    }
+
+    // 无标签时回退到文件名解析
+    if title.is_empty() {
+        let stem = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or_else(|| crate::i18n::pick("未知曲目", "Unknown Track"));
+        if let Some((a, t)) = stem.split_once(" - ") {
+            if artist.is_empty() {
+                artist = a.trim().to_string();
+            }
+            title = t.trim().to_string();
+        } else {
+            title = stem.to_string();
+        }
+    }
+
+    Some(NewTrack {
+        path: np,
+        title,
+        artist,
+        album,
+        album_artist,
+        track_no,
+        disc,
+        year,
+        duration,
+        format,
+        bitrate,
+        sample_rate,
+        bit_depth,
+        cover,
+        lrc_path,
+        size,
+        mtime,
+    })
+}
+
+fn save_cover(
+    app_data: &Path,
+    track_path: &str,
+    data: &[u8],
+    mime: Option<&lofty::picture::MimeType>,
+) -> Option<String> {
+    if data.is_empty() {
+        return None;
+    }
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    track_path.hash(&mut h);
+    let name = format!("{:016x}", h.finish());
+    let dir = app_data.join("covers");
+    let _ = fs::create_dir_all(&dir);
+
+    // 优先解码并压缩为统一尺寸的 JPEG
+    if let Ok(img) = image::load_from_memory(data) {
+        let img = if img.width() > 600 || img.height() > 600 {
+            img.thumbnail(600, 600)
+        } else {
+            img
+        };
+        let dest = dir.join(format!("{name}.jpg"));
+        if img
+            .to_rgb8()
+            .save_with_format(&dest, image::ImageFormat::Jpeg)
+            .is_ok()
+        {
+            // 列表用小缩略图（160px 解码 ≈ 100KB，600px ≈ 1.4MB）：
+            // 长列表滚动时的解码缓存是渲染内存的大头，行高只有 64px 用不到 600px
+            let small = dir.join(format!("{name}_s.jpg"));
+            img.thumbnail(160, 160)
+                .to_rgb8()
+                .save_with_format(&small, image::ImageFormat::Jpeg)
+                .ok();
+            return Some(dest.to_string_lossy().into_owned());
+        }
+    }
+
+    // 解码失败则按原始格式保存
+    let ext = match mime {
+        Some(lofty::picture::MimeType::Png) => "png",
+        Some(lofty::picture::MimeType::Jpeg) => "jpg",
+        Some(lofty::picture::MimeType::Bmp) => "bmp",
+        Some(lofty::picture::MimeType::Gif) => "gif",
+        Some(lofty::picture::MimeType::Tiff) => "tiff",
+        _ => "img",
+    };
+    let dest = dir.join(format!("{name}.{ext}"));
+    fs::write(&dest, data).ok()?;
+    Some(dest.to_string_lossy().into_owned())
+}
+
+/// 为存量 600px 封面补生成 160px 列表缩略图（升级旧库的一次性后台迁移）。
+/// 补齐前前端对缺失小图的封面自动回退到原图，功能不受影响
+pub fn migrate_cover_thumbs(app_data: &Path) {
+    let app_data = app_data.to_path_buf();
+    std::thread::spawn(move || {
+        let dir = app_data.join("covers");
+        let Ok(entries) = fs::read_dir(&dir) else {
+            return;
+        };
+        for entry in entries.flatten() {
+            let p = entry.path();
+            let Some(name) = p.file_name().and_then(|n| n.to_str()) else {
+                continue;
+            };
+            if !name.ends_with(".jpg") || name.ends_with("_s.jpg") {
+                continue;
+            }
+            let stem = name.strip_suffix(".jpg").unwrap_or(name);
+            let small = dir.join(format!("{stem}_s.jpg"));
+            if small.exists() {
+                continue;
+            }
+            if let Ok(img) = image::open(&p) {
+                img.thumbnail(160, 160)
+                    .to_rgb8()
+                    .save_with_format(&small, image::ImageFormat::Jpeg)
+                    .ok();
+            }
+        }
+    });
+}

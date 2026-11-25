@@ -1,0 +1,283 @@
+/** 主题系统：浅色/暗色 + 强调色选择，localStorage 持久化 */
+import { tr } from "./i18n";
+
+export interface AccentColor {
+  key: string;
+  label: string;
+  labelEn: string;
+  base: string; // 主色
+  strong: string; // 亮一档（浅色模式可作主色）
+  onLight: string; // 浅色模式下按钮文字色
+}
+
+export const ACCENTS: AccentColor[] = [
+  { key: "amber", label: "琥珀", labelEn: "Amber", base: "#f0a24a", strong: "#ffc470", onLight: "#fff" },
+  { key: "tangerine", label: "橙黄", labelEn: "Tangerine", base: "#e8823f", strong: "#ff9d5c", onLight: "#fff" },
+  { key: "coral", label: "珊瑚", labelEn: "Coral", base: "#e8674a", strong: "#ff8f6e", onLight: "#fff" },
+  { key: "rose", label: "玫红", labelEn: "Rose", base: "#d94f6e", strong: "#f4758f", onLight: "#fff" },
+  { key: "crimson", label: "绛紫", labelEn: "Crimson", base: "#b04a8f", strong: "#cd6ba9", onLight: "#fff" },
+  { key: "violet", label: "紫罗兰", labelEn: "Violet", base: "#8e6fd8", strong: "#ab93ea", onLight: "#fff" },
+  { key: "iris", label: "鸢尾", labelEn: "Iris", base: "#6d6ee0", strong: "#8f90ea", onLight: "#fff" },
+  { key: "ocean", label: "海蓝", labelEn: "Ocean", base: "#3f8fd4", strong: "#6bace8", onLight: "#fff" },
+  { key: "sky", label: "天青", labelEn: "Sky", base: "#3ba6c9", strong: "#63c0dd", onLight: "#fff" },
+  { key: "teal", label: "青碧", labelEn: "Teal", base: "#3aa896", strong: "#5fc0af", onLight: "#fff" },
+  { key: "jade", label: "翡翠", labelEn: "Jade", base: "#2f9e7f", strong: "#52b89b", onLight: "#fff" },
+  { key: "moss", label: "苔绿", labelEn: "Moss", base: "#7ba85f", strong: "#9cc285", onLight: "#fff" },
+  { key: "olive", label: "橄榄", labelEn: "Olive", base: "#8f9a4d", strong: "#adb866", onLight: "#fff" },
+  { key: "graphite", label: "石墨", labelEn: "Graphite", base: "#6b7280", strong: "#8b95a3", onLight: "#fff" },
+  { key: "wine", label: "酒红", labelEn: "Wine", base: "#a83f55", strong: "#c65d72", onLight: "#fff" },
+];
+
+export function accentLabel(a: AccentColor): string {
+  return tr(a.label, a.labelEn);
+}
+
+const CUSTOM_KEY_PREFIX = "custom:";
+const CUSTOM_HEX_KEY = "rustmusic.accent.custom";
+
+// ---------- 桌面歌词配色 ----------
+
+const DLYRICS_COLOR_KEY = "rustmusic.dlyrics.colors";
+
+export interface DesktopLyricsColors {
+  sung: string; // 已唱（卡拉OK 染色）
+  unsung: string; // 未唱（当前行底色）
+  next: string; // 下一句小字
+}
+
+export type DesktopLyricsEffect = "none" | "fade" | "float" | "glow";
+
+export interface DesktopLyricsStyle {
+  fontSize: number;
+  font: string;
+  fontFile: string;
+  fontName: string;
+  effect: DesktopLyricsEffect;
+}
+
+const DLYRICS_STYLE_KEY = "rustmusic.dlyrics.style";
+
+export const DLYRICS_DEFAULT_STYLE: DesktopLyricsStyle = {
+  fontSize: 34,
+  font: "Arial, sans-serif",
+  fontFile: "",
+  fontName: "",
+  effect: "none",
+};
+
+export function loadDesktopLyricsStyle(): DesktopLyricsStyle {
+  try {
+    const raw = localStorage.getItem(DLYRICS_STYLE_KEY);
+    if (!raw) return DLYRICS_DEFAULT_STYLE;
+    const v = JSON.parse(raw) as Partial<DesktopLyricsStyle>;
+    const effect = ["none", "fade", "float", "glow"].includes(v.effect ?? "")
+      ? (v.effect as DesktopLyricsEffect)
+      : DLYRICS_DEFAULT_STYLE.effect;
+    return {
+      fontSize:
+        typeof v.fontSize === "number" && Number.isFinite(v.fontSize)
+          ? Math.min(72, Math.max(18, Math.round(v.fontSize)))
+          : DLYRICS_DEFAULT_STYLE.fontSize,
+      font:
+        typeof v.font === "string" && v.font.length <= 120
+          ? v.font
+          : DLYRICS_DEFAULT_STYLE.font,
+      fontFile:
+        typeof v.fontFile === "string" &&
+        /^[a-f0-9]{64}\.(ttf|otf|woff2?)$/.test(v.fontFile)
+          ? v.fontFile
+          : "",
+      fontName:
+        typeof v.fontName === "string" && v.fontName.length <= 240
+          ? v.fontName
+          : "",
+      effect,
+    };
+  } catch {
+    return DLYRICS_DEFAULT_STYLE;
+  }
+}
+
+export function saveDesktopLyricsStyle(style: DesktopLyricsStyle) {
+  localStorage.setItem(DLYRICS_STYLE_KEY, JSON.stringify(style));
+}
+
+export const DLYRICS_DEFAULT_COLORS: DesktopLyricsColors = {
+  sung: "#ffc45e",
+  unsung: "rgba(255,255,255,0.9)",
+  next: "rgba(230,168,82,0.8)",
+};
+
+export function loadDesktopLyricsColors(): DesktopLyricsColors {
+  try {
+    const raw = localStorage.getItem(DLYRICS_COLOR_KEY);
+    if (!raw) return DLYRICS_DEFAULT_COLORS;
+    const v = JSON.parse(raw) as Partial<DesktopLyricsColors>;
+    return {
+      sung: v.sung || DLYRICS_DEFAULT_COLORS.sung,
+      unsung: v.unsung || DLYRICS_DEFAULT_COLORS.unsung,
+      next: v.next || DLYRICS_DEFAULT_COLORS.next,
+    };
+  } catch {
+    return DLYRICS_DEFAULT_COLORS;
+  }
+}
+
+export function saveDesktopLyricsColors(c: DesktopLyricsColors) {
+  localStorage.setItem(DLYRICS_COLOR_KEY, JSON.stringify(c));
+}
+
+// ---------- 播放页歌词配色 ----------
+// 已移除手动三色设置：播放页歌词颜色由封面调色板自适应决定
+// （utils.lyricAdaptiveColors：最坏情况对比度 + 阴影/遮罩补偿 +
+//   卡拉OK染色跟封面），见设置页删除时的说明。
+
+/** 解析自定义色 key（"custom:#RRGGBB"）为 hex；非法返回 null */
+export function parseCustomAccent(key: string): string | null {
+  if (!key.startsWith(CUSTOM_KEY_PREFIX)) return null;
+  const hex = key.slice(CUSTOM_KEY_PREFIX.length);
+  return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : null;
+}
+
+/** 读取上次的自定义色（用于取色器回显） */
+export function loadCustomAccentHex(): string {
+  return localStorage.getItem(CUSTOM_HEX_KEY) ?? "#f0a24a";
+}
+
+export function saveCustomAccentHex(hex: string) {
+  localStorage.setItem(CUSTOM_HEX_KEY, hex);
+}
+
+/** hex → HSL，用于给自定义色派生浅色档和文字对比色 */
+function hexToHsl(hex: string): [number, number, number] {
+  const [r0, g0, b0] = hexToRgb(hex).map((v) => v / 255) as [number, number, number];
+  const max = Math.max(r0, g0, b0);
+  const min = Math.min(r0, g0, b0);
+  const l = (max + min) / 2;
+  if (max === min) return [0, 0, l];
+  const d = max - min;
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  if (max === r0) h = ((g0 - b0) / d + (g0 < b0 ? 6 : 0)) / 6;
+  else if (max === g0) h = ((b0 - r0) / d + 2) / 6;
+  else h = ((r0 - g0) / d + 4) / 6;
+  return [h, s, l];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const f = (n: number) => {
+    const k = (n + h * 12) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const v = l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1)));
+    return Math.round(v * 255)
+      .toString(16)
+      .padStart(2, "0");
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+const THEME_KEY = "rustmusic.theme";
+const ACCENT_KEY = "rustmusic.accent";
+
+// ---------- 界面风格（标准 / 拟物 / 液态玻璃） ----------
+// 与明暗主题（data-theme）正交：风格决定材质与布局语言，明暗决定配色。
+// html[data-ui] 由 CSS 侧作用域全部主题样式（见 src/themes/*.css）。
+
+export type UiTheme = "standard" | "skeuo" | "liquid";
+
+export const UI_THEMES: { key: UiTheme; label: string; labelEn: string }[] = [
+  { key: "standard", label: "标准", labelEn: "Standard" },
+  { key: "skeuo", label: "拟物", labelEn: "Skeuomorphic" },
+  { key: "liquid", label: "液态玻璃", labelEn: "Liquid Glass" },
+];
+
+export function uiThemeLabel(u: { label: string; labelEn: string }): string {
+  return tr(u.label, u.labelEn);
+}
+
+const UI_KEY = "rustmusic.uiTheme";
+
+export function applyUiTheme(ui: UiTheme) {
+  document.documentElement.dataset.ui = ui;
+}
+
+export function loadUiTheme(): UiTheme {
+  const t = localStorage.getItem(UI_KEY);
+  return t === "skeuo" || t === "liquid" || t === "standard" ? t : "standard";
+}
+
+export function saveUiTheme(ui: UiTheme) {
+  localStorage.setItem(UI_KEY, ui);
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+export function applyTheme(theme: "dark" | "light") {
+  document.documentElement.dataset.theme = theme;
+}
+
+export function applyAccent(key: string) {
+  const customHex = parseCustomAccent(key);
+  const acc = customHex
+    ? (() => {
+        // 自定义色：亮色档 = HSL 亮度 +0.12；文字色按亮度阈值自动黑/白
+        const [h, s, l] = hexToHsl(customHex);
+        return {
+          base: customHex,
+          strong: hslToHex(h, Math.max(s * 0.9, 0), Math.min(l + 0.12, 0.94)),
+          onLight: l > 0.72 ? "#5a3a10" : "#fff",
+        };
+      })()
+    : ACCENTS.find((a) => a.key === key) ?? ACCENTS[0];
+  const root = document.documentElement.style;
+  root.setProperty("--accent", acc.base);
+  // strong 档按主题派生：暗色主题用亮档（浅色文字/渐变高光）；
+  // 浅色主题改用深档 —— 亮琥珀类颜色在浅色玻璃上对比度不足（发白），
+  // 深档保证激活态文字、进度条、歌词染色等在浅色场景下依旧清晰
+  const isLight = document.documentElement.dataset.theme === "light";
+  const [h, s, l] = hexToHsl(acc.base);
+  root.setProperty(
+    "--accent-strong",
+    isLight
+      ? hslToHex(h, Math.min(s * 1.04, 1), Math.max(l - 0.12, 0.3))
+      : acc.strong
+  );
+  root.setProperty("--accent-soft", `rgba(${hexToRgb(acc.base).join(", ")}, 0.35)`);
+  root.setProperty("--accent-weak", `rgba(${hexToRgb(acc.base).join(", ")}, 0.14)`);
+  // 浅色模式按钮文字对比色
+  root.setProperty("--accent-on", acc.onLight);
+}
+
+export function loadTheme(): "dark" | "light" {
+  const t = localStorage.getItem(THEME_KEY);
+  // 默认浅色：与合并前 main 及拟物 / 液态玻璃两分支的默认行为保持一致
+  return t === "dark" ? "dark" : "light";
+}
+
+export function loadAccent(): string {
+  return localStorage.getItem(ACCENT_KEY) ?? "amber";
+}
+
+export function saveTheme(theme: "dark" | "light") {
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+export function saveAccent(key: string) {
+  localStorage.setItem(ACCENT_KEY, key);
+}
+
+/** 初始化（应用启动时调用一次；桌面歌词等副窗口复用同一入口） */
+export function initTheme() {
+  // 先落界面风格：loadTheme 的默认明暗取决于风格
+  applyUiTheme(loadUiTheme());
+  const theme = loadTheme();
+  applyTheme(theme);
+  applyAccent(loadAccent());
+}

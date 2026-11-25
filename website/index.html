@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="不止听歌，更能玩歌。AI 伴奏与人声提取、多模型选择、OBS 透明歌词和电音插件联动，让练唱与直播更轻松。">
+  <meta name="theme-color" content="#fbfaf6">
+  <title>播放器 · 不止听歌，更能玩歌</title>
+  <link rel="stylesheet" href="/site.css">
+  <script src="/site.js" defer></script>
+  <script src="/lyric-community.js" defer></script>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+  <header class="nav wrap">
+    <a class="brand" href="#" aria-label="播放器首页"><span class="logo">♫</span>播放器<span class="brand-note">MUSIC, REIMAGINED.</span></a>
+    <nav aria-label="主导航"><a href="#features">探索功能</a><a href="#showcase">交互体验</a><a class="button small customize-link" href="/downloads/player-packager.exe" download="播放器打包工具.exe" aria-describedby="packager-tip">免费定制安装包 ↓</a><a class="button small community-link" href="https://qun.qq.com/universal-share/share?ac=1&amp;authKey=G1smP5qDKJToxq0OPGTGNGSnVW0BtEarMlJcSq%2BjtfWlB7eY4hvNxC3BKYwQ381u&amp;busi_data=eyJncm91cENvZGUiOiIxMDgwMzkwNjkwIiwidG9rZW4iOiJ3V0dScWllS0ZQOG9HUWdxQ1hGL2dlWmUyTHJkQ0xMU2JRbUZaZFNLZ3JSQWFaU1JYQkRCd00xakNzbmVGUENMIiwidWluIjoiMjY0MDA3OTQ0MCJ9&amp;data=cX95HDtNtcZ8d3Xg7w2cH3rHjKCzAVfbxDL13Wt2ppbkLb2Uz9wwsNm1a-bCR1bRz3MMo0dOjeymFH9i-RtLnw&amp;svctype=4&amp;tempid=h5_group_info" target="_blank" rel="noopener noreferrer">加入 QQ 群 · 1080390690 ↗</a><a class="button small" href="#download">立即体验 ↗</a></nav>
+  </header>
+  <p class="wrap packager-tip" id="packager-tip">免费定制安装包：下载打包工具后，请放入播放器根目录（与 rustmusic.exe 同目录），双击运行即可修改名称、图标并生成安装包。</p>
+  <main>
+    <div class="wrap lyric-community-entry"><a class="button small" href="#lyric-community">歌词社区 ↗</a></div>
+    <section class="section wrap showcase" id="showcase">
+      <div class="section-heading reveal"><span class="eyebrow">PLAY WITH IT</span><h2>不是图片，真的可以点。</h2><p>直接体验播放器的真实界面：点击功能导览查看箭头说明，再试试底栏按钮。</p></div>
+      <div class="interactive-shell reveal"><iframe id="player-demo" src="/demo/" title="播放器可点击功能体验"></iframe></div>
+      <p class="caption">真实播放器组件 · 演示数据 · 不连接账号、不播放音频、不操作本机插件</p>
+    </section>
+    <section class="hero wrap">
+      <div class="hero-copy reveal">
+        <span class="eyebrow"><i></i> 给音乐，多一种可能</span>
+        <h1>不止听歌，<br>更能<span class="accent">玩歌。</span></h1>
+        <p>让喜欢的歌，变成你的舞台。<br>提取伴奏、听清人声、点亮直播，<br>灵感不必在几个软件之间来回切换。</p>
+        <div class="actions"><a class="button primary" href="#download">下载 Windows 版 <span>↓</span></a><a class="text-link" href="#showcase">看看它的样子 ↗</a></div>
+        <div class="hero-tags"><span>AI 多模型</span><span>透明动态歌词</span><span>电音插件联动</span></div>
+      </div>
+      <div class="hero-art reveal">
+        <div class="vinyl" aria-hidden="true"><div class="vinyl-label">PLAY<br><strong>YOUR</strong><br>POSSIBILITIES</div></div>
+        <div class="float-card card-top"><span class="mini-icon">✦</span><div><b>把主唱交给你</b><small>AI 伴奏 · 自由练唱</small></div></div>
+        <div class="float-card card-bottom"><div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div><b>每一句，都有光</b><small>逐字歌词 · 为直播而生</small></div></div>
+        <span class="orbit-word">LISTEN · CREATE · GO LIVE ·</span>
+      </div>
+      <div class="scroll-hint" aria-hidden="true">向下，发现不一样的音乐体验 <span>↓</span></div>
+    </section>
+    <div class="ticker" aria-hidden="true"><div>AI 伴奏 ✦ 人声提取 ✦ 逐字歌词 ✦ 多模型选择 ✦ 电音联动 ✦ 自然变调 ✦ AI 伴奏 ✦ 人声提取 ✦ 逐字歌词 ✦ 多模型选择 ✦ 电音联动 ✦ 自然变调 ✦</div></div>
+    <section class="section wrap" id="features">
+      <div class="section-heading reveal"><span class="eyebrow">MORE THAN A PLAYER</span><h2>你的音乐，不该只有播放键。</h2><p>从日常听歌，到认真练唱，再到直播现场。</p></div>
+      <div class="feature-grid">
+        <article class="feature wide reveal"><span class="feature-number">01 / AI 创作</span><h3>伴奏与人声，<br>各自精彩。</h3><p>从歌曲中提取伴奏和人声，按需要切换聆听。原曲、伴奏和人声沿用歌曲信息，找歌不必重来。</p><div class="demo" aria-label="音轨选择交互演示"><div class="demo-tabs" role="group" aria-label="演示音轨"><button class="selected" aria-pressed="true">原唱</button><button aria-pressed="false">伴奏</button><button aria-pressed="false">人声</button></div><div class="wave" aria-hidden="true"></div><small id="demo-caption" aria-live="polite">原唱模式 · 保留完整音乐表达</small><small>交互演示，不播放音频</small></div></article>
+        <article class="feature peach reveal"><span class="feature-number">02 / 自由选择</span><span class="feature-symbol" aria-hidden="true">✳</span><h3>你的听感，<br>由你选择。</h3><p>支持多模型选择、模型导入与下载。根据歌曲和设备，选择适合自己的提取方式。</p><div class="chips"><span>多模型切换</span><span>资源档位</span><span>本地提取</span></div></article>
+        <article class="feature lilac reveal"><span class="feature-number">03 / 直播美学</span><div class="lyric-demo" aria-hidden="true">每一句<span>都闪闪发光</span><i>✦</i></div><h3>让歌词，也成为主角。</h3><p>OBS 透明歌词、飞字与超级弹幕效果，自定义字体和 CSS。把直播间，变成自己的音乐现场。</p></article>
+        <article class="feature sage reveal"><span class="feature-number">04 / 电音联动</span><span class="feature-symbol" aria-hidden="true">♮</span><h3>跟着音乐，<br>找到你的调。</h3><p>识别歌曲调性，向已支持的电音插件同步调性与相关参数；支持连接多个已检测到的插件实例。</p><small>电音联动需激活；兼容性取决于插件、格式和运行环境。</small></article>
+      </div>
+    </section>
+    <section class="section wrap" id="lyric-community">
+      <div class="section-heading"><h2>歌词社区</h2><p>分享 Folia 歌词包和自定义 HTML 歌词效果，下载后可在播放器的 OBS 透明歌词设置中使用。</p></div>
+      <div class="lyric-community-layout">
+        <div>
+          <p id="lyric-community-status" role="status">正在加载作品…</p>
+          <div id="lyric-community-posts" class="lyric-community-posts"></div>
+          <button class="button small" id="lyric-community-more" type="button" hidden>加载更多</button>
+        </div>
+        <div class="feature lyric-community-panel">
+          <h3>发布效果</h3>
+          <form id="lyric-community-login">
+            <label>播放器账号<input name="username" autocomplete="username" required minlength="3" maxlength="48"></label>
+            <label>密码<input name="password" type="password" autocomplete="current-password" required minlength="6" maxlength="128"></label>
+            <div class="lyric-community-actions">
+              <button class="button small primary" type="submit" value="login">登录</button>
+              <button class="button small" type="submit" value="register">注册</button>
+            </div>
+          </form>
+          <form id="lyric-community-publish" hidden>
+            <p id="lyric-community-user"></p>
+            <label>名称<input name="title" required maxlength="80"></label>
+            <label>简介<textarea name="description" maxlength="500" rows="2"></textarea></label>
+            <label>类型<select name="kind"><option value="folia">Folia 歌词包</option><option value="html">HTML 歌词效果</option></select></label>
+            <label>效果文件<input name="effect" type="file" accept=".folia,.json" required></label>
+            <p class="lyric-community-file-tip">Folia 最大 32 MB，HTML 最多 12,000 字符。请仅发布你有权分享的素材。</p>
+            <div class="lyric-community-actions">
+              <button class="button small primary" type="submit">发布</button>
+              <button class="button small" id="lyric-community-switch" type="button">切换账号</button>
+            </div>
+          </form>
+          <p id="lyric-community-feedback" role="status"></p>
+        </div>
+      </div>
+    </section>
+    <section class="section wrap" id="download">
+      <div class="download reveal"><span class="eyebrow">LET THE MUSIC BEGIN</span><h2>下一首，<br>换你上场。</h2><p>听歌、练唱、直播。把音乐的更多可能，留在身边。</p><a class="button primary" href="/download" id="download-button">下载 Windows 安装包 ↓</a><label class="download-route">下载线路 <select id="download-route" aria-label="下载线路"><option value="">使用当前推荐线路</option></select></label><small id="download-info">v1.0.0 · Windows x64 · 约 300 MB · 含 AI 运行环境与两款模型</small><details><summary>使用前了解一下</summary><p>AI 提取速度与效果取决于歌曲、模型和硬件。逐字效果需要逐字歌词。电音插件联动需卡密激活，并非所有插件和宿主组合均已实测。请仅处理你有权使用的音乐。</p></details></div>
+    </section>
+  </main>
+  <footer class="wrap"><a class="brand" href="#"><span class="logo">♫</span>播放器</a><p>不止听歌，更能玩歌。<br><a href="https://beian.miit.gov.cn/">吉ICP备2025031352号-3</a></p><a href="https://music.xn--hlr32k.com/admin" rel="nofollow">管理入口 ↗</a></footer>
+
+</body>
+</html>

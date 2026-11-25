@@ -1,0 +1,142 @@
+.host-console-body {
+  overflow: clip;
+}
+
+.studio-one-rack:has(#studio-one-controls) {
+  flex: 1;
+}
+
+.studio-one-rack > :first-child {
+  flex: none;
+}
+
+.studio-one-channels {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.studio-one-channel {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 24px 87px minmax(0, 1fr) 28px;
+  gap: 4px;
+}
+
+.studio-one-plugin-slots {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 3px;
+  min-height: 0;
+}
+
+.studio-one-plugin-slots > li {
+  min-width: 0;
+  min-height: 0;
+}
+
+.studio-one-plugin-slots > li > .studio-one-plugin {
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding-block: 0;
+}
+
+.studio-one-plugin-slots > li > select {
+  display: block;
+}
+
+.studio-one-channels > [role="status"] {
+  grid-column: 1 / -1;
+}
+
+.studio-one-fader-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 45px;
+  align-items: end;
+  min-height: 0;
+  gap: 3px;
+}
+
+.studio-one-fader-value {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding-inline: 3px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 10px;
+  color: var(--ink-2);
+}
+
+.studio-one-fader-value:focus-within {
+  border-color: var(--accent);
+}
+
+.studio-one-fader-value > input {
+  appearance: textfield;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  outline: none;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.studio-one-fader-value > input::-webkit-inner-spin-button,
+.studio-one-fader-value > input::-webkit-outer-spin-button {
+  appearance: none;
+}
+
+html[data-ui] input[type="range"].studio-one-fader {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: min(48px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  background: transparent;
+  cursor: ns-resize;
+  writing-mode: vertical-lr;
+  direction: rtl;
+}
+
+html[data-ui] input[type="range"].studio-one-fader::-webkit-slider-runnable-track {
+  width: 4px;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(to top, var(--accent) var(--fader-fill), var(--line) var(--fader-fill));
+  border: 0;
+  box-shadow: none;
+}
+
+html[data-ui] input[type="range"].studio-one-fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 0;
+  margin-left: -6px;
+  border-radius: 50%;
+  border: 1px solid #0002;
+  background: #fff;
+  box-shadow: 0 1px 3px #0003;
+}
+
+.studio-one-plugin[aria-pressed="true"] {
+  color: var(--ink);
+}
+
+.studio-one-plugin[aria-pressed="false"] {
+  color: #e1424f;
+}
+
+.studio-one-fader:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}

@@ -1,0 +1,3 @@
+[submodule "folia-web"]
+	path = _third_party/folia-web
+	url = https://github.com/folia-ce/folia-web.git

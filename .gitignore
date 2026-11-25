@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Frontend build output
+dist/
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Installer build output
+installer/output/
+
+# Icon tool transient previews
+scripts/icon-tool/preview-*.png
+
+# Logs
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Scratch & debug dumps（根目录下划线开头的临时文件 / 参考资料目录）
+/_*
+src-tauri/_*.rs
+
+# Test audio files
+/testdata/
+.tmp-test/
+src-tauri/rust_url.txt
+*.log.bak
+.zcodeignore
+.zcode/
+installer/signing.key
+
+# Private assistant and server sources are not part of this public repository.
+**/RustMusic-AutoTune-private/
+**/native/autotune/
+**/autotune.rs
+**/tune_license.rs
+**/parameter_roles.rs
+**/rustmusic-tune-service*
+**/rustmusic-autotune*
+/gateway/
+/backend/
+/server/
+.env
+.env.*

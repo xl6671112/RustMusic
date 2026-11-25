@@ -1,0 +1,456 @@
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
+import type {
+  Folder,
+  DropResult,
+  LyricsPayload,
+  NeteaseTrack,
+  Playlist,
+  QqSong,
+  UpdateInfo,
+  UserPlaylistMeta,
+  PlayState,
+  PlayStateSnapshot,
+  ScanState,
+  SettingsPayload,
+  SourceItem,
+  TrackMeta,
+  BiliSpaceItem,
+} from "./types";
+
+export const api = {
+  listTracks: () => invoke<TrackMeta[]>("list_tracks"),
+  listFolders: () => invoke<Folder[]>("list_folders"),
+  addFolder: (path: string) => invoke<void>("add_folder", { path }),
+  removeFolder: (id: number) => invoke<void>("remove_folder", { id }),
+  rescan: () => invoke<void>("rescan"),
+  openFolder: (path: string) => invoke<void>("open_folder", { path }),
+  listOutputDevices: () =>
+    invoke<{
+      devices: { name: string; isDefault: boolean }[];
+      current: string;
+      preference: string | null;
+    }>("list_output_devices"),
+  setOutputDevice: (name: string | null) =>
+    invoke<void>("set_output_device", { name }),
+  fxSetEnabled: (enabled: boolean) =>
+    invoke<void>("fx_set_enabled", { enabled }),
+  dropPaths: (paths: string[]) => invoke<DropResult>("drop_paths", { paths }),
+  getLyrics: (trackId: number) => invoke<LyricsPayload>("get_lyrics", { trackId }),
+  likeTrack: (id: number, liked: boolean) =>
+    invoke<void>("like_track", { id, liked }),
+  likeTracks: (ids: number[], liked: boolean) =>
+    invoke<void>("like_tracks", { ids, liked }),
+  deleteTrack: (id: number) => invoke<void>("delete_track", { id }),
+  deleteTracks: (ids: number[]) => invoke<number>("delete_tracks", { ids }),
+  listPlaylists: () => invoke<Playlist[]>("list_playlists"),
+  createPlaylist: (name: string) => invoke<number>("create_playlist", { name }),
+  deletePlaylist: (id: number) => invoke<void>("delete_playlist", { id }),
+  deletePlaylists: (ids: number[]) => invoke<void>("delete_playlists", { ids }),
+  renamePlaylist: (id: number, name: string) =>
+    invoke<void>("rename_playlist", { id, name }),
+  addToPlaylist: (playlistId: number, trackId: number) =>
+    invoke<void>("add_to_playlist", { playlistId, trackId }),
+  addTracksToPlaylist: (playlistId: number, trackIds: number[]) =>
+    invoke<number>("add_tracks_to_playlist", { playlistId, trackIds }),
+  exportPlaylistM3u: (playlistId: number, path: string) =>
+    invoke<number>("export_playlist_m3u", { playlistId, path }),
+  importPlaylistM3u: (name: string, path: string) =>
+    invoke<{ playlistId: number; added: number; skipped: number }>(
+      "import_playlist_m3u",
+      { name, path }
+    ),
+  removeFromPlaylist: (playlistId: number, trackId: number) =>
+    invoke<void>("remove_from_playlist", { playlistId, trackId }),
+  listSources: () => invoke<SourceItem[]>("list_sources"),
+  addSource: (url: string, title?: string) =>
+    invoke<number>("add_source", { url, title: title ?? "" }),
+  deleteSource: (id: number) => invoke<void>("delete_source", { id }),
+  /** 解析 B 站视频（链接/BV号/av号/短链），多P每个分P各加一条，返回新增条数 */
+  bilibiliAdd: (input: string) => invoke<number>("bilibili_add", { input }),
+  /** 播放 B 站曲目（我喜欢/播放列表/最近播放入口；rid = "BVxxx-cid"） */
+  bilibiliPlay: (track: {
+    rid: string;
+    title: string;
+    artist: string;
+    album: string;
+    cover: string;
+    durationMs: number;
+  }) => invoke<void>("bilibili_play", { track }),
+  biliQrCreate: () => invoke<{ key: string; qr: string }>("bilibili_qr_create"),
+  biliQrCheck: (key: string) =>
+    invoke<{ status: string; nickname?: string }>("bilibili_qr_check", { key }),
+  biliStatus: () => invoke<{ loggedIn: boolean; nickname: string }>("bilibili_status"),
+  biliLogout: () => invoke<void>("bilibili_logout"),
+  /** B 站字幕歌词（rid = "BVxxx-cid"；需 B 站登录，无字幕返回空行列表） */
+  biliLyric: (rid: string) => invoke<LyricsPayload>("bilibili_lyric", { rid }),
+  /** UP 主空间：信息 + 投稿列表第一页 + 合集（order: pubdate|click|stow） */
+  biliSpace: (input: string, order: string) =>
+    invoke<{
+      mid: string;
+      name: string;
+      face: string;
+      fans: string;
+      total: number;
+      hasMore: boolean;
+      items: BiliSpaceItem[];
+      collections: { id: number; kind: string; title: string; total: number }[];
+    }>("bilibili_space", { input, order }),
+  biliSpaceMore: (mid: string, order: string, pn: number) =>
+    invoke<{ total: number; hasMore: boolean; items: BiliSpaceItem[] }>(
+      "bilibili_space_more",
+      { mid, order, pn }
+    ),
+  biliSpaceCollection: (mid: string, id: number, kind: string) =>
+    invoke<{ total: number; hasMore: boolean; items: BiliSpaceItem[] }>(
+      "bilibili_space_collection",
+      { mid, id, kind }
+    ),
+  biliSpaceCollectionMore: (mid: string, id: number, kind: string, pn: number) =>
+    invoke<{ total: number; hasMore: boolean; items: BiliSpaceItem[] }>(
+      "bilibili_space_collection_more",
+      { mid, id, kind, pn }
+    ),
+  /** 登录用户创建的收藏夹列表（含昵称/头像；kind "fav" 复用合集内容接口） */
+  biliFavFolders: () =>
+    invoke<{
+      folders: { id: number; title: string; total: number }[];
+      name: string;
+      face: string;
+    }>("bilibili_fav_folders"),
+  /** 解析单个视频（当前结果展示，不落库），每分P一条 */
+  biliVideoInfo: (input: string) =>
+    invoke<BiliSpaceItem[]>("bilibili_video_info", { input }),
+  neteaseSearch: (keyword: string, offset: number) =>
+    invoke<{ total: number; songs: NeteaseTrack[] }>("netease_search", {
+      keyword,
+      offset,
+    }),
+  neteasePlay: (track: {
+    id: number;
+    title: string;
+    artist: string;
+    album: string;
+    cover: string;
+    durationMs: number;
+  }) => invoke<void>("netease_play", { track }),
+  neteaseStatus: () => invoke<{ loggedIn: boolean; nickname: string }>("netease_status"),
+  neteaseQrCreate: () => invoke<{ key: string; qr: string }>("netease_qr_create"),
+  neteaseQrCheck: (key: string) =>
+    invoke<{ status: string; nickname?: string }>("netease_qr_check", { key }),
+  neteaseLyric: (id: number) => invoke<LyricsPayload>("netease_lyric", { id }),
+  qqSearch: (keyword: string, page: number) =>
+    invoke<{ songs: QqSong[] }>("qq_search", { keyword, page }),
+  qqPlay: (track: {
+    songmid: string;
+    title: string;
+    artist: string;
+    album: string;
+    albumMid: string;
+    mediaMid: string;
+    durationMs: number;
+    vip: boolean;
+  }) => invoke<void>("qq_play", { track }),
+  qqLyric: (songmid: string) => invoke<LyricsPayload>("qq_lyric", { songmid }),
+  kugouSearch: (keyword: string, page: number) =>
+    invoke<{ songs: import("./types").KgSong[] }>("kugou_search", { keyword, page }),
+  kugouPlay: (track: {
+    hash: string;
+    title: string;
+    artist: string;
+    album: string;
+    cover: string;
+    durationMs: number;
+    vip: boolean;
+    albumAudioId?: number;
+    albumId?: number;
+    hqHash?: string;
+    sqHash?: string;
+    superHash?: string;
+  }) => invoke<void>("kugou_play", { track }),
+  kugouLyric: (hash: string) => invoke<LyricsPayload>("kugou_lyric", { hash }),
+  kugouQrCreate: () => invoke<{ key: string; qr: string }>("kugou_qr_create"),
+  kugouQrCheck: (key: string) =>
+    invoke<{ status: string; nickname?: string }>("kugou_qr_check", { key }),
+  kugouStatus: () => invoke<{ loggedIn: boolean; nickname: string }>("kugou_status"),
+  kugouLogout: () => invoke<void>("kugou_logout"),
+  kugouToplists: () =>
+    invoke<{ toplists: import("./types").KgToplist[] }>("kugou_toplists"),
+  kugouToplistTracks: (topId: number, page: number) =>
+    invoke<{ songs: import("./types").KgSong[]; hasMore: boolean }>(
+      "kugou_toplist_tracks",
+      { topId, page },
+    ),
+  kugouRandomPlaylist: () =>
+    invoke<import("./types").KgPublicPlaylist>("kugou_random_playlist"),
+  kugouPlaylistTracks: (id: string) =>
+    invoke<import("./types").KgPublicPlaylist>("kugou_playlist_tracks", { id }),
+  kugouUserPlaylists: () =>
+    invoke<{ id: string; name: string; trackCount: number }[]>(
+      "kugou_user_playlists"
+    ),
+  kugouImportPlaylist: (remotePid: string, name: string) =>
+    invoke<[number, number]>("kugou_import_playlist", { remotePid, name }),
+  qqQrCreate: () => invoke<{ qrsig: string; qr: string }>("qq_qr_create"),
+  qqQrCheck: (qrsig: string) =>
+    invoke<{ status: string; nickname?: string }>("qq_qr_check", { qrsig }),
+  /** 微信扫码登录：check 为长轮询，一次调用挂起约 15s，前端循环调用 */
+  qqWxQrCreate: () => invoke<{ uuid: string; qr: string }>("qq_wx_qr_create"),
+  qqWxQrCheck: (uuid: string) =>
+    invoke<{ status: string; nickname?: string }>("qq_wx_qr_check", { uuid }),
+  qqStatus: () => invoke<{ loggedIn: boolean; nickname: string }>("qq_status"),
+  qqLogout: () => invoke<void>("qq_logout"),
+  neteaseLikeList: () => invoke<number[]>("netease_like_list"),
+  neteaseLike: (id: number, like: boolean) =>
+    invoke<void>("netease_like", { id, like }),
+  neteaseLogout: () => invoke<void>("netease_logout"),
+  likeOnline: (req: {
+    kind: string;
+    rid: string;
+    title: string;
+    artist: string;
+    album: string;
+    cover: string;
+    durationMs: number;
+    mediaMid: string;
+    vip: boolean;
+    like: boolean;
+  }) => invoke<void>("like_online", req),
+  downloadOnline: (req: {
+    kind: string;
+    id: string;
+    title: string;
+    artist: string;
+    album: string;
+    coverUrl: string;
+    durationMs: number;
+    mediaMid: string;
+    albumAudioId?: number;
+    hqHash?: string;
+    sqHash?: string;
+    superHash?: string;
+  }) => invoke<{ name: string; quality: string | null; path: string }>("download_online", { req }),
+  likedOnlineList: () =>
+    invoke<import("./types").PlaylistEntryMeta[]>("liked_online_list"),
+  recentOnlineList: () =>
+    invoke<import("./types").PlaylistEntryMeta[]>("recent_online_list"),
+  downloadedOnlineList: () =>
+    invoke<import("./types").PlaylistEntryMeta[]>("downloaded_online_list"),
+  saveDirGet: () =>
+    invoke<{ dir: string; default: string }>("save_dir_get"),
+  saveDirSet: (dir: string) => invoke<void>("save_dir_set", { dir }),
+  addOnlineToPlaylist: (req: {
+    playlistId: number;
+    kind: string;
+    rid: string;
+    title: string;
+    artist: string;
+    album: string;
+    cover: string;
+    durationMs: number;
+    mediaMid: string;
+    vip: boolean;
+  }) => invoke<void>("add_online_to_playlist", req),
+  removePlaylistEntry: (rowid: number) =>
+    invoke<void>("remove_playlist_entry", { rowid }),
+  removePlaylistEntries: (rowids: number[]) =>
+    invoke<void>("remove_playlist_entries", { rowids }),
+  saveManualOrder: (list: string, keys: string[]) =>
+    invoke<void>("save_manual_order", { list, keys }),
+  getManualOrder: (list: string) =>
+    invoke<Record<string, number>>("get_manual_order", { list }),
+  reorderPlaylist: (playlistId: number, rowids: number[]) =>
+    invoke<void>("reorder_playlist", { playlistId, rowids }),
+  reorderPlaylists: (ids: number[]) =>
+    invoke<void>("reorder_playlists", { ids }),
+  neteaseUserPlaylists: () =>
+    invoke<UserPlaylistMeta[]>("netease_user_playlists"),
+  neteaseImportPlaylist: (remotePid: number, name: string) =>
+    invoke<[number, number]>("netease_import_playlist", { remotePid, name }),
+  qqUserPlaylists: () =>
+    invoke<import("./types").UserPlaylistMeta[]>("qq_user_playlists"),
+  qqImportPlaylist: (remotePid: number, name: string) =>
+    invoke<[number, number]>("qq_import_playlist", { remotePid, name }),
+  qqToplists: () =>
+    invoke<{ toplists: import("./types").QqToplist[] }>("qq_toplists"),
+  qqToplistTracks: (topId: number, page: number) =>
+    invoke<{ songs: QqSong[]; hasMore: boolean }>("qq_toplist_tracks", { topId, page }),
+  qqRandomPlaylist: () =>
+    invoke<import("./types").QqRandomPlaylist>("qq_random_playlist"),
+  neteaseToplists: () =>
+    invoke<{ toplists: import("./types").NetToplist[] }>("netease_toplists"),
+  neteaseToplistTracks: (topId: number, page: number) =>
+    invoke<{ songs: NeteaseTrack[]; hasMore: boolean }>("netease_toplist_tracks", { topId, page }),
+  neteaseRandomPlaylist: () =>
+    invoke<import("./types").NetRandomPlaylist>("netease_random_playlist"),
+  neteaseDailyRecommend: () =>
+    invoke<{ songs: NeteaseTrack[] }>("netease_daily_recommend"),
+  neteasePersonalFm: () =>
+    invoke<{ songs: NeteaseTrack[] }>("netease_personal_fm"),
+  setPlayQuality: (kind: string, quality: string) =>
+    invoke<void>("set_play_quality", { kind, quality }),
+  setWasapiExclusive: (enabled: boolean) =>
+    invoke<void>("set_wasapi_exclusive", { enabled }),
+  setCloseAction: (action: string) => invoke<void>("set_close_action", { action }),
+  setAutoUpdate: (enabled: boolean) => invoke<void>("set_auto_update", { enabled }),
+  setLanguage: (lang: import("./types").LanguagePref, systemHint?: "zh" | "en") =>
+    invoke<import("./types").LanguagePref>("set_language", { lang, systemHint }),
+  syncSystemLang: (hint: "zh" | "en") =>
+    invoke<void>("sync_system_lang", { hint }),
+  // ---------- 自动更新（GitHub Release） ----------
+  /** 前端就绪后触发一次启动自动检查（结果通过 update://available 事件推送） */
+  autoCheckUpdate: () => invoke<void>("auto_check_update"),
+  /** 手动检查：有更新返回信息，已是最新返回 null */
+  checkUpdate: () => invoke<UpdateInfo | null>("check_update"),
+  /** 下载安装包到临时目录，进度走 update://progress 事件，返回文件路径 */
+  downloadUpdate: (req: {
+    url: string;
+    name: string;
+    size: number;
+    digest: string | null;
+    sigUrl: string | null;
+    mirrors?: string[];
+    signatureMirrors?: string[];
+  }) => invoke<string>("download_update", req),
+  cancelUpdateDownload: () => invoke<void>("cancel_update_download"),
+  /** 安装并重启应用（安装位置不变，安装完成后自动重启） */
+  installUpdate: (path: string) => invoke<void>("install_update", { path }),
+  /** 用系统浏览器打开链接（release notes 内跳转用） */
+  openUrl: (url: string) => invoke<void>("open_url", { url }),
+  extractCoverPalette: (url: string) => invoke<string[]>("extract_cover_palette", { url }),
+  assetScopeAllow: (path: string) => invoke<void>("asset_scope_allow", { path }),
+  /** 皮肤图片的展示用压缩副本（≤1920px；动图/小图原样返回，失败回退原路径） */
+  prepareSkinImage: (path: string) => invoke<string>("prepare_skin_image", { path }),
+  navidromeSave: (server: string, username: string, password: string) =>
+    invoke<void>("navidrome_save", { req: { server, username, password } }),
+  navidromeAlbums: (server: string, username: string) =>
+    invoke<import("./types").NdAlbum[]>("navidrome_albums", { server, username }),
+  navidromeSearch: (server: string, username: string, query: string) =>
+    invoke<import("./types").NdSong[]>("navidrome_search", { server, username, query }),
+  navidromeAllSongs: (server: string, username: string, offset: number) =>
+    invoke<{ songs: import("./types").NdSong[]; total: number }>("navidrome_all_songs", {
+      server,
+      username,
+      offset,
+    }),
+  navidromeAlbumSongs: (server: string, username: string, id: string) =>
+    invoke<{ name: string; artist: string; songs: import("./types").NdSong[] }>(
+      "navidrome_album_songs",
+      { server, username, id }
+    ),
+  navidromePlay: (
+    server: string,
+    username: string,
+    track: {
+      id: string;
+      title: string;
+      artist: string;
+      album: string;
+      cover: string;
+      durationMs: number;
+    }
+  ) => invoke<void>("navidrome_play", { server, username, track }),
+  navidromeForget: (server: string, username: string) =>
+    invoke<void>("navidrome_forget", { server, username }),
+  navidromeLyric: (id: string) =>
+    invoke<import("./types").LyricsPayload>("navidrome_lyric", { id }),
+  playTrack: (id: number) => invoke<void>("play_track", { id }),
+  playSource: (id: number) => invoke<void>("play_source", { id }),
+  playPause: () => invoke<void>("play_pause"),
+  getPlayState: () => invoke<PlayStateSnapshot | null>("get_play_state"),
+  pause: () => invoke<void>("pause"),
+  resume: () => invoke<void>("resume"),
+  stop: () => invoke<void>("stop"),
+  seek: (ms: number) => invoke<void>("seek", { ms }),
+  setVolume: async (v: number) => {
+    await invoke<void>("set_volume", { v });
+    void emit("player://volume", v).catch(() => {});
+  },
+  setSpeed: (v: number) => invoke<void>("set_speed", { v }),
+  setEq: (gains: number[], enabled: boolean) =>
+    invoke<void>("set_eq", { gains, enabled }),
+  getSettings: () => invoke<SettingsPayload>("get_settings"),
+  /** 最近一次扫描进度快照（WebView 挂起恢复后补发用） */
+  getScanState: () => invoke<ScanState>("get_scan_state"),
+  clearCache: () => invoke<number>("clear_cache"),
+  cacheStats: () =>
+    invoke<{ bytes: number; files: number }>("cache_stats"),
+  setCacheLimit: (bytes: number) =>
+    invoke<void>("set_cache_limit", { bytes }),
+  getAppInfo: () =>
+    invoke<{ version: string; dataDir: string; platform: string }>(
+      "get_app_info",
+    ),
+  desktopLyricsOpen: () => invoke<void>("desktop_lyrics_open"),
+  desktopLyricsClose: () => invoke<void>("desktop_lyrics_close"),
+  hostConsoleOpen: () => invoke<void>("host_console_open"),
+  enterMiniMode: () => invoke<void>("enter_mini_mode"),
+  exitMiniMode: () => invoke<void>("exit_mini_mode"),
+  /** 菜单栏歌词（Linux）：当前行写入运行时文件，GNOME 扩展轮询显示。
+   *  color 为空 = 顶栏主题默认色 */
+  dlyricsMenubarLine: (line: string, color: string) =>
+    invoke<void>("dlyrics_menubar_line", { line, color }),
+  menubarExtensionInstall: () => invoke<string>("menubar_extension_install"),
+  /** 任务栏歌词（Windows）：当前行推给嵌入任务栏的原生窗口。
+   *  color 为空 = 随任务栏深浅取默认色 */
+  dlyricsTaskbarLine: (line: string, color: string) =>
+    invoke<void>("dlyrics_taskbar_line", { line, color }),
+  /** 预载"自然播完后的下一曲"（仅本库曲目可由引擎直接起播；null = 清除，
+   *  走原有前端编排路径）：自然播完引擎直接续播，挂起期间也无缝 */
+  enginePreloadNext: (item: { id: number } | null) =>
+    invoke<void>("engine_preload_next", { item }),
+  /** 整包推送同步歌词行（歌词加载/切歌时一次）；行推进由 Rust monitor
+   *  按播放位置自动完成——挂起期间前端停摆也能继续更新 */
+  dlyricsTaskbarSetLines: (lines: { timeMs: number; text: string }[]) =>
+    invoke<void>("dlyrics_taskbar_set_lines", { lines }),
+  /** 任务栏歌词颜色变更（无需随行携带） */
+  dlyricsTaskbarColor: (color: string) =>
+    invoke<void>("dlyrics_taskbar_color", { color }),
+  taskbarLyricsSetEnabled: (on: boolean) =>
+    invoke<void>("taskbar_lyrics_set_enabled", { on }),
+  /** 可选显示器列表（主屏在前，标记是否有任务栏） */
+  taskbarLyricsListDisplays: () =>
+    invoke<
+      { id: string; name: string; primary: boolean; has_taskbar: boolean }[]
+    >("taskbar_lyrics_list_displays"),
+  /** 任务栏歌词显示范围（"all" 或显示器设备名） */
+  taskbarLyricsSetDisplay: (display: string) =>
+    invoke<void>("taskbar_lyrics_set_display", { display }),
+  desktopLyricsUnlock: () => invoke<void>("desktop_lyrics_unlock"),
+  desktopLyricsIsOpen: () => invoke<boolean>("desktop_lyrics_is_open"),
+  /** 远程封面经后端下载落盘（绕开 WebKit 系统代理依赖），返回本地路径 */
+  fetchCover: (url: string) => invoke<string>("fetch_cover", { url }),
+  desktopLyricsSetAlwaysTop: (on: boolean) =>
+    invoke<void>("desktop_lyrics_set_always_top", { on }),
+};
+
+export { convertFileSrc };
+
+export function coverSrc(path: string): string {
+  if (!path) return "";
+  // http(s) 封面直接用原 URL；本地文件路径才转 asset 协议
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return convertFileSrc(path);
+}
+
+export type ListenerUnbind = () => void;
+
+export async function listenEvent<T>(
+  event: string,
+  handler: (payload: T) => void
+): Promise<ListenerUnbind> {
+  const { listen } = await import("@tauri-apps/api/event");
+  return listen<T>(event, (e) => handler(e.payload));
+}
+
+export type {
+  Folder,
+  LyricsPayload,
+  Playlist,
+  PlayState,
+  ScanState,
+  SettingsPayload,
+  SourceItem,
+  TrackMeta,
+  UpdateInfo,
+};

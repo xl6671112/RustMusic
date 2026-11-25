@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@source "../../_third_party/folia-web/src/components/visualizer/**/*.tsx";
+@source "../../_third_party/folia-web/src/components/visualizer/**/*.ts";
+@source "../../_third_party/folia-web/src/components/modal/settings/kit/**/*.tsx";
+@source "../../_third_party/folia-web/src/utils/**/*.ts";
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}

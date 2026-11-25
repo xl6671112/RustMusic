@@ -1,0 +1,20 @@
+.pg-effects{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}.pg-effects i{position:absolute;left:calc(var(--i)*6.1%);top:-30px;animation-delay:calc(var(--i)*-1.7s)}main>header,main>ul{position:relative;z-index:1}.description{white-space:pre-wrap;overflow-wrap:anywhere}
+.pg-sakura i{width:12px;height:18px;border-radius:85% 10% 80% 20%;background:linear-gradient(135deg,#ffe3f4,#ed9ecb);box-shadow:0 0 8px #ffcde855;animation:pg-fall 14s linear infinite;animation-delay:calc(var(--i)*-1.7s)}
+.pg-meteor i{top:calc(var(--i)*6%);width:130px;height:2px;background:linear-gradient(90deg,transparent,#d7f4ff);filter:drop-shadow(0 0 4px #77bbff);transform:rotate(-30deg);animation:pg-shoot 8s linear infinite;animation-delay:calc(var(--i)*-1.7s)}
+.pg-stars i{width:10px;height:10px;background:#ffdc83;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:pg-twinkle 4s ease-in-out infinite;animation-delay:calc(var(--i)*-.7s)}
+@keyframes pg-fall{from{transform:translate(0,-30px) rotate(0);opacity:0}10%{opacity:.85}to{transform:translate(100px,110vh) rotate(400deg);opacity:.1}}
+@keyframes pg-shoot{0%,75%{opacity:0;transform:translate(-200px,-80px) rotate(-30deg)}80%{opacity:.9}100%{opacity:0;transform:translate(110vw,55vh) rotate(-30deg)}}
+@keyframes pg-twinkle{0%,100%{opacity:.15;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1.2) rotate(30deg)}}
+@media(prefers-reduced-motion:reduce){.pg-effects{display:none}}
+main[data-text-glow=true] h1,main[data-text-glow=true] strong{text-shadow:0 0 calc(var(--pg-glow-width)*.4) var(--pg-glow),0 0 var(--pg-glow-width) var(--pg-glow)}
+.pg-letter{display:inline-block;white-space:pre}
+main[data-text-effect=wave] .pg-letter{animation:pg-wave var(--pg-fx-duration) ease-in-out infinite;animation-delay:calc(var(--letter)*-.12s)}
+main[data-text-effect=blink] h1,main[data-text-effect=blink] strong{animation:pg-blink var(--pg-fx-duration) ease-in-out infinite}
+main[data-text-effect=breathe] h1,main[data-text-effect=breathe] strong{animation:pg-breathe var(--pg-fx-duration) ease-in-out infinite}
+main[data-border-effect=neon] li,main[data-border-effect=breathe] li{position:relative}
+main[data-border-effect=neon] li:after,main[data-border-effect=breathe] li:after{content:"";position:absolute;inset:0;border:1px solid var(--pg-glow);border-radius:inherit;box-shadow:0 0 var(--pg-glow-width) var(--pg-glow),inset 0 0 calc(var(--pg-glow-width)*.4) var(--pg-glow);pointer-events:none}
+main[data-border-effect=breathe] li:after{animation:pg-breathe var(--pg-fx-duration) ease-in-out infinite}
+@keyframes pg-wave{0%,100%{transform:translateY(0)}50%{transform:translateY(-.18em)}}
+@keyframes pg-blink{0%,35%,100%{opacity:1}65%{opacity:.25}}
+@keyframes pg-breathe{0%,100%{opacity:1}50%{opacity:.45}}
+@media(prefers-reduced-motion:reduce){main[data-text-effect] .pg-letter,main[data-text-effect] h1,main[data-text-effect] strong,main[data-border-effect] li:after{animation:none!important;transform:none!important}}

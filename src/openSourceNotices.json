@@ -1,0 +1,5823 @@
+[
+  {
+    "name": "cffi",
+    "version": "随附版本",
+    "authors": [
+      "cffi 项目贡献者（上游未单列作者）"
+    ],
+    "license": "详见项目随附许可",
+    "url": "https://pypi.org/project/cffi",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "flatbuffers",
+    "version": "随附版本",
+    "authors": [
+      "flatbuffers 项目贡献者（上游未单列作者）"
+    ],
+    "license": "详见项目随附许可",
+    "url": "https://pypi.org/project/flatbuffers",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "numpy",
+    "version": "2.5.4",
+    "authors": [
+      "Travis E. Oliphant et al."
+    ],
+    "license": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+    "url": "https://github.com/numpy/numpy",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "onnxruntime-directml",
+    "version": "1.24.4",
+    "authors": [
+      "Microsoft Corporation"
+    ],
+    "license": "MIT License",
+    "url": "https://onnxruntime.ai",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "packaging",
+    "version": "随附版本",
+    "authors": [
+      "packaging 项目贡献者（上游未单列作者）"
+    ],
+    "license": "详见项目随附许可",
+    "url": "https://pypi.org/project/packaging",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "soundfile",
+    "version": "0.14.0",
+    "authors": [
+      "Bastian Bechtold"
+    ],
+    "license": "BSD 3-Clause License",
+    "url": "https://github.com/bastibe/python-soundfile",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "soxr",
+    "version": "随附版本",
+    "authors": [
+      "soxr 项目贡献者（上游未单列作者）"
+    ],
+    "license": "详见项目随附许可",
+    "url": "https://pypi.org/project/soxr",
+    "group": "AI 伴奏运行时"
+  },
+  {
+    "name": "audio-separator",
+    "version": "0.47.1 · MDX 算法参考",
+    "authors": [
+      "Andrew Beveridge"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/nomadkaraoke/python-audio-separator",
+    "group": "AI 模型与来源"
+  },
+  {
+    "name": "BS-Roformer Resurrection",
+    "version": "Instrumental",
+    "authors": [
+      "pcunwa；BS-Roformer 项目贡献者"
+    ],
+    "license": "模型仓库未标注权重许可证",
+    "url": "https://huggingface.co/pcunwa/BS-Roformer-Resurrection",
+    "group": "AI 模型与来源"
+  },
+  {
+    "name": "Music Source Separation Training · BS-Roformer Attend",
+    "version": "随模型导出参考",
+    "authors": [
+      "ZFTurbo 及项目贡献者"
+    ],
+    "license": "以来源仓库随附许可为准",
+    "url": "https://github.com/ZFTurbo/Music-Source-Separation-Training",
+    "group": "AI 模型与来源"
+  },
+  {
+    "name": "Ultimate Vocal Remover（UVR）",
+    "version": "随附版本",
+    "authors": [
+      "Anjok07、TRvlvr 及 UVR 项目贡献者"
+    ],
+    "license": "MIT（GUI / 项目声明）",
+    "url": "https://github.com/Anjok07/ultimatevocalremovergui",
+    "group": "AI 模型与来源"
+  },
+  {
+    "name": "UVR-MDX-NET-Inst_HQ_3",
+    "version": "固定 HQ_3 权重",
+    "authors": [
+      "UVR 开发者；TRvlvr/model_repo 发布"
+    ],
+    "license": "具体权重完整许可正文未随附",
+    "url": "https://github.com/TRvlvr/model_repo",
+    "group": "AI 模型与来源"
+  },
+  {
+    "name": "adler2",
+    "version": "2.0.1",
+    "authors": [
+      "Jonas Schievink <jonasschievink@gmail.com>",
+      "oyvindln <oyvindln@users.noreply.github.com>"
+    ],
+    "license": "0BSD OR MIT OR Apache-2.0",
+    "url": "https://github.com/oyvindln/adler2",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "aes",
+    "version": "0.8.4",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/block-ciphers",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ahash",
+    "version": "0.8.12",
+    "authors": [
+      "Tom Kaitchuck <Tom.Kaitchuck@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/tkaitchuck/ahash",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "aho-corasick",
+    "version": "1.1.5",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/aho-corasick",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "alloc-no-stdlib",
+    "version": "2.0.4",
+    "authors": [
+      "Daniel Reiter Horn <danielrh@dropbox.com>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/dropbox/rust-alloc-no-stdlib",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "alloc-stdlib",
+    "version": "0.2.4",
+    "authors": [
+      "Daniel Reiter Horn <danielrh@dropbox.com>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/dropbox/rust-alloc-no-stdlib",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "anyhow",
+    "version": "1.0.104",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/anyhow",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "arrayvec",
+    "version": "0.7.8",
+    "authors": [
+      "bluss"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/bluss/arrayvec",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "autocfg",
+    "version": "1.5.1",
+    "authors": [
+      "Josh Stone <cuviper@gmail.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/cuviper/autocfg",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "base64",
+    "version": "0.22.1",
+    "authors": [
+      "Marshall Pierce <marshall@mpierce.org>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/marshallpierce/rust-base64",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "base64ct",
+    "version": "1.8.3",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/formats",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bit-set",
+    "version": "0.8.0",
+    "authors": [
+      "Alexis Beingessner <a.beingessner@gmail.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/contain-rs/bit-set",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bit-vec",
+    "version": "0.8.0",
+    "authors": [
+      "Alexis Beingessner <a.beingessner@gmail.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/contain-rs/bit-vec",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bitflags",
+    "version": "1.3.2",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/bitflags/bitflags",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bitflags",
+    "version": "2.13.1",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/bitflags/bitflags",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "block-buffer",
+    "version": "0.10.4",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "block-padding",
+    "version": "0.3.3",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "brotli",
+    "version": "8.0.4",
+    "authors": [
+      "Daniel Reiter Horn <danielrh@dropbox.com>",
+      "The Brotli Authors"
+    ],
+    "license": "BSD-3-Clause AND MIT",
+    "url": "https://github.com/dropbox/rust-brotli",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "brotli-decompressor",
+    "version": "5.0.3",
+    "authors": [
+      "Daniel Reiter Horn <danielrh@dropbox.com>",
+      "The Brotli Authors"
+    ],
+    "license": "BSD-3-Clause/MIT",
+    "url": "https://github.com/dropbox/rust-brotli-decompressor",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bs58",
+    "version": "0.5.1",
+    "authors": [
+      "bs58 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/Nullus157/bs58-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bumpalo",
+    "version": "3.20.3",
+    "authors": [
+      "Nick Fitzgerald <fitzgen@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/fitzgen/bumpalo",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bytemuck",
+    "version": "1.25.2",
+    "authors": [
+      "Lokathor <zefria@gmail.com>"
+    ],
+    "license": "Zlib OR Apache-2.0 OR MIT",
+    "url": "https://github.com/Lokathor/bytemuck",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "byteorder",
+    "version": "1.5.0",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/byteorder",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "byteorder-lite",
+    "version": "0.1.0",
+    "authors": [
+      "byteorder-lite 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/image-rs/byteorder-lite",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "bytes",
+    "version": "1.12.1",
+    "authors": [
+      "Carl Lerche <me@carllerche.com>",
+      "Sean McArthur <sean@seanmonstar.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/bytes",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "camino",
+    "version": "1.2.5",
+    "authors": [
+      "Without Boats <saoirse@without.boats>",
+      "Ashley Williams <ashley666ashley@gmail.com>",
+      "Steve Klabnik <steve@steveklabnik.com>",
+      "Rain <rain@sunshowers.io>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/camino-rs/camino",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cargo-platform",
+    "version": "0.1.9",
+    "authors": [
+      "cargo-platform 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/cargo",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cargo_metadata",
+    "version": "0.19.2",
+    "authors": [
+      "Oliver Schneider <git-spam-no-reply9815368754983@oli-obk.de>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/oli-obk/cargo_metadata",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cargo_toml",
+    "version": "0.22.3",
+    "authors": [
+      "Kornel <kornel@geekhood.net>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://gitlab.com/lib.rs/cargo_toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cc",
+    "version": "1.4.5",
+    "authors": [
+      "cc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/cc-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cfb",
+    "version": "0.7.3",
+    "authors": [
+      "Matthew D. Steele <mdsteele@alum.mit.edu>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mdsteele/rust-cfb",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cfg-if",
+    "version": "1.0.4",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/cfg-if",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "chrono",
+    "version": "0.4.45",
+    "authors": [
+      "chrono 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/chronotope/chrono",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cipher",
+    "version": "0.4.4",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/traits",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "color_quant",
+    "version": "1.1.0",
+    "authors": [
+      "nwin <nwin@users.noreply.github.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/image-rs/color_quant.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "const-oid",
+    "version": "0.9.6",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/formats/tree/master/const-oid",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cookie",
+    "version": "0.18.2",
+    "authors": [
+      "Sergio Benitez <sb@sergio.bz>",
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/SergioBenitez/cookie-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cpal",
+    "version": "0.17.3",
+    "authors": [
+      "cpal 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/RustAudio/cpal",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cpufeatures",
+    "version": "0.2.17",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crc32fast",
+    "version": "1.5.5",
+    "authors": [
+      "Sam Rijs <srijs@airpost.net>",
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/srijs/rust-crc32fast",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crossbeam-channel",
+    "version": "0.5.17",
+    "authors": [
+      "crossbeam-channel 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/crossbeam-rs/crossbeam",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crossbeam-deque",
+    "version": "0.8.8",
+    "authors": [
+      "crossbeam-deque 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/crossbeam-rs/crossbeam",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crossbeam-epoch",
+    "version": "0.9.21",
+    "authors": [
+      "crossbeam-epoch 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/crossbeam-rs/crossbeam",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crossbeam-utils",
+    "version": "0.8.23",
+    "authors": [
+      "crossbeam-utils 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/crossbeam-rs/crossbeam",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "crypto-common",
+    "version": "0.1.7",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/traits",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cssparser",
+    "version": "0.36.0",
+    "authors": [
+      "Simon Sapin <simon.sapin@exyr.org>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/servo/rust-cssparser",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "cssparser-macros",
+    "version": "0.6.1",
+    "authors": [
+      "Simon Sapin <simon.sapin@exyr.org>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/servo/rust-cssparser",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ctor",
+    "version": "0.8.0",
+    "authors": [
+      "Matt Mastracci <matthew@mastracci.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/mmastrac/rust-ctor",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ctor-proc-macro",
+    "version": "0.0.7",
+    "authors": [
+      "Matt Mastracci <matthew@mastracci.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/mmastrac/rust-ctor",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "curve25519-dalek",
+    "version": "4.1.3",
+    "authors": [
+      "Isis Lovecruft <isis@patternsinthevoid.net>",
+      "Henry de Valence <hdevalence@hdevalence.ca>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/dalek-cryptography/curve25519-dalek/tree/main/curve25519-dalek",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "curve25519-dalek-derive",
+    "version": "0.1.1",
+    "authors": [
+      "curve25519-dalek-derive 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/dalek-cryptography/curve25519-dalek",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "darling",
+    "version": "0.23.0",
+    "authors": [
+      "Ted Driggs <ted.driggs@outlook.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/TedDriggs/darling",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "darling_core",
+    "version": "0.23.0",
+    "authors": [
+      "Ted Driggs <ted.driggs@outlook.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/TedDriggs/darling",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "darling_macro",
+    "version": "0.23.0",
+    "authors": [
+      "Ted Driggs <ted.driggs@outlook.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/TedDriggs/darling",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dasp_sample",
+    "version": "0.11.0",
+    "authors": [
+      "mitchmindtree <mitchell.nordine@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rustaudio/sample.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "data-encoding",
+    "version": "2.11.1",
+    "authors": [
+      "data-encoding 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/ia0/data-encoding",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "defmt",
+    "version": "1.1.1",
+    "authors": [
+      "The Knurling-rs developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/knurling-rs/defmt",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "defmt-macros",
+    "version": "1.1.1",
+    "authors": [
+      "The Knurling-rs developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/knurling-rs/defmt",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "defmt-parser",
+    "version": "1.0.0",
+    "authors": [
+      "The Knurling-rs developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/knurling-rs/defmt",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "der",
+    "version": "0.7.10",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/formats/tree/master/der",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "deranged",
+    "version": "0.5.8",
+    "authors": [
+      "Jacob Pratt <jacob@jhpratt.dev>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/jhpratt/deranged",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "derive_more",
+    "version": "2.1.1",
+    "authors": [
+      "Jelte Fennema <github-tech@jeltef.nl>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/JelteF/derive_more",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "derive_more-impl",
+    "version": "2.1.1",
+    "authors": [
+      "Jelte Fennema <github-tech@jeltef.nl>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/JelteF/derive_more",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "digest",
+    "version": "0.10.7",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/traits",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dirs",
+    "version": "6.0.0",
+    "authors": [
+      "Simon Ochsenreither <simon@ochsenreither.de>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/soc/dirs-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dirs-sys",
+    "version": "0.5.0",
+    "authors": [
+      "Simon Ochsenreither <simon@ochsenreither.de>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dirs-dev/dirs-sys-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "displaydoc",
+    "version": "0.2.7",
+    "authors": [
+      "Jane Lusby <jlusby@yaah.dev>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/yaahc/displaydoc",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dom_query",
+    "version": "0.27.0",
+    "authors": [
+      "niklak <morgenpurple@gmail.com>",
+      "importcjj <importcjj@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/niklak/dom_query",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dpi",
+    "version": "0.1.2",
+    "authors": [
+      "dpi 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 AND MIT",
+    "url": "https://github.com/rust-windowing/winit",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dtoa",
+    "version": "1.0.11",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/dtoa",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dtoa-short",
+    "version": "0.3.5",
+    "authors": [
+      "Xidorn Quan <me@upsuper.org>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/upsuper/dtoa-short",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dtor",
+    "version": "0.3.0",
+    "authors": [
+      "Matt Mastracci <matthew@mastracci.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/mmastrac/rust-ctor",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dtor-proc-macro",
+    "version": "0.0.6",
+    "authors": [
+      "Matt Mastracci <matthew@mastracci.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/mmastrac/rust-ctor",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dunce",
+    "version": "1.0.5",
+    "authors": [
+      "Kornel <kornel@geekhood.net>"
+    ],
+    "license": "CC0-1.0 OR MIT-0 OR Apache-2.0",
+    "url": "https://gitlab.com/kornelski/dunce",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "dyn-clone",
+    "version": "1.0.20",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/dyn-clone",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ed25519",
+    "version": "2.2.3",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/signatures/tree/master/ed25519",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ed25519-dalek",
+    "version": "2.2.0",
+    "authors": [
+      "isis lovecruft <isis@patternsinthevoid.net>",
+      "Tony Arcieri <bascule@gmail.com>",
+      "Michael Rosenberg <michael@mrosenberg.pub>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/dalek-cryptography/curve25519-dalek/tree/main/ed25519-dalek",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "either",
+    "version": "1.18.0",
+    "authors": [
+      "either 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rayon-rs/either",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "embed-resource",
+    "version": "3.0.11",
+    "authors": [
+      "наб <nabijaczleweli@nabijaczleweli.xyz>",
+      "Cat Plus Plus <piotrlegnica@piotrl.pl>",
+      "Liigo <liigo@qq.com>",
+      "azyobuzin <azyobuzin@users.sourceforge.jp>",
+      "Peter Atashian <retep998@gmail.com>",
+      "pravic <ehysta@gmail.com>",
+      "Gabriel Majeri <gabriel.majeri6@gmail.com>",
+      "SonnyX",
+      "Johan Andersson <repi@repi.se>",
+      "Jordan Poles <jpdev.noreply@gmail.com>",
+      "MSxDOS <melcodos@gmail.com>",
+      "Jim McGrath <jimmc2@gmail.com>",
+      "roblabla <unfiltered@roblab.la>",
+      "Jasper Bekkers <jasper@traverseresearch.nl>",
+      "Richard Markiewicz <rmarkiewicz@devolutions.net>",
+      "Emerson de Freitas Barcelos <emersonfxbx@gmail.com>",
+      "Li Keqing <me@kaze.ai>",
+      "Alexis Bourget <alexis.bourget@gmail.com>",
+      "Michael Farrell <micolous+git@gmail.com>",
+      "Jacob Okamoto <oko@oko.io>",
+      "Marijn Suijten <marijn@traverseresearch.nl>",
+      "Lucas Nogueira <lucas@tauri.app>",
+      "CharlesChen0823 <yongchen0823@gmail.com>",
+      "Daniel Schaefer <dhs@frame.work>",
+      "Rene Leonhardt",
+      "ssrlive",
+      "Kan-Ru Chen <kanru@kanru.info>",
+      "Tony <legendmastertony@gmail.com>",
+      "Berrysoft <Strawberry_Str@hotmail.com>",
+      "Marcus Ahlberg <marcus.ahlberg@kvaser.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/nabijaczleweli/rust-embed-resource",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "encoding_rs",
+    "version": "0.8.35",
+    "authors": [
+      "Henri Sivonen <hsivonen@hsivonen.fi>"
+    ],
+    "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+    "url": "https://github.com/hsivonen/encoding_rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "equivalent",
+    "version": "1.0.2",
+    "authors": [
+      "equivalent 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/indexmap-rs/equivalent",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "erased-serde",
+    "version": "0.4.10",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/erased-serde",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "extended",
+    "version": "0.1.0",
+    "authors": [
+      "Dietrich Epp <depp@zdome.net>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/depp/extended-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "fallible-iterator",
+    "version": "0.3.0",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/sfackler/rust-fallible-iterator",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "fallible-streaming-iterator",
+    "version": "0.1.9",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/sfackler/fallible-streaming-iterator",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "fastrand",
+    "version": "2.5.0",
+    "authors": [
+      "Stjepan Glavina <stjepang@gmail.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/smol-rs/fastrand",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "fdeflate",
+    "version": "0.3.7",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/fdeflate",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "filetime",
+    "version": "0.2.29",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/alexcrichton/filetime",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "find-msvc-tools",
+    "version": "0.1.12",
+    "authors": [
+      "find-msvc-tools 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/cc-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "flate2",
+    "version": "1.1.10",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>",
+      "Josh Triplett <josh@joshtriplett.org>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/flate2-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "fnv",
+    "version": "1.0.7",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "Apache-2.0 / MIT",
+    "url": "https://github.com/servo/rust-fnv",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "foldhash",
+    "version": "0.2.0",
+    "authors": [
+      "Orson Peters <orsonpeters@gmail.com>"
+    ],
+    "license": "Zlib",
+    "url": "https://github.com/orlp/foldhash",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "form_urlencoded",
+    "version": "1.2.2",
+    "authors": [
+      "The rust-url developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/rust-url",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "generic-array",
+    "version": "0.14.7",
+    "authors": [
+      "Bartłomiej Kamiński <fizyk20@gmail.com>",
+      "Aaron Trent <novacrazy@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/fizyk20/generic-array.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "getrandom",
+    "version": "0.2.17",
+    "authors": [
+      "The Rand Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/getrandom",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "getrandom",
+    "version": "0.3.4",
+    "authors": [
+      "The Rand Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/getrandom",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "getrandom",
+    "version": "0.4.3",
+    "authors": [
+      "The Rand Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/getrandom",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "gif",
+    "version": "0.14.2",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/image-gif",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "glob",
+    "version": "0.3.4",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/glob",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "hashbrown",
+    "version": "0.12.3",
+    "authors": [
+      "Amanieu d'Antras <amanieu@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/hashbrown",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "hashbrown",
+    "version": "0.14.5",
+    "authors": [
+      "Amanieu d'Antras <amanieu@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/hashbrown",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "hashbrown",
+    "version": "0.17.1",
+    "authors": [
+      "hashbrown 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/hashbrown",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "hashlink",
+    "version": "0.9.1",
+    "authors": [
+      "kyren <kerriganw@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/kyren/hashlink",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "heck",
+    "version": "0.5.0",
+    "authors": [
+      "heck 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/withoutboats/heck",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "hex",
+    "version": "0.4.3",
+    "authors": [
+      "KokaKiwi <kokakiwi@kokakiwi.net>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/KokaKiwi/rust-hex",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "html5ever",
+    "version": "0.38.0",
+    "authors": [
+      "The html5ever Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/html5ever",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "http",
+    "version": "1.5.0",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>",
+      "Carl Lerche <me@carllerche.com>",
+      "Sean McArthur <sean@seanmonstar.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/hyperium/http",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "http-range",
+    "version": "0.1.5",
+    "authors": [
+      "Luka Zakrajšek <luka@bancek.net>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/bancek/rust-http-range.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ico",
+    "version": "0.5.0",
+    "authors": [
+      "Matthew D. Steele <mdsteele@alum.mit.edu>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mdsteele/rust-ico",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_collections",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_locale_core",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_normalizer",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_normalizer_data",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_properties",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_properties_data",
+    "version": "2.3.0",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "icu_provider",
+    "version": "2.3.1",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ident_case",
+    "version": "1.0.1",
+    "authors": [
+      "Ted Driggs <ted.driggs@outlook.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/TedDriggs/ident_case",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "idna",
+    "version": "1.1.0",
+    "authors": [
+      "The rust-url developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/rust-url/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "idna_adapter",
+    "version": "1.2.2",
+    "authors": [
+      "The rust-url developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/hsivonen/idna_adapter",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "image",
+    "version": "0.25.10",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/image",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "image-webp",
+    "version": "0.2.4",
+    "authors": [
+      "image-webp 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/image-webp",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "indexmap",
+    "version": "1.9.3",
+    "authors": [
+      "indexmap 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/bluss/indexmap",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "indexmap",
+    "version": "2.14.2",
+    "authors": [
+      "indexmap 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/indexmap-rs/indexmap",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "infer",
+    "version": "0.19.0",
+    "authors": [
+      "Bojan <dbojan@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/bojand/infer",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "inout",
+    "version": "0.1.4",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "itoa",
+    "version": "1.0.18",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/itoa",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "jiff",
+    "version": "0.2.35",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/jiff",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "jiff-core",
+    "version": "0.1.0",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/jiff",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "jiff-tzdb",
+    "version": "0.1.8",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/jiff",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "jiff-tzdb-platform",
+    "version": "0.1.3",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/jiff",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "json-patch",
+    "version": "3.0.1",
+    "authors": [
+      "Ivan Dubrov <dubrov.ivan@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/idubrov/json-patch",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "jsonptr",
+    "version": "0.6.3",
+    "authors": [
+      "chance dinkins",
+      "André Sá de Mello <codasm@pm.me>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/chanced/jsonptr",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "keyboard-types",
+    "version": "0.7.0",
+    "authors": [
+      "Pyfisch <pyfisch@posteo.org>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/pyfisch/keyboard-types",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "keyring",
+    "version": "3.6.3",
+    "authors": [
+      "Walther Chen <walther.chen@gmail.com>",
+      "Daniel Brotsky <dev@brotsky.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/hwchen/keyring-rs.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "lazy_static",
+    "version": "1.5.0",
+    "authors": [
+      "Marvin Löbel <loebel.marvin@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang-nursery/lazy-static.rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "libc",
+    "version": "0.2.189",
+    "authors": [
+      "libc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/libc",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "libloading",
+    "version": "0.7.4",
+    "authors": [
+      "Simonas Kazlauskas <libloading@kazlauskas.me>"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/nagisa/rust_libloading/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "libsqlite3-sys",
+    "version": "0.30.1",
+    "authors": [
+      "The rusqlite developers"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rusqlite/rusqlite",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "litemap",
+    "version": "0.8.3",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "lock_api",
+    "version": "0.4.14",
+    "authors": [
+      "Amanieu d'Antras <amanieu@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Amanieu/parking_lot",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "lofty",
+    "version": "0.22.4",
+    "authors": [
+      "Serial <69764315+Serial-ATA@users.noreply.github.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Serial-ATA/lofty-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "lofty_attr",
+    "version": "0.11.1",
+    "authors": [
+      "Serial <69764315+Serial-ATA@users.noreply.github.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Serial-ATA/lofty-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "log",
+    "version": "0.4.34",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/log",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "markup5ever",
+    "version": "0.38.0",
+    "authors": [
+      "The html5ever Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/html5ever",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "md-5",
+    "version": "0.10.6",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/hashes",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "memchr",
+    "version": "2.8.3",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>",
+      "bluss"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/memchr",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "mime",
+    "version": "0.3.17",
+    "authors": [
+      "Sean McArthur <sean@seanmonstar.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/hyperium/mime",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "miniz_oxide",
+    "version": "0.8.9",
+    "authors": [
+      "Frommi <daniil.liferenko@gmail.com>",
+      "oyvindln <oyvindln@users.noreply.github.com>",
+      "Rich Geldreich richgel99@gmail.com"
+    ],
+    "license": "MIT OR Zlib OR Apache-2.0",
+    "url": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "miniz_oxide",
+    "version": "0.9.1",
+    "authors": [
+      "Frommi <daniil.liferenko@gmail.com>",
+      "oyvindln <oyvindln@users.noreply.github.com>",
+      "Rich Geldreich richgel99@gmail.com"
+    ],
+    "license": "MIT OR Zlib OR Apache-2.0",
+    "url": "https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "mio",
+    "version": "1.2.3",
+    "authors": [
+      "Carl Lerche <me@carllerche.com>",
+      "Thomas de Zeeuw <thomasdezeeuw@gmail.com>",
+      "Tokio Contributors <team@tokio.rs>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/mio",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "moxcms",
+    "version": "0.8.1",
+    "authors": [
+      "Radzivon Bartoshyk"
+    ],
+    "license": "BSD-3-Clause OR Apache-2.0",
+    "url": "https://github.com/awxkee/moxcms.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "muda",
+    "version": "0.19.3",
+    "authors": [
+      "muda 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/muda",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "new_debug_unreachable",
+    "version": "1.0.6",
+    "authors": [
+      "Matt Brubeck <mbrubeck@limpet.net>",
+      "Jonathan Reem <jonathan.reem@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mbrubeck/rust-debug-unreachable",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "num-bigint",
+    "version": "0.4.8",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-num/num-bigint",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "num-conv",
+    "version": "0.2.2",
+    "authors": [
+      "Jacob Pratt <jacob@jhpratt.dev>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/jhpratt/num-conv",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "num-integer",
+    "version": "0.1.47",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-num/num-integer",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "num-rational",
+    "version": "0.4.2",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-num/num-rational",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "num-traits",
+    "version": "0.2.19",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-num/num-traits",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ogg_pager",
+    "version": "0.7.2",
+    "authors": [
+      "Serial <69764315+Serial-ATA@users.noreply.github.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Serial-ATA/lofty-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "once_cell",
+    "version": "1.21.4",
+    "authors": [
+      "Aleksey Kladov <aleksey.kladov@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/matklad/once_cell",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "option-ext",
+    "version": "0.2.0",
+    "authors": [
+      "Simon Ochsenreither <simon@ochsenreither.de>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/soc/option-ext.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "parking_lot",
+    "version": "0.12.5",
+    "authors": [
+      "Amanieu d'Antras <amanieu@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Amanieu/parking_lot",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "parking_lot_core",
+    "version": "0.9.12",
+    "authors": [
+      "Amanieu d'Antras <amanieu@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/Amanieu/parking_lot",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "paste",
+    "version": "1.0.15",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/paste",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "percent-encoding",
+    "version": "2.3.2",
+    "authors": [
+      "The rust-url developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/rust-url/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "phf",
+    "version": "0.13.1",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rust-phf/rust-phf",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "phf_codegen",
+    "version": "0.13.1",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rust-phf/rust-phf",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "phf_generator",
+    "version": "0.13.1",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rust-phf/rust-phf",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "phf_macros",
+    "version": "0.13.1",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rust-phf/rust-phf",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "phf_shared",
+    "version": "0.13.1",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rust-phf/rust-phf",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "pin-project-lite",
+    "version": "0.2.17",
+    "authors": [
+      "pin-project-lite 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/taiki-e/pin-project-lite",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "pkcs8",
+    "version": "0.10.2",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/formats/tree/master/pkcs8",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "pkg-config",
+    "version": "0.3.34",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/pkg-config-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "plist",
+    "version": "1.10.0",
+    "authors": [
+      "Ed Barnard <eabarnard@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/ebarnard/rust-plist/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "png",
+    "version": "0.17.16",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/image-png",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "png",
+    "version": "0.18.1",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/image-png",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "potential_utf",
+    "version": "0.1.6",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "powerfmt",
+    "version": "0.2.0",
+    "authors": [
+      "Jacob Pratt <jacob@jhpratt.dev>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/jhpratt/powerfmt",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ppv-lite86",
+    "version": "0.2.21",
+    "authors": [
+      "The CryptoCorrosion Contributors"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/cryptocorrosion/cryptocorrosion",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "precomputed-hash",
+    "version": "0.1.1",
+    "authors": [
+      "Emilio Cobos Álvarez <emilio@crisal.io>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/emilio/precomputed-hash",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "proc-macro2",
+    "version": "1.0.107",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>",
+      "Alex Crichton <alex@alexcrichton.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/proc-macro2",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "pxfm",
+    "version": "0.1.30",
+    "authors": [
+      "Radzivon Bartoshyk"
+    ],
+    "license": "BSD-3-Clause OR Apache-2.0",
+    "url": "https://github.com/awxkee/pxfm",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "qrcode",
+    "version": "0.14.1",
+    "authors": [
+      "kennytm <kennytm@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/kennytm/qrcode-rust",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "quick-error",
+    "version": "2.0.1",
+    "authors": [
+      "Paul Colomiets <paul@colomiets.name>",
+      "Colin Kiegel <kiegel@gmx.de>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "http://github.com/tailhook/quick-error",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "quick-xml",
+    "version": "0.41.0",
+    "authors": [
+      "quick-xml 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tafia/quick-xml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "quote",
+    "version": "1.0.47",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/quote",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rand",
+    "version": "0.8.8",
+    "authors": [
+      "The Rand Project Developers",
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/rand",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rand_chacha",
+    "version": "0.3.1",
+    "authors": [
+      "The Rand Project Developers",
+      "The Rust Project Developers",
+      "The CryptoCorrosion Contributors"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/rand",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rand_core",
+    "version": "0.6.4",
+    "authors": [
+      "The Rand Project Developers",
+      "The Rust Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-random/rand",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "raw-window-handle",
+    "version": "0.6.2",
+    "authors": [
+      "Osspial <osspial@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0 OR Zlib",
+    "url": "https://github.com/rust-windowing/raw-window-handle",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rayon",
+    "version": "1.12.0",
+    "authors": [
+      "rayon 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rayon-rs/rayon",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rayon-core",
+    "version": "1.13.0",
+    "authors": [
+      "rayon-core 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rayon-rs/rayon",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ref-cast",
+    "version": "1.0.27",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/ref-cast",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ref-cast-impl",
+    "version": "1.0.27",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/ref-cast",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "regex",
+    "version": "1.13.1",
+    "authors": [
+      "The Rust Project Developers",
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/regex",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "regex-automata",
+    "version": "0.4.18",
+    "authors": [
+      "The Rust Project Developers",
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/regex",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "regex-syntax",
+    "version": "0.8.11",
+    "authors": [
+      "The Rust Project Developers",
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/regex",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rfd",
+    "version": "0.16.0",
+    "authors": [
+      "Poly <marynczak.bartlomiej@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/PolyMeilex/rfd",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ring",
+    "version": "0.17.14",
+    "authors": [
+      "ring 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 AND ISC",
+    "url": "https://github.com/briansmith/ring",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rodio",
+    "version": "0.22.2",
+    "authors": [
+      "rodio 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustAudio/rodio",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rusqlite",
+    "version": "0.32.1",
+    "authors": [
+      "The rusqlite developers"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rusqlite/rusqlite",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rustc-hash",
+    "version": "2.1.3",
+    "authors": [
+      "The Rust Project Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/rust-lang/rustc-hash",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rustc_version",
+    "version": "0.4.1",
+    "authors": [
+      "rustc_version 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/djc/rustc-version-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rustls",
+    "version": "0.23.43",
+    "authors": [
+      "rustls 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR ISC OR MIT",
+    "url": "https://github.com/rustls/rustls",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rustls-pki-types",
+    "version": "1.15.1",
+    "authors": [
+      "rustls-pki-types 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rustls/pki-types",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "rustls-webpki",
+    "version": "0.103.15",
+    "authors": [
+      "rustls-webpki 项目贡献者（上游未单列作者）"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/rustls/webpki",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "same-file",
+    "version": "1.0.6",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense/MIT",
+    "url": "https://github.com/BurntSushi/same-file",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "schemars",
+    "version": "0.8.22",
+    "authors": [
+      "Graham Esau <gesau@hotmail.co.uk>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/GREsau/schemars",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "schemars",
+    "version": "0.9.0",
+    "authors": [
+      "Graham Esau <gesau@hotmail.co.uk>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/GREsau/schemars",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "schemars",
+    "version": "1.2.2",
+    "authors": [
+      "Graham Esau <gesau@hotmail.co.uk>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/GREsau/schemars",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "schemars_derive",
+    "version": "0.8.22",
+    "authors": [
+      "Graham Esau <gesau@hotmail.co.uk>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/GREsau/schemars",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "scopeguard",
+    "version": "1.2.0",
+    "authors": [
+      "bluss"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/bluss/scopeguard",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "selectors",
+    "version": "0.36.1",
+    "authors": [
+      "The Servo Project Developers"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/servo/stylo",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "semver",
+    "version": "1.0.28",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/semver",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde",
+    "version": "1.0.229",
+    "authors": [
+      "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/serde-rs/serde",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde-untagged",
+    "version": "0.1.9",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/serde-untagged",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_core",
+    "version": "1.0.229",
+    "authors": [
+      "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/serde-rs/serde",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_derive",
+    "version": "1.0.229",
+    "authors": [
+      "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/serde-rs/serde",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_derive_internals",
+    "version": "0.29.1",
+    "authors": [
+      "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/serde-rs/serde",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_json",
+    "version": "1.0.151",
+    "authors": [
+      "Erick Tryzelaar <erick.tryzelaar@gmail.com>",
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/serde-rs/json",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_repr",
+    "version": "0.1.21",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/serde-repr",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_spanned",
+    "version": "1.1.1",
+    "authors": [
+      "serde_spanned 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_with",
+    "version": "3.22.0",
+    "authors": [
+      "Jonas Bushart",
+      "Marcin Kaźmierczak"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/jonasbb/serde_with/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serde_with_macros",
+    "version": "3.22.0",
+    "authors": [
+      "Jonas Bushart"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/jonasbb/serde_with/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serialize-to-javascript",
+    "version": "0.1.2",
+    "authors": [
+      "Chip Reed <chip@chip.sh>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/chippers/serialize-to-javascript",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "serialize-to-javascript-impl",
+    "version": "0.1.2",
+    "authors": [
+      "Chip Reed <chip@chip.sh>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/chippers/serialize-to-javascript",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "servo_arc",
+    "version": "0.4.3",
+    "authors": [
+      "The Servo Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/stylo",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "sha1",
+    "version": "0.10.7",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/hashes",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "sha2",
+    "version": "0.10.9",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/RustCrypto/hashes",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "shlex",
+    "version": "2.0.1",
+    "authors": [
+      "comex <comexk@gmail.com>",
+      "Fenhl <fenhl@fenhl.net>",
+      "Adrian Taylor <adetaylor@chromium.org>",
+      "Alex Touchet <alextouchet@outlook.com>",
+      "Daniel Parks <dp+git@oxidized.org>",
+      "Garrett Berg <googberg@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/comex/rust-shlex",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "signature",
+    "version": "2.2.0",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/traits/tree/master/signature",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "simd-adler32",
+    "version": "0.3.10",
+    "authors": [
+      "Marvin Countryman <me@maar.vin>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mcountryman/simd-adler32",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "siphasher",
+    "version": "1.0.3",
+    "authors": [
+      "Frank Denis <github@pureftpd.org>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/jedisct1/rust-siphash",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "smallvec",
+    "version": "1.16.0",
+    "authors": [
+      "The Servo Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/rust-smallvec",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "socket2",
+    "version": "0.6.5",
+    "authors": [
+      "Alex Crichton <alex@alexcrichton.com>",
+      "Thomas de Zeeuw <thomasdezeeuw@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-lang/socket2",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "socks",
+    "version": "0.3.4",
+    "authors": [
+      "Steven Fackler <sfackler@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/sfackler/rust-socks",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "softbuffer",
+    "version": "0.4.8",
+    "authors": [
+      "softbuffer 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/rust-windowing/softbuffer",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "souvlaki",
+    "version": "0.8.3",
+    "authors": [
+      "Sinono3 <aldoacevedo@protonmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/Sinono3/souvlaki",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "spki",
+    "version": "0.7.3",
+    "authors": [
+      "RustCrypto Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/formats/tree/master/spki",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "stable_deref_trait",
+    "version": "1.2.1",
+    "authors": [
+      "Robert Grosse <n210241048576@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/storyyeller/stable_deref_trait",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "string_cache",
+    "version": "0.9.0",
+    "authors": [
+      "The Servo Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/string-cache",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "string_cache_codegen",
+    "version": "0.6.1",
+    "authors": [
+      "The Servo Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/string-cache",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "strsim",
+    "version": "0.11.1",
+    "authors": [
+      "Danny Guo <danny@dannyguo.com>",
+      "maxbachmann <oss@maxbachmann.de>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rapidfuzz/strsim-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "subtle",
+    "version": "2.6.1",
+    "authors": [
+      "Isis Lovecruft <isis@patternsinthevoid.net>",
+      "Henry de Valence <hdevalence@hdevalence.ca>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/dalek-cryptography/subtle",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-bundle-flac",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-bundle-mp3",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-codec-aac",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>",
+      "Kostya Shishkov <kostya.shiskov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-codec-alac",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-codec-pcm",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-codec-vorbis",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-core",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-format-isomp4",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-format-riff",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>",
+      "dedobbin <dedobbindedobbin@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-metadata",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "symphonia-utils-xiph",
+    "version": "0.5.5",
+    "authors": [
+      "Philip Deljanov <philip.deljanov@gmail.com>"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/pdeljanov/Symphonia",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "syn",
+    "version": "2.0.119",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/syn",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "syn",
+    "version": "3.0.5",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/syn",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "synstructure",
+    "version": "0.13.2",
+    "authors": [
+      "Nika Layzell <nika@thelayzells.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mystor/synstructure",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tao",
+    "version": "0.35.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy",
+      "The winit contributors"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/tauri-apps/tao",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri",
+    "version": "2.11.5",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-build",
+    "version": "2.6.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-codegen",
+    "version": "2.6.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-macros",
+    "version": "2.6.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-plugin",
+    "version": "2.6.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-plugin-dialog",
+    "version": "2.7.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/plugins-workspace",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-plugin-fs",
+    "version": "2.5.2",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/plugins-workspace",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-runtime",
+    "version": "2.11.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-runtime-wry",
+    "version": "2.11.4",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-utils",
+    "version": "2.9.3",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tauri-winres",
+    "version": "0.3.6",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy",
+      "Max Resch <resch.max@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tauri-apps/winres",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tendril",
+    "version": "0.5.1",
+    "authors": [
+      "Keegan McAllister <mcallister.keegan@gmail.com>",
+      "Simon Sapin <simon.sapin@exyr.org>",
+      "Chris Morgan <me@chrismorgan.info>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/html5ever",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "thiserror",
+    "version": "1.0.69",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/thiserror",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "thiserror",
+    "version": "2.0.20",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/thiserror",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "thiserror-impl",
+    "version": "1.0.69",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/thiserror",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "thiserror-impl",
+    "version": "2.0.20",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/thiserror",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "time",
+    "version": "0.3.55",
+    "authors": [
+      "Jacob Pratt <open-source@jhpratt.dev>",
+      "Time contributors"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/time-rs/time",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "time-core",
+    "version": "0.1.9",
+    "authors": [
+      "Jacob Pratt <open-source@jhpratt.dev>",
+      "Time contributors"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/time-rs/time",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "time-macros",
+    "version": "0.2.32",
+    "authors": [
+      "Jacob Pratt <open-source@jhpratt.dev>",
+      "Time contributors"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/time-rs/time",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tinystr",
+    "version": "0.8.4",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tinyvec",
+    "version": "1.13.2",
+    "authors": [
+      "Lokathor <zefria@gmail.com>"
+    ],
+    "license": "Zlib OR Apache-2.0 OR MIT",
+    "url": "https://github.com/Lokathor/tinyvec",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tinyvec_macros",
+    "version": "0.1.1",
+    "authors": [
+      "Soveu <marx.tomasz@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0 OR Zlib",
+    "url": "https://github.com/Soveu/tinyvec_macros",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tokio",
+    "version": "1.53.1",
+    "authors": [
+      "Tokio Contributors <team@tokio.rs>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/tokio",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml",
+    "version": "0.9.12+spec-1.1.0",
+    "authors": [
+      "toml 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml",
+    "version": "1.1.5+spec-1.1.0",
+    "authors": [
+      "toml 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml_datetime",
+    "version": "0.7.5+spec-1.1.0",
+    "authors": [
+      "toml_datetime 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml_datetime",
+    "version": "1.1.1+spec-1.1.0",
+    "authors": [
+      "toml_datetime 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml_parser",
+    "version": "1.1.3+spec-1.1.0",
+    "authors": [
+      "toml_parser 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "toml_writer",
+    "version": "1.1.2+spec-1.1.0",
+    "authors": [
+      "toml_writer 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/toml-rs/toml",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tracing",
+    "version": "0.1.44",
+    "authors": [
+      "Eliza Weisman <eliza@buoyant.io>",
+      "Tokio Contributors <team@tokio.rs>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/tracing",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tracing-attributes",
+    "version": "0.1.31",
+    "authors": [
+      "Tokio Contributors <team@tokio.rs>",
+      "Eliza Weisman <eliza@buoyant.io>",
+      "David Barsky <dbarsky@amazon.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/tracing",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tracing-core",
+    "version": "0.1.36",
+    "authors": [
+      "Tokio Contributors <team@tokio.rs>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tokio-rs/tracing",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "tray-icon",
+    "version": "0.24.2",
+    "authors": [
+      "tray-icon 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/tauri-apps/tray-icon",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "typeid",
+    "version": "1.0.3",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/dtolnay/typeid",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "typenum",
+    "version": "1.20.1",
+    "authors": [
+      "typenum 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/paholg/typenum",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unic-char-property",
+    "version": "0.9.0",
+    "authors": [
+      "The UNIC Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/open-i18n/rust-unic/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unic-char-range",
+    "version": "0.9.0",
+    "authors": [
+      "The UNIC Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/open-i18n/rust-unic/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unic-common",
+    "version": "0.9.0",
+    "authors": [
+      "The UNIC Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/open-i18n/rust-unic/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unic-ucd-ident",
+    "version": "0.9.0",
+    "authors": [
+      "The UNIC Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/open-i18n/rust-unic/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unic-ucd-version",
+    "version": "0.9.0",
+    "authors": [
+      "The UNIC Project Developers"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/open-i18n/rust-unic/",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unicode-ident",
+    "version": "1.0.24",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
+    "url": "https://github.com/dtolnay/unicode-ident",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "unicode-segmentation",
+    "version": "1.13.3",
+    "authors": [
+      "kwantam <kwantam@gmail.com>",
+      "Manish Goregaokar <manishsmail@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/unicode-rs/unicode-segmentation",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "untrusted",
+    "version": "0.9.0",
+    "authors": [
+      "Brian Smith <brian@briansmith.org>"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/briansmith/untrusted",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "ureq",
+    "version": "2.12.1",
+    "authors": [
+      "Martin Algesten <martin@algesten.se>",
+      "Jacob Hoffman-Andrews <ureq@hoffman-andrews.com>"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/algesten/ureq",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "url",
+    "version": "2.5.8",
+    "authors": [
+      "The rust-url developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/rust-url",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "urlpattern",
+    "version": "0.3.0",
+    "authors": [
+      "the Deno authors",
+      "crowlKats <crowlkats@toaxl.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/denoland/rust-urlpattern",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "utf8_iter",
+    "version": "1.0.4",
+    "authors": [
+      "Henri Sivonen <hsivonen@hsivonen.fi>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/hsivonen/utf8_iter",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "uuid",
+    "version": "1.26.0",
+    "authors": [
+      "Ashley Mannix<ashleymannix@live.com.au>",
+      "Dylan DPC<dylan.dpc@gmail.com>",
+      "Hunar Roop Kahlon<hunar.roop@gmail.com>"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/uuid-rs/uuid",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "vcpkg",
+    "version": "0.2.15",
+    "authors": [
+      "Jim McGrath <jimmc2@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/mcgoo/vcpkg-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "version_check",
+    "version": "0.9.5",
+    "authors": [
+      "Sergio Benitez <sb@sergio.bz>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/SergioBenitez/version_check",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "vswhom",
+    "version": "0.1.0",
+    "authors": [
+      "nabijaczleweli <nabijaczleweli@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/nabijaczleweli/vswhom.rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "vswhom-sys",
+    "version": "0.1.3",
+    "authors": [
+      "наб <nabijaczleweli@nabijaczleweli.xyz>",
+      "forrestsmithfb <forrest.smith@fb.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/nabijaczleweli/vswhom-sys.rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "walkdir",
+    "version": "2.5.0",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense/MIT",
+    "url": "https://github.com/BurntSushi/walkdir",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "wasapi",
+    "version": "0.14.0",
+    "authors": [
+      "HEnquist <henrik.enquist@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/HEnquist/wasapi-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "web_atoms",
+    "version": "0.2.6",
+    "authors": [
+      "The html5ever Project Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/servo/html5ever",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "webpki-roots",
+    "version": "0.26.11",
+    "authors": [
+      "webpki-roots 项目贡献者（上游未单列作者）"
+    ],
+    "license": "CDLA-Permissive-2.0",
+    "url": "https://github.com/rustls/webpki-roots",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "webpki-roots",
+    "version": "1.0.9",
+    "authors": [
+      "webpki-roots 项目贡献者（上游未单列作者）"
+    ],
+    "license": "CDLA-Permissive-2.0",
+    "url": "https://github.com/rustls/webpki-roots",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "webview2-com",
+    "version": "0.38.2",
+    "authors": [
+      "webview2-com 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/wravery/webview2-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "webview2-com-macros",
+    "version": "0.8.1",
+    "authors": [
+      "webview2-com-macros 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/wravery/webview2-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "webview2-com-sys",
+    "version": "0.38.2",
+    "authors": [
+      "webview2-com-sys 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/wravery/webview2-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "weezl",
+    "version": "0.1.12",
+    "authors": [
+      "The image-rs Developers"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/image-rs/weezl",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "widestring",
+    "version": "1.2.1",
+    "authors": [
+      "widestring 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/VoidStarKat/widestring-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "winapi",
+    "version": "0.3.9",
+    "authors": [
+      "Peter Atashian <retep998@gmail.com>"
+    ],
+    "license": "MIT/Apache-2.0",
+    "url": "https://github.com/retep998/winapi-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "winapi-util",
+    "version": "0.1.11",
+    "authors": [
+      "Andrew Gallant <jamslam@gmail.com>"
+    ],
+    "license": "Unlicense OR MIT",
+    "url": "https://github.com/BurntSushi/winapi-util",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "window-vibrancy",
+    "version": "0.6.0",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri-plugin-vibrancy",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows",
+    "version": "0.44.0",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows",
+    "version": "0.51.1",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows",
+    "version": "0.61.3",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-collections",
+    "version": "0.2.0",
+    "authors": [
+      "windows-collections 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-core",
+    "version": "0.51.1",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-core",
+    "version": "0.61.2",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-future",
+    "version": "0.2.1",
+    "authors": [
+      "windows-future 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-implement",
+    "version": "0.51.1",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-implement",
+    "version": "0.60.2",
+    "authors": [
+      "windows-implement 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-interface",
+    "version": "0.51.1",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-interface",
+    "version": "0.59.3",
+    "authors": [
+      "windows-interface 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-link",
+    "version": "0.1.3",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-link",
+    "version": "0.2.1",
+    "authors": [
+      "windows-link 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-numerics",
+    "version": "0.2.0",
+    "authors": [
+      "windows-numerics 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-result",
+    "version": "0.3.4",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-strings",
+    "version": "0.4.2",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-sys",
+    "version": "0.59.0",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-sys",
+    "version": "0.60.2",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-sys",
+    "version": "0.61.2",
+    "authors": [
+      "windows-sys 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-targets",
+    "version": "0.42.2",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-targets",
+    "version": "0.48.5",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-targets",
+    "version": "0.52.6",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-targets",
+    "version": "0.53.5",
+    "authors": [
+      "windows-targets 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-threading",
+    "version": "0.1.0",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows-version",
+    "version": "0.1.7",
+    "authors": [
+      "windows-version 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows_x86_64_msvc",
+    "version": "0.42.2",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows_x86_64_msvc",
+    "version": "0.48.5",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows_x86_64_msvc",
+    "version": "0.52.6",
+    "authors": [
+      "Microsoft"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "windows_x86_64_msvc",
+    "version": "0.53.1",
+    "authors": [
+      "windows_x86_64_msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/microsoft/windows-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "winnow",
+    "version": "0.7.15",
+    "authors": [
+      "winnow 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/winnow-rs/winnow",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "winnow",
+    "version": "1.0.4",
+    "authors": [
+      "winnow 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/winnow-rs/winnow",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "winreg",
+    "version": "0.55.0",
+    "authors": [
+      "Igor Shaula <gentoo90@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/gentoo90/winreg-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "writeable",
+    "version": "0.6.4",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "wry",
+    "version": "0.55.1",
+    "authors": [
+      "Tauri Programme within The Commons Conservancy"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/wry",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "yoke",
+    "version": "0.8.3",
+    "authors": [
+      "Manish Goregaokar <manishsmail@gmail.com>"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "yoke-derive",
+    "version": "0.8.2",
+    "authors": [
+      "Manish Goregaokar <manishsmail@gmail.com>"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerocopy",
+    "version": "0.8.56",
+    "authors": [
+      "zerocopy 项目贡献者（上游未单列作者）"
+    ],
+    "license": "BSD-2-Clause OR Apache-2.0 OR MIT",
+    "url": "https://github.com/google/zerocopy",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerofrom",
+    "version": "0.1.8",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerofrom-derive",
+    "version": "0.1.7",
+    "authors": [
+      "Manish Goregaokar <manishsmail@gmail.com>"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zeroize",
+    "version": "1.9.0",
+    "authors": [
+      "The RustCrypto Project Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zeroize_derive",
+    "version": "1.5.0",
+    "authors": [
+      "The RustCrypto Project Developers"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/RustCrypto/utils",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerotrie",
+    "version": "0.2.5",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerovec",
+    "version": "0.11.8",
+    "authors": [
+      "The ICU4X Project Developers"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zerovec-derive",
+    "version": "0.11.6",
+    "authors": [
+      "Manish Goregaokar <manishsmail@gmail.com>"
+    ],
+    "license": "Unicode-3.0",
+    "url": "https://github.com/unicode-org/icu4x",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zip",
+    "version": "2.6.1",
+    "authors": [
+      "Mathijs van de Nes <git@mathijs.vd-nes.nl>",
+      "Marli Frost <marli@frost.red>",
+      "Ryan Levick <ryan.levick@gmail.com>",
+      "Chris Hennick <hennickc@amazon.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/zip-rs/zip2.git",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zlib-rs",
+    "version": "0.6.7",
+    "authors": [
+      "zlib-rs 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Zlib",
+    "url": "https://github.com/trifectatechfoundation/zlib-rs",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zmij",
+    "version": "1.0.23",
+    "authors": [
+      "David Tolnay <dtolnay@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/dtolnay/zmij",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zopfli",
+    "version": "0.8.4",
+    "authors": [
+      "zopfli 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/zopfli-rs/zopfli",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zune-core",
+    "version": "0.5.3",
+    "authors": [
+      "zune-core 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0 OR Zlib",
+    "url": "https://github.com/etemesi254/zune-image",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "zune-jpeg",
+    "version": "0.5.15",
+    "authors": [
+      "caleb <etemesicaleb@gmail.com>"
+    ],
+    "license": "MIT OR Apache-2.0 OR Zlib",
+    "url": "https://github.com/etemesi254/zune-image/tree/dev/crates/zune-jpeg",
+    "group": "Rust 与原生组件"
+  },
+  {
+    "name": "FFmpeg",
+    "version": "随附版本",
+    "authors": [
+      "FFmpeg 开发者及各组件贡献者"
+    ],
+    "license": "以随附 FFmpeg 许可与构建配置为准",
+    "url": "https://ffmpeg.org/",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "MinHook",
+    "version": "随附版本",
+    "authors": [
+      "Tsuda Kageyu"
+    ],
+    "license": "BSD-2-Clause（含第三方组件条款）",
+    "url": "https://github.com/TsudaKageyu/minhook",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "Python",
+    "version": "随附版本",
+    "authors": [
+      "Python Software Foundation 及 Python 贡献者"
+    ],
+    "license": "PSF-2.0 及随附第三方条款",
+    "url": "https://www.python.org/",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "Signalsmith Linear",
+    "version": "随附版本",
+    "authors": [
+      "Signalsmith Audio"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/Signalsmith-Audio/linear",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "Signalsmith Stretch",
+    "version": "随附版本",
+    "authors": [
+      "Geraint Luff / Signalsmith Audio Ltd."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/Signalsmith-Audio/signalsmith-stretch",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "VST 3 Plug-in Interfaces",
+    "version": "随附版本",
+    "authors": [
+      "Steinberg Media Technologies GmbH"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/steinbergmedia/vst3_pluginterfaces",
+    "group": "原生与音频组件"
+  },
+  {
+    "name": "edwards25519",
+    "version": "1.1.0",
+    "authors": [
+      "Filippo Valsorda"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://filippo.io/edwards25519",
+    "group": "在线网关"
+  },
+  {
+    "name": "go-sql-driver/mysql",
+    "version": "1.9.3",
+    "authors": [
+      "Go-MySQL-Driver 项目贡献者"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/go-sql-driver/mysql",
+    "group": "在线网关"
+  },
+  {
+    "name": "Inno Setup",
+    "version": "随附版本",
+    "authors": [
+      "Jordan Russell",
+      "Martijn Laan"
+    ],
+    "license": "Inno Setup License",
+    "url": "https://jrsoftware.org/isinfo.php",
+    "group": "安装包工具"
+  },
+  {
+    "name": "RustMusic",
+    "version": "原项目",
+    "authors": [
+      "LingyunStudio"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/LingyunStudio/RustMusic",
+    "group": "播放器原项目"
+  },
+  {
+    "name": "@tauri-apps/api",
+    "version": "2.11.1",
+    "authors": [
+      "Copyright (c) 2017 - Present Tauri Apps Contributors"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "@tauri-apps/plugin-dialog",
+    "version": "2.7.3",
+    "authors": [
+      "@tauri-apps/plugin-dialog 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT OR Apache-2.0",
+    "url": "https://github.com/tauri-apps/plugins-workspace",
+    "group": "播放器界面"
+  },
+  {
+    "name": "@types/prop-types",
+    "version": "15.7.15",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "@types/react",
+    "version": "18.3.31",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "@types/trusted-types",
+    "version": "2.0.7",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "csstype",
+    "version": "3.2.3",
+    "authors": [
+      "Fredrik Nicol <fredrik.nicol@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/frenic/csstype",
+    "group": "播放器界面"
+  },
+  {
+    "name": "dompurify",
+    "version": "3.4.15",
+    "authors": [
+      "Dr.-Ing. Mario Heiderich, Cure53 <mario@cure53.de> (https://cure53.de/)"
+    ],
+    "license": "(MPL-2.0 OR Apache-2.0)",
+    "url": "https://github.com/cure53/DOMPurify.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "js-tokens",
+    "version": "4.0.0",
+    "authors": [
+      "Simon Lydell"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/lydell/js-tokens",
+    "group": "播放器界面"
+  },
+  {
+    "name": "loose-envify",
+    "version": "1.4.0",
+    "authors": [
+      "Andres Suarez <zertosh@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/zertosh/loose-envify.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "lucide-react",
+    "version": "0.469.0",
+    "authors": [
+      "Eric Fennis"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/lucide-icons/lucide.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "marked",
+    "version": "18.0.12",
+    "authors": [
+      "Christopher Jeffrey"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/markedjs/marked.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "react",
+    "version": "18.3.1",
+    "authors": [
+      "Copyright (c) Facebook, Inc. and its affiliates."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/facebook/react.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "react-dom",
+    "version": "18.3.1",
+    "authors": [
+      "Copyright (c) Facebook, Inc. and its affiliates."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/facebook/react.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "scheduler",
+    "version": "0.23.2",
+    "authors": [
+      "Copyright (c) Facebook, Inc. and its affiliates."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/facebook/react.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "zustand",
+    "version": "5.0.15",
+    "authors": [
+      "Paul Henschel"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/pmndrs/zustand.git",
+    "group": "播放器界面"
+  },
+  {
+    "name": "@babel/code-frame",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/compat-data",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/core",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/generator",
+    "version": "7.29.8",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-compilation-targets",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-globals",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-module-imports",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-module-transforms",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-plugin-utils",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-string-parser",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-validator-identifier",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helper-validator-option",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/helpers",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/parser",
+    "version": "7.29.8",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/plugin-transform-react-jsx-self",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/plugin-transform-react-jsx-source",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/template",
+    "version": "7.29.7",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/traverse",
+    "version": "7.29.8",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@babel/types",
+    "version": "7.29.8",
+    "authors": [
+      "The Babel Team (https://babel.dev/team)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/babel/babel.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/aix-ppc64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/aix-ppc64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/aix-ppc64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/android-arm",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/android-arm 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/android-arm",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/android-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/android-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/android-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/android-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/android-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/android-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/darwin-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/darwin-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/darwin-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/darwin-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/darwin-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/darwin-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/freebsd-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/freebsd-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/freebsd-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/freebsd-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/freebsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/freebsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-arm",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-arm 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-arm",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-ia32",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-ia32 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-ia32",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-loong64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-loong64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-loong64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-mips64el",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-mips64el 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-mips64el",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-ppc64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-ppc64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-ppc64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-riscv64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-riscv64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-riscv64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-s390x",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-s390x 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-s390x",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/linux-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/linux-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/linux-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/netbsd-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/netbsd-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/netbsd-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/netbsd-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/netbsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/netbsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/openbsd-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/openbsd-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/openbsd-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/openbsd-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/openbsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/openbsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/openharmony-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/openharmony-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/openharmony-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/sunos-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/sunos-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/sunos-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/win32-arm64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/win32-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/win32-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/win32-ia32",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/win32-ia32 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@esbuild/win32-ia32",
+    "group": "构建工具"
+  },
+  {
+    "name": "@esbuild/win32-x64",
+    "version": "0.25.12",
+    "authors": [
+      "@esbuild/win32-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/evanw/esbuild.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@jridgewell/gen-mapping",
+    "version": "0.3.13",
+    "authors": [
+      "Justin Ridgewell <justin@ridgewell.name>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/jridgewell/sourcemaps.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@jridgewell/remapping",
+    "version": "2.3.5",
+    "authors": [
+      "Justin Ridgewell <justin@ridgewell.name>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/jridgewell/sourcemaps.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@jridgewell/resolve-uri",
+    "version": "3.1.2",
+    "authors": [
+      "Justin Ridgewell <justin@ridgewell.name>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/jridgewell/resolve-uri",
+    "group": "构建工具"
+  },
+  {
+    "name": "@jridgewell/sourcemap-codec",
+    "version": "1.6.0",
+    "authors": [
+      "Justin Ridgewell <justin@ridgewell.name>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/jridgewell/sourcemaps.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@jridgewell/trace-mapping",
+    "version": "0.3.31",
+    "authors": [
+      "Justin Ridgewell <justin@ridgewell.name>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/jridgewell/sourcemaps.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@napi-rs/lzma-linux-x64-gnu",
+    "version": "1.5.1",
+    "authors": [
+      "@napi-rs/lzma-linux-x64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@napi-rs/lzma-linux-x64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rolldown/pluginutils",
+    "version": "1.0.0-beta.27",
+    "authors": [
+      "Copyright (c) 2024-present VoidZero Inc. & Contributors"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rolldown/rolldown.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-android-arm-eabi",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-android-arm-eabi 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-android-arm-eabi",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-android-arm64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-android-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-android-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-darwin-arm64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-darwin-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-darwin-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-darwin-x64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-darwin-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-darwin-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-freebsd-arm64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-freebsd-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-freebsd-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-freebsd-x64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-freebsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-freebsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-arm-gnueabihf",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-arm-gnueabihf 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-arm-gnueabihf",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-arm-musleabihf",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-arm-musleabihf 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-arm-musleabihf",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-arm64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-arm64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-arm64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-arm64-musl",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-arm64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-arm64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-loong64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-loong64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-loong64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-loong64-musl",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-loong64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-loong64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-ppc64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-ppc64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-ppc64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-ppc64-musl",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-ppc64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-ppc64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-riscv64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-riscv64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-riscv64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-riscv64-musl",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-riscv64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-riscv64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-s390x-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-s390x-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-s390x-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-x64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-x64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-x64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-linux-x64-musl",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-linux-x64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-linux-x64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-openbsd-x64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-openbsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-openbsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-openharmony-arm64",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-openharmony-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-openharmony-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-win32-arm64-msvc",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-win32-arm64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-win32-arm64-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-win32-ia32-msvc",
+    "version": "4.63.1",
+    "authors": [
+      "@rollup/rollup-win32-ia32-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@rollup/rollup-win32-ia32-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-win32-x64-gnu",
+    "version": "4.63.1",
+    "authors": [
+      "Lukas Taegert-Atkinson"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rollup/rollup.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@rollup/rollup-win32-x64-msvc",
+    "version": "4.63.1",
+    "authors": [
+      "Lukas Taegert-Atkinson"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rollup/rollup.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/node",
+    "version": "4.3.3",
+    "authors": [
+      "Copyright (c) Tailwind Labs, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tailwindlabs/tailwindcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide",
+    "version": "4.3.3",
+    "authors": [
+      "Copyright (c) Tailwind Labs, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tailwindlabs/tailwindcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-android-arm64",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-android-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-android-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-darwin-arm64",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-darwin-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-darwin-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-darwin-x64",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-darwin-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-darwin-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-freebsd-x64",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-freebsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-freebsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-arm-gnueabihf",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-linux-arm-gnueabihf 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-linux-arm-gnueabihf",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-arm64-gnu",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-linux-arm64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-linux-arm64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-arm64-musl",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-linux-arm64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-linux-arm64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-x64-gnu",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-linux-x64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-linux-x64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-linux-x64-musl",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-linux-x64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-linux-x64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-wasm32-wasi",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-wasm32-wasi 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-wasm32-wasi",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-win32-arm64-msvc",
+    "version": "4.3.3",
+    "authors": [
+      "@tailwindcss/oxide-win32-arm64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/@tailwindcss/oxide-win32-arm64-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/oxide-win32-x64-msvc",
+    "version": "4.3.3",
+    "authors": [
+      "Copyright (c) Tailwind Labs, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tailwindlabs/tailwindcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tailwindcss/vite",
+    "version": "4.3.3",
+    "authors": [
+      "Copyright (c) Tailwind Labs, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tailwindlabs/tailwindcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli",
+    "version": "2.11.4",
+    "authors": [
+      "Copyright (c) 2017 - Present Tauri Apps Contributors"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-darwin-arm64",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-darwin-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-darwin-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-darwin-x64",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-darwin-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-darwin-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-arm-gnueabihf",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-arm-gnueabihf 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-arm-gnueabihf",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-arm64-gnu",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-arm64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-arm64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-arm64-musl",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-arm64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-arm64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-riscv64-gnu",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-riscv64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-riscv64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-x64-gnu",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-x64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-x64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-linux-x64-musl",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-linux-x64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-linux-x64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-win32-arm64-msvc",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-win32-arm64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-win32-arm64-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-win32-ia32-msvc",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-win32-ia32-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://www.npmjs.com/package/@tauri-apps/cli-win32-ia32-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "@tauri-apps/cli-win32-x64-msvc",
+    "version": "2.11.4",
+    "authors": [
+      "@tauri-apps/cli-win32-x64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0 OR MIT",
+    "url": "https://github.com/tauri-apps/tauri.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/babel__core",
+    "version": "7.20.5",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/babel__generator",
+    "version": "7.27.0",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/babel__template",
+    "version": "7.4.4",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/babel__traverse",
+    "version": "7.28.0",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/estree",
+    "version": "1.0.9",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@types/react-dom",
+    "version": "18.3.7",
+    "authors": [
+      "Copyright (c) Microsoft Corporation."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "@vitejs/plugin-react",
+    "version": "4.7.0",
+    "authors": [
+      "Evan You"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/vitejs/vite-plugin-react.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "baseline-browser-mapping",
+    "version": "2.11.21",
+    "authors": [
+      "baseline-browser-mapping 项目贡献者（上游未单列作者）"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/web-platform-dx/baseline-browser-mapping.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "browserslist",
+    "version": "4.28.9",
+    "authors": [
+      "Andrey Sitnik <andrey@sitnik.es>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/browserslist/browserslist",
+    "group": "构建工具"
+  },
+  {
+    "name": "caniuse-lite",
+    "version": "1.0.30001810",
+    "authors": [
+      "Ben Briggs"
+    ],
+    "license": "CC-BY-4.0",
+    "url": "https://github.com/browserslist/caniuse-lite",
+    "group": "构建工具"
+  },
+  {
+    "name": "convert-source-map",
+    "version": "2.0.0",
+    "authors": [
+      "Thorsten Lorenz"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/thlorenz/convert-source-map.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "debug",
+    "version": "4.4.3",
+    "authors": [
+      "Josh Junon (https://github.com/qix-)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/debug-js/debug.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "detect-libc",
+    "version": "2.1.2",
+    "authors": [
+      "Lovell Fuller <npm@lovell.info>"
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/lovell/detect-libc.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "electron-to-chromium",
+    "version": "1.5.422",
+    "authors": [
+      "Kilian Valkhof"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/Kilian/electron-to-chromium.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "enhanced-resolve",
+    "version": "5.24.5",
+    "authors": [
+      "Tobias Koppers @sokra"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/webpack/enhanced-resolve.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "esbuild",
+    "version": "0.25.12",
+    "authors": [
+      "Copyright (c) 2020 Evan Wallace"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/evanw/esbuild.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "escalade",
+    "version": "3.2.0",
+    "authors": [
+      "Luke Edwards"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/lukeed/escalade",
+    "group": "构建工具"
+  },
+  {
+    "name": "fdir",
+    "version": "6.5.0",
+    "authors": [
+      "thecodrr <thecodrr@protonmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/thecodrr/fdir.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "fsevents",
+    "version": "2.3.3",
+    "authors": [
+      "fsevents 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MIT",
+    "url": "https://www.npmjs.com/package/fsevents",
+    "group": "构建工具"
+  },
+  {
+    "name": "gensync",
+    "version": "1.0.0-beta.2",
+    "authors": [
+      "Logan Smyth <loganfsmyth@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/loganfsmyth/gensync.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "graceful-fs",
+    "version": "4.2.11",
+    "authors": [
+      "Copyright (c) 2011-2022 Isaac Z. Schlueter, Ben Noordhuis, and Contributors"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/isaacs/node-graceful-fs",
+    "group": "构建工具"
+  },
+  {
+    "name": "jiti",
+    "version": "2.7.0",
+    "authors": [
+      "Copyright (c) Pooya Parsa <pooya@pi0.io>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/unjs/jiti",
+    "group": "构建工具"
+  },
+  {
+    "name": "jsesc",
+    "version": "3.1.0",
+    "authors": [
+      "Mathias Bynens"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/mathiasbynens/jsesc.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "json5",
+    "version": "2.2.3",
+    "authors": [
+      "Aseem Kishore <aseem.kishore@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/json5/json5.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/parcel-bundler/lightningcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-android-arm64",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-android-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-android-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-darwin-arm64",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-darwin-arm64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-darwin-arm64",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-darwin-x64",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-darwin-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-darwin-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-freebsd-x64",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-freebsd-x64 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-freebsd-x64",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-linux-arm-gnueabihf",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-linux-arm-gnueabihf 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-linux-arm-gnueabihf",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-linux-arm64-gnu",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-linux-arm64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-linux-arm64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-linux-arm64-musl",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-linux-arm64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-linux-arm64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-linux-x64-gnu",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-linux-x64-gnu 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-linux-x64-gnu",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-linux-x64-musl",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-linux-x64-musl 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-linux-x64-musl",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-win32-arm64-msvc",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-win32-arm64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://www.npmjs.com/package/lightningcss-win32-arm64-msvc",
+    "group": "构建工具"
+  },
+  {
+    "name": "lightningcss-win32-x64-msvc",
+    "version": "1.32.0",
+    "authors": [
+      "lightningcss-win32-x64-msvc 项目贡献者（上游未单列作者）"
+    ],
+    "license": "MPL-2.0",
+    "url": "https://github.com/parcel-bundler/lightningcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "lru-cache",
+    "version": "5.1.1",
+    "authors": [
+      "Isaac Z. Schlueter <i@izs.me>"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/isaacs/node-lru-cache.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "magic-string",
+    "version": "0.30.21",
+    "authors": [
+      "Rich Harris"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/Rich-Harris/magic-string.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "ms",
+    "version": "2.1.3",
+    "authors": [
+      "Copyright (c) 2020 Vercel, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/vercel/ms",
+    "group": "构建工具"
+  },
+  {
+    "name": "nanoid",
+    "version": "3.3.18",
+    "authors": [
+      "Andrey Sitnik <andrey@sitnik.ru>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/ai/nanoid",
+    "group": "构建工具"
+  },
+  {
+    "name": "node-releases",
+    "version": "2.0.54",
+    "authors": [
+      "Sergey Rubanov <chi187@gmail.com>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/chicoxyzzy/node-releases.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "picocolors",
+    "version": "1.1.1",
+    "authors": [
+      "Alexey Raspopov"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/alexeyraspopov/picocolors",
+    "group": "构建工具"
+  },
+  {
+    "name": "picomatch",
+    "version": "4.0.7",
+    "authors": [
+      "Jon Schlinkert (https://github.com/jonschlinkert)"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/micromatch/picomatch",
+    "group": "构建工具"
+  },
+  {
+    "name": "postcss",
+    "version": "8.5.28",
+    "authors": [
+      "Andrey Sitnik <andrey@sitnik.es>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/postcss/postcss",
+    "group": "构建工具"
+  },
+  {
+    "name": "react-refresh",
+    "version": "0.17.0",
+    "authors": [
+      "Copyright (c) Meta Platforms, Inc. and affiliates."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/facebook/react.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "rollup",
+    "version": "4.63.1",
+    "authors": [
+      "Rich Harris"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/rollup/rollup.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "semver",
+    "version": "6.3.1",
+    "authors": [
+      "GitHub Inc."
+    ],
+    "license": "ISC",
+    "url": "https://github.com/npm/node-semver.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "source-map-js",
+    "version": "1.2.1",
+    "authors": [
+      "Valentin 7rulnik Semirulnik <v7rulnik@gmail.com>"
+    ],
+    "license": "BSD-3-Clause",
+    "url": "https://github.com/7rulnik/source-map-js",
+    "group": "构建工具"
+  },
+  {
+    "name": "tailwindcss",
+    "version": "4.3.3",
+    "authors": [
+      "Copyright (c) Tailwind Labs, Inc."
+    ],
+    "license": "MIT",
+    "url": "https://github.com/tailwindlabs/tailwindcss.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "tapable",
+    "version": "2.3.3",
+    "authors": [
+      "Tobias Koppers @sokra"
+    ],
+    "license": "MIT",
+    "url": "http://github.com/webpack/tapable.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "tinyglobby",
+    "version": "0.2.17",
+    "authors": [
+      "Superchupu"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/SuperchupuDev/tinyglobby.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "typescript",
+    "version": "5.9.3",
+    "authors": [
+      "Microsoft Corp."
+    ],
+    "license": "Apache-2.0",
+    "url": "https://github.com/microsoft/TypeScript.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "update-browserslist-db",
+    "version": "1.3.2",
+    "authors": [
+      "Andrey Sitnik <andrey@sitnik.es>"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/browserslist/update-db",
+    "group": "构建工具"
+  },
+  {
+    "name": "vite",
+    "version": "6.4.3",
+    "authors": [
+      "Evan You"
+    ],
+    "license": "MIT",
+    "url": "https://github.com/vitejs/vite.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "yallist",
+    "version": "3.1.1",
+    "authors": [
+      "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me/)"
+    ],
+    "license": "ISC",
+    "url": "https://github.com/isaacs/yallist.git",
+    "group": "构建工具"
+  },
+  {
+    "name": "Folia Web",
+    "version": "0.7.29 · 095e7f84738e",
+    "authors": [
+      "chthollyphile；Folia 项目贡献者"
+    ],
+    "license": "AGPL-3.0",
+    "url": "https://github.com/folia-ce/folia-web",
+    "group": "歌词视觉效果"
+  }
+]

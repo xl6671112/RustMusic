@@ -1,0 +1,1887 @@
+/// 网易云音乐接口客户端（eapi / weapi 协议）
+///
+/// 仅以官方客户端同款协议访问音乐平台：搜索与播放链接获取按用户账号自身
+/// 权益进行（未登录可播放免费曲目，登录后按其会员权益），不包含任何绕过
+/// 付费/版权限制的功能。
+use aes::cipher::{generic_array::GenericArray, BlockEncrypt, KeyInit};
+use md5::{Digest, Md5};
+use num_bigint::BigUint;
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
+const WEAPI_PRESET: &[u8; 16] = b"0CoJUm6Qyw8W8jud";
+const WEAPI_IV: &[u8; 16] = b"0102030405060708";
+const WEAPI_RSA_E_HEX: &str = "010001";
+const WEAPI_RSA_N_HEX: &str = "e0b509f6259df8642dbc35662901477df22677ec152b5ff68ace615bb7b725152b3ab17a876aea8a5aa76d2e417629ec4ee341f56135fccf695280104e0312ecbda92557c93870114af6c9d05c4f7f0c3685b7a46bee255932575cce10b424d813cfe4875d3e82047b97ddef52741d546b8e289dc6935b3ece0462db0a22b8e7";
+const UA: &str =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+const TIMEOUT: Duration = Duration::from_secs(12);
+
+// ---------- 加密 ----------
+
+#[allow(dead_code)]
+fn md5_hex(data: &[u8]) -> String {
+    let mut h = Md5::new();
+    h.update(data);
+    hex::encode(h.finalize())
+}
+
+#[allow(dead_code)]
+fn aes_ecb_encrypt_hex(key: &[u8; 16], data: &[u8]) -> String {
+    let cipher = aes::Aes128::new(GenericArray::from_slice(key));
+    let mut padded = data.to_vec();
+    let pad = 16 - (padded.len() % 16);
+    padded.extend(std::iter::repeat(pad as u8).take(pad));
+    let mut out = Vec::with_capacity(padded.len());
+    for chunk in padded.chunks(16) {
+        let mut block = GenericArray::clone_from_slice(chunk);
+        cipher.encrypt_block(&mut block);
+        out.extend_from_slice(&block);
+    }
+    hex::encode_upper(out)
+}
+
+/// AES-128-CBC + PKCS7（手写链接：c_i = E(p_i XOR c_{i-1})）
+fn aes_cbc_encrypt(key: &[u8; 16], data: &[u8], iv: &[u8; 16]) -> Vec<u8> {
+    let cipher = aes::Aes128::new(GenericArray::from_slice(key));
+    let mut padded = data.to_vec();
+    let pad = 16 - (padded.len() % 16);
+    padded.extend(std::iter::repeat(pad as u8).take(pad));
+    let mut prev = *iv;
+    let mut out = Vec::with_capacity(padded.len());
+    for chunk in padded.chunks_mut(16) {
+        for (b, p) in chunk.iter_mut().zip(prev.iter()) {
+            *b ^= p;
+        }
+        let mut block = GenericArray::clone_from_slice(chunk);
+        cipher.encrypt_block(&mut block);
+        prev.copy_from_slice(&block);
+        out.extend_from_slice(&block);
+    }
+    out
+}
+
+fn b64_encode(data: &[u8]) -> String {
+    use base64::Engine;
+    base64::engine::general_purpose::STANDARD.encode(data)
+}
+
+fn rsa_encrypt_hex(input: &[u8]) -> Result<String, String> {
+    let mut rev = input.to_vec();
+    rev.reverse();
+    // 文本按十六进制字节解读为大整数，裸 RSA（无填充，与平台约定一致）
+    let m_bytes = hex::decode(&hex::encode(&rev)).map_err(|e| e.to_string())?;
+    let e_bytes = hex::decode(WEAPI_RSA_E_HEX)
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("RSA 指数配置错误", "Invalid RSA exponent config")))?;
+    let n_bytes = hex::decode(WEAPI_RSA_N_HEX)
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("RSA 模数配置错误", "Invalid RSA modulus config")))?;
+    let m = BigUint::from_bytes_be(&m_bytes);
+    let e = BigUint::from_bytes_be(&e_bytes);
+    let n = BigUint::from_bytes_be(&n_bytes);
+    let c = m.modpow(&e, &n);
+    let s = hex::encode_upper(c.to_bytes_be());
+    Ok(format!("{s:0>256}"))
+}
+
+fn random_secret() -> [u8; 16] {
+    use rand::Rng;
+    const CHARSET: &[u8] = b"poiuytrewqasdfghjklmnbvcxzQWERTYUIOPASDFGHJKLZXCVBNM0123456789";
+    let mut rng = rand::thread_rng();
+    let mut out = [0u8; 16];
+    for b in out.iter_mut() {
+        *b = CHARSET[rng.gen_range(0..CHARSET.len())];
+    }
+    out
+}
+
+fn form_encode(s: &str) -> String {
+    use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+    utf8_percent_encode(s, NON_ALPHANUMERIC).to_string()
+}
+
+/// weapi 请求体（AES-CBC 双层 + RSA），返回 "params=...&encSecKey=..."
+fn weapi_body(payload: &str) -> Result<String, String> {
+    let secret = random_secret();
+    let first = b64_encode(&aes_cbc_encrypt(WEAPI_PRESET, payload.as_bytes(), WEAPI_IV));
+    let second = b64_encode(&aes_cbc_encrypt(&secret, first.as_bytes(), WEAPI_IV));
+    let enc_sec = rsa_encrypt_hex(&secret)?;
+    Ok(format!(
+        "params={}&encSecKey={}",
+        form_encode(&second),
+        enc_sec
+    ))
+}
+
+// ---------- HTTP ----------
+
+fn cookie_header(music_u: Option<&str>) -> String {
+    match music_u {
+        Some(u) if !u.is_empty() => format!("os=pc; appver=2.10.13; MUSIC_U={u}"),
+        _ => "os=pc; appver=2.10.13".to_string(),
+    }
+}
+
+fn post_form(url: &str, body: &str, music_u: Option<&str>) -> Result<serde_json::Value, String> {
+    // 传输级错误（DNS/连接/TLS）自动重试一次（issue#8-2：网络/代理切换自愈）
+    let resp = crate::net::with_retry(|| {
+        ureq::post(url)
+            .set("Content-Type", "application/x-www-form-urlencoded")
+            .set("User-Agent", UA)
+            .set("Cookie", &cookie_header(music_u))
+            .timeout(TIMEOUT)
+            .send_string(body)
+    })
+    .map_err(|e| format!("{}: {e}", crate::i18n::pick("网易云接口请求失败", "NetEase API request failed")))?;
+    let status = resp.status();
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("网易云接口响应读取失败", "Failed to read NetEase API response")))?;
+    serde_json::from_str(&text).map_err(|e| {
+        let head: String = text.chars().take(180).collect();
+        if crate::i18n::is_en() {
+            format!("Unexpected NetEase API response (HTTP {status}): {e} | body: {head}")
+        } else {
+            format!("网易云接口响应异常（HTTP {status}）: {e} | body: {head}")
+        }
+    })
+}
+
+pub(crate) fn weapi_post(
+    path: &str,
+    payload: &str,
+    music_u: Option<&str>,
+) -> Result<serde_json::Value, String> {
+    let url = if path.starts_with("https://") {
+        path.to_owned()
+    } else {
+        format!("https://music.163.com{path}")
+    };
+    let body = weapi_body(payload)?;
+    post_form(&url, &body, music_u)
+}
+
+/// Unencrypted API endpoint used by Netease cloud upload metadata/publish calls.
+pub(crate) fn api_post(
+    path: &str,
+    payload: &str,
+    music_u: &str,
+) -> Result<serde_json::Value, String> {
+    api_post_at("https://interface.music.163.com", path, payload, music_u)
+}
+
+fn api_post_at(base: &str, path: &str, payload: &str, music_u: &str) -> Result<serde_json::Value, String> {
+    if !matches!(
+        path,
+        "/api/cloud/upload/check" | "/api/upload/cloud/info/v2" | "/api/cloud/pub/v2"
+    ) {
+        return Err("Unsupported Netease API endpoint".into());
+    }
+    let url = format!("{base}{path}");
+    let fields = serde_json::from_str::<serde_json::Value>(payload).map_err(|e| e.to_string())?;
+    let form = fields.as_object().ok_or("Netease API payload must be an object")?
+        .iter().map(|(key, value)| {
+            let value = value.as_str().map(str::to_owned).unwrap_or_else(|| value.to_string());
+            format!("{}={}", form_encode(key), form_encode(&value))
+        }).collect::<Vec<_>>().join("&");
+    // Metadata/publish can outlast ordinary search requests. Retry only this
+    // identical form, never the resource allocation or NOS audio upload.
+    for attempt in 1..=3 {
+        let result = ureq::AgentBuilder::new()
+            .timeout_connect(Duration::from_secs(15))
+            .timeout(Duration::from_secs(60))
+            .build()
+            .post(&url)
+            .set("Content-Type", "application/x-www-form-urlencoded")
+            .set("User-Agent", UA)
+            .set("Referer", "https://music.163.com/")
+            .set("Cookie", &cookie_header(Some(music_u)))
+            .send_string(&form);
+        match result {
+            Ok(response) => return response.into_json()
+                .map_err(|e| format!("网易云 API 响应解析失败: {e}")),
+            Err(error) if attempt < 3 && cloud_transient_transport(&error) => {
+                std::thread::sleep(Duration::from_millis(600 * attempt));
+            }
+            Err(error) => return Err(format!("网易云 API 请求失败（第 {attempt} 次）: {error}")),
+        }
+    }
+    unreachable!("Each final attempt returns its result")
+}
+
+fn cloud_transient_transport(error: &ureq::Error) -> bool {
+    use std::{error::Error, io::ErrorKind};
+    let ureq::Error::Transport(transport) = error else { return false; };
+    if transport.kind() == ureq::ErrorKind::Dns {
+        return true;
+    }
+    // A malformed status line, invalid URL or certificate is not a timeout.
+    // Inspect the typed I/O cause, including Windows WSAETIMEDOUT (10060).
+    let mut source = transport.source();
+    while let Some(cause) = source {
+        if let Some(io) = cause.downcast_ref::<std::io::Error>() {
+            return matches!(io.kind(),
+                ErrorKind::TimedOut | ErrorKind::WouldBlock | ErrorKind::Interrupted |
+                ErrorKind::ConnectionReset | ErrorKind::ConnectionAborted |
+                ErrorKind::ConnectionRefused | ErrorKind::NotConnected |
+                ErrorKind::BrokenPipe | ErrorKind::UnexpectedEof);
+        }
+        source = cause.source();
+    }
+    false
+}
+
+#[cfg(test)]
+mod cloud_transport_tests {
+    use super::*;
+    use std::{io::{Read, Write}, net::TcpListener};
+
+    fn read_form(stream: &mut std::net::TcpStream) -> Vec<u8> {
+        stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+        let mut data = Vec::new();
+        loop {
+            let mut buf = [0u8; 1024];
+            let n = stream.read(&mut buf).unwrap();
+            assert!(n > 0, "Metadata retry must retain a complete request body");
+            data.extend_from_slice(&buf[..n]);
+            if let Some(end) = data.windows(4).position(|w| w == b"\r\n\r\n") {
+                let head = String::from_utf8_lossy(&data[..end]);
+                let length = head.lines().find_map(|line| {
+                    let (name, value) = line.split_once(':')?;
+                    name.eq_ignore_ascii_case("content-length").then(|| value.trim().parse::<usize>().unwrap())
+                }).unwrap();
+                if data.len() >= end + 4 + length { return data[end + 4..].to_vec(); }
+            }
+        }
+    }
+
+    #[test]
+    fn metadata_transport_retry_preserves_resource_identity_and_stops_at_three() {
+        for succeed in [true, false] {
+            let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+            let base = format!("http://{}", listener.local_addr().unwrap());
+            let server = std::thread::spawn(move || {
+                let mut forms = Vec::new();
+                for attempt in 1..=if succeed { 2 } else { 3 } {
+                    let (mut stream, _) = listener.accept().unwrap();
+                    forms.push(read_form(&mut stream));
+                    if succeed && attempt == 2 {
+                        let body = r#"{"code":200,"songId":42}"#;
+                        write!(stream, "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+                    }
+                    // Closing before the status line simulates a dropped connection.
+                }
+                assert!(forms.windows(2).all(|pair| pair[0] == pair[1]),
+                    "Retry metadata, not a newly allocated or re-uploaded audio resource");
+                assert!(String::from_utf8_lossy(&forms[0]).contains("song=Instrumental%20%26%20Test"));
+            });
+            let result = api_post_at(&base, "/api/upload/cloud/info/v2",
+                r#"{"song":"Instrumental & Test","md5":"same-md5","resourceId":"same-resource","songid":42}"#,
+                "fixture-token");
+            assert_eq!(result.is_ok(), succeed, "Only a successful metadata response may finish the retry");
+            if !succeed {
+                assert!(result.unwrap_err().contains("第 3 次"), "Retries must have a finite limit");
+            }
+            server.join().unwrap();
+        }
+    }
+
+    #[test]
+    fn invalid_metadata_and_protocol_errors_are_not_retried() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        for payload in ["not json", "[]", "null"] {
+            assert!(api_post_at(&base, "/api/upload/cloud/info/v2", payload, "fixture-token").is_err());
+        }
+        listener.set_nonblocking(true).unwrap();
+        assert!(listener.accept().is_err(), "Invalid metadata must never send a request");
+        listener.set_nonblocking(false).unwrap();
+        let server = std::thread::spawn(move || {
+            for response in ["not HTTP\r\n\r\n", "HTTP/1.1 200 OK\r\nContent-Length: 8\r\nConnection: close\r\n\r\nnot json"] {
+                let (mut stream, _) = listener.accept().unwrap();
+                read_form(&mut stream);
+                stream.write_all(response.as_bytes()).unwrap();
+            }
+        });
+        for _ in 0..2 {
+            assert!(api_post_at(&base, "/api/upload/cloud/info/v2", "{}", "fixture-token").is_err(),
+                "Malformed protocol or JSON must not turn into a successful upload");
+        }
+        server.join().unwrap();
+        for kind in [std::io::ErrorKind::TimedOut, std::io::ErrorKind::ConnectionReset] {
+            assert!(cloud_transient_transport(&std::io::Error::from(kind).into()),
+                "Typed socket timeouts and resets are transient, regardless of error text");
+        }
+        assert!(!cloud_transient_transport(&std::io::Error::from(std::io::ErrorKind::InvalidData).into()));
+        #[cfg(windows)]
+        assert!(cloud_transient_transport(&std::io::Error::from_raw_os_error(10060).into()),
+            "The screenshot's WSAETIMEDOUT must retry without matching its English message");
+    }
+
+    #[test]
+    fn cloud_metadata_uses_form_encoding_and_preserves_http_failures() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", listener.local_addr().unwrap());
+        let server = std::thread::spawn(move || {
+            for path in ["/api/cloud/upload/check", "/api/upload/cloud/info/v2", "/api/cloud/pub/v2"] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream.set_read_timeout(Some(Duration::from_secs(3))).unwrap();
+                let mut data = Vec::new();
+                loop {
+                    let mut buf = [0u8; 1024];
+                    let n = stream.read(&mut buf).unwrap();
+                    assert!(n > 0, "Request ended before its complete form body");
+                    data.extend_from_slice(&buf[..n]);
+                    if let Some(end) = data.windows(4).position(|w| w == b"\r\n\r\n") {
+                        let head = String::from_utf8_lossy(&data[..end]);
+                        let length = head.lines().find_map(|line| {
+                            let (name, value) = line.split_once(':')?;
+                            name.eq_ignore_ascii_case("content-length").then(|| value.trim().parse::<usize>().unwrap())
+                        }).unwrap();
+                        if data.len() >= end + 4 + length { break; }
+                    }
+                }
+                let request = String::from_utf8(data).unwrap();
+                assert!(request.starts_with(&format!("POST {path} HTTP/1.1")));
+                assert!(request.to_lowercase().contains("content-type: application/x-www-form-urlencoded"));
+                assert!(request.contains("MUSIC_U=fixture-token"));
+                assert!(request.ends_with("song=Instrumental%20%26%20Test"));
+                let status = if path == "/api/cloud/pub/v2" { "503 Service Unavailable" } else { "200 OK" };
+                let body = r#"{"code":200,"songId":42}"#;
+                write!(stream, "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len()).unwrap();
+            }
+        });
+        let payload = r#"{"song":"Instrumental & Test"}"#;
+        for path in ["/api/cloud/upload/check", "/api/upload/cloud/info/v2"] {
+            assert_eq!(api_post_at(&base, path, payload, "fixture-token").unwrap()["songId"], 42);
+        }
+        assert!(api_post_at(&base, "/api/cloud/pub/v2", payload, "fixture-token").is_err(), "A failing HTTP publish must not be reported as uploaded");
+        assert!(api_post_at(&base, "/arbitrary", payload, "fixture-token").is_err());
+        server.join().unwrap();
+    }
+}
+
+/// Fetch real metadata for account favorites without inventing placeholder songs.
+pub fn songs_by_ids(ids: &[i64], music_u: &str) -> Result<Vec<NetSong>, String> {
+    let mut songs = Vec::new();
+    for batch in ids.chunks(200) {
+        let payload = serde_json::json!({
+            "c": serde_json::to_string(&batch.iter().map(|id| serde_json::json!({"id":id})).collect::<Vec<_>>()).map_err(|e| e.to_string())?,
+            "ids": serde_json::to_string(batch).map_err(|e| e.to_string())?,
+            "csrf_token": ""
+        });
+        let result = weapi_post("/weapi/v3/song/detail", &payload.to_string(), Some(music_u))?;
+        if result["code"].as_i64() != Some(200) {
+            return Err(format!("读取收藏歌曲详情失败：{}", result["code"]));
+        }
+        let rows: Vec<NetSong> = result["songs"].as_array()
+            .ok_or_else(|| "读取收藏歌曲详情失败：缺少 songs".to_string())?
+            .iter().filter_map(|song| serde_json::from_value(song.clone()).ok())
+            .collect();
+        songs.extend(rows);
+    }
+    Ok(songs)
+}
+
+// ---------- 数据模型 ----------
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct NetSong {
+    pub id: i64,
+    pub name: String,
+    #[serde(default)]
+    pub ar: Vec<NetArtist>,
+    #[serde(default, alias = "artists", skip_serializing)]
+    pub ar_legacy: Vec<NetArtist>,
+    #[serde(default)]
+    pub al: NetAlbum,
+    #[serde(default, alias = "album", skip_serializing)]
+    pub al_legacy: serde_json::Value,
+    #[serde(default)]
+    pub dt: i64,
+    #[serde(default, alias = "duration", skip_serializing)]
+    pub dt_legacy: i64,
+    #[serde(default)]
+    pub fee: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct NetArtist {
+    #[serde(default, deserialize_with = "nullable_label")]
+    pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct NetAlbum {
+    #[serde(default, deserialize_with = "nullable_label")]
+    pub name: String,
+    #[serde(default, rename = "picUrl")]
+    pub pic_url: Option<String>,
+}
+
+fn nullable_label<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
+    Ok(Option::<String>::deserialize(deserializer)?.unwrap_or_default())
+}
+
+#[cfg(test)]
+mod metadata_tests {
+    use super::*;
+
+    #[test]
+    fn nullable_artist_and_album_labels_do_not_discard_a_real_song() {
+        let song: NetSong = serde_json::from_value(serde_json::json!({
+            "id": 1452247189, "name": "Real song title",
+            "ar": [{"name": null}], "al": {"name": null},
+        })).expect("Optional provider labels may be null without losing a favorite with a real ID and title");
+        assert_eq!(song.id, 1452247189);
+        assert_eq!(song.name, "Real song title");
+        assert!(song.artist_str().is_empty());
+        assert!(song.album_name().is_empty());
+        for label in [serde_json::json!({}), serde_json::json!({"name": "Real label"})] {
+            let artist: NetArtist = serde_json::from_value(label.clone()).unwrap();
+            let album: NetAlbum = serde_json::from_value(label.clone()).unwrap();
+            let expected = label["name"].as_str().unwrap_or_default();
+            assert_eq!(artist.name, expected, "Missing labels retain the existing empty default");
+            assert_eq!(album.name, expected, "Present labels remain unchanged");
+        }
+    }
+
+    #[test]
+    fn nullable_optional_labels_do_not_allow_missing_titles_or_malformed_labels() {
+        for value in [serde_json::json!({"id": 42}), serde_json::json!({"id": 42, "name": null})] {
+            assert!(serde_json::from_value::<NetSong>(value).is_err(),
+                "A real title remains required; compatibility must not fabricate favorite metadata");
+        }
+        assert!(serde_json::from_value::<NetArtist>(serde_json::json!({"name": 42})).is_err());
+        assert!(serde_json::from_value::<NetAlbum>(serde_json::json!({"name": 42})).is_err(),
+            "Only null and missing labels default, not arbitrary malformed values");
+    }
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct NetSearchResult {
+    pub total: i64,
+    pub songs: Vec<NetSong>,
+}
+
+#[allow(dead_code)]
+impl NetSong {
+    pub fn artist_str(&self) -> String {
+        let artists = if self.ar.is_empty() {
+            &self.ar_legacy
+        } else {
+            &self.ar
+        };
+        artists
+            .iter()
+            .map(|a| a.name.as_str())
+            .collect::<Vec<_>>()
+            .join(" / ")
+    }
+
+    pub fn duration_ms(&self) -> i64 {
+        if self.dt > 0 {
+            self.dt
+        } else {
+            self.dt_legacy
+        }
+    }
+
+    pub fn album_name(&self) -> String {
+        if !self.al.name.is_empty() {
+            return self.al.name.clone();
+        }
+        self.al_legacy
+            .get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string()
+    }
+
+    pub fn cover_url(&self) -> Option<String> {
+        if let Some(u) = &self.al.pic_url {
+            return Some(u.clone());
+        }
+        self.al_legacy
+            .get("picUrl")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
+    }
+}
+
+// ---------- 业务接口 ----------
+
+/// 搜索歌曲（标准 web 搜索接口，匿名可用，字段兼容新旧两套）
+pub fn search(
+    keyword: &str,
+    limit: i64,
+    offset: i64,
+    music_u: Option<&str>,
+) -> Result<NetSearchResult, String> {
+    let keyword = keyword.trim();
+    if keyword.is_empty() {
+        return Ok(NetSearchResult {
+            total: 0,
+            songs: vec![],
+        });
+    }
+    let payload = serde_json::json!({
+        "s": keyword, "type": 1, "offset": offset,
+        "limit": limit, "total": true
+    })
+    .to_string();
+
+    let resp = weapi_post("/weapi/search/get", &payload, music_u)?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(if crate::i18n::is_en() {
+            format!("NetEase search failed (code {code})")
+        } else {
+            format!("网易云搜索失败（code {code}）")
+        });
+    }
+    let songs_json = resp
+        .pointer("/result/songs")
+        .and_then(|s| s.as_array())
+        .cloned()
+        .unwrap_or_default();
+    let total = resp
+        .pointer("/result/songCount")
+        .and_then(|c| c.as_i64())
+        .unwrap_or(songs_json.len() as i64);
+    let mut songs: Vec<NetSong> = songs_json
+        .into_iter()
+        .filter_map(|s| serde_json::from_value(s).ok())
+        .map(|mut s: NetSong| {
+            // 归一化：旧版字段（artists/album/duration）并入新版字段（ar/al/dt），
+            // 保证前端始终读到一致的字段
+            if s.ar.is_empty() {
+                s.ar = std::mem::take(&mut s.ar_legacy);
+            }
+            if s.dt == 0 {
+                s.dt = s.dt_legacy;
+            }
+            if s.al.name.is_empty() {
+                s.al.name = s
+                    .al_legacy
+                    .get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+            }
+            if s.al.pic_url.is_none() {
+                s.al.pic_url = s
+                    .al_legacy
+                    .get("picUrl")
+                    .and_then(|v| v.as_str())
+                    .map(|x| x.to_string());
+            }
+            s
+        })
+        .collect();
+    // 搜索接口的专辑对象常常缺少封面，批量补一次歌曲详情
+    enrich_covers(&mut songs, music_u);
+    Ok(NetSearchResult { total, songs })
+}
+
+/// 批量拉取歌曲详情，补齐缺失的专辑封面 picUrl
+fn enrich_covers(songs: &mut [NetSong], music_u: Option<&str>) {
+    let missing: Vec<i64> = songs
+        .iter()
+        .filter(|s| s.al.pic_url.is_none() && s.al_legacy.get("picUrl").is_none())
+        .map(|s| s.id)
+        .collect();
+    if missing.is_empty() {
+        return;
+    }
+    let ids_json = serde_json::to_string(&missing).unwrap_or_default();
+    let c_json = serde_json::to_string(
+        &missing
+            .iter()
+            .map(|id| serde_json::json!({ "id": id }))
+            .collect::<Vec<_>>(),
+    )
+    .unwrap_or_default();
+    let payload = serde_json::json!({ "c": c_json, "ids": ids_json, "csrf_token": "" }).to_string();
+    if let Ok(resp) = weapi_post("/weapi/v3/song/detail", &payload, music_u) {
+        if let Some(details) = resp.get("songs").and_then(|s| s.as_array()) {
+            for d in details {
+                let id = d.get("id").and_then(|v| v.as_i64());
+                let pic = d
+                    .pointer("/al/picUrl")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
+                if let (Some(id), Some(pic)) = (id, pic) {
+                    if let Some(s) = songs.iter_mut().find(|s| s.id == id) {
+                        if s.al.pic_url.is_none() {
+                            s.al.pic_url = Some(pic);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// 按音质请求播放直链（weapi v1），按 level 取流并逐级回退。
+/// 未登录也可播免费曲目（匿名 weapi 取 standard，官方 Web 同款行为，
+/// 与酷狗/QQ 的“匿名播免费”保持一致）；高音质档位需登录权益
+pub fn song_url(
+    id: i64,
+    music_u: Option<&str>,
+    quality: &str,
+) -> Result<Option<(String, i64, String, String)>, String> {
+    let music_u = music_u.filter(|s| !s.is_empty());
+    // v1 接口按 level 取流：无损权益真实下发 flac（旧接口的 br 阶梯拿不到
+    // 无损档），权益不足时服务端降级并在响应 level 字段如实上报；
+    // 仍逐级回退到 standard 兜底。hires 档（黑胶 SVIP Hi-Res）也纳入阶梯
+    // 设置档位 = 上限：无损档不含 hires level（此前两档共用 hires 优先
+    // 链，权益够时选“无损”也会下发 Hi-Res，档位失去意义）
+    // 官方 App 档位：标准128k / 较高192k / 极高320k(exhigh) / 无损(lossless) /
+    // Hi-Res(hires) / 高清环绕声(jyeffect，黑胶VIP/SVIP) /
+    // 沉浸环绕声(sky，黑胶SVIP) / 超清母带(jymaster，黑胶SVIP)。
+    // 设置档位 = 上限，权益不足或歌曲无对应音源时沿阶梯向下回落。
+    fn level_rank(l: &str) -> i32 {
+        match l {
+            "jymaster" => 80,
+            "sky" => 70,
+            "jyeffect" => 60,
+            "hires" => 50,
+            "lossless" => 40,
+            "exhigh" | "high" => 30,
+            "higher" => 20,
+            "standard" => 10,
+            _ => 0,
+        }
+    }
+    let levels: Vec<(&str, i64)> = match quality {
+        "jymaster" => vec![
+            ("jymaster", 1999_000),
+            ("hires", 1999_000),
+            ("lossless", 999_000),
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+        "sky" => vec![
+            ("sky", 1999_000),
+            ("jyeffect", 1999_000),
+            ("hires", 1999_000),
+            ("lossless", 999_000),
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+        "jyeffect" => vec![
+            ("jyeffect", 1999_000),
+            ("hires", 1999_000),
+            ("lossless", 999_000),
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+        "hires" => vec![
+            ("hires", 1999_000),
+            ("lossless", 999_000),
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+        "lossless" => vec![
+            ("lossless", 999_000),
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+        "higher" => vec![("higher", 192_000), ("standard", 128_000)],
+        "standard" => vec![("standard", 128_000)],
+        // high / exhigh = 极高 320k
+        _ => vec![
+            ("exhigh", 320_000),
+            ("higher", 192_000),
+            ("standard", 128_000),
+        ],
+    };
+    // 匿名只请求 standard：更高档位没有权益必然降级，白耗一次往返
+    let levels: Vec<(&str, i64)> = if music_u.is_none() {
+        vec![("standard", 128_000)]
+    } else {
+        levels
+    };
+    let mut last_hint = crate::i18n::pick(
+        "该歌曲没有可播放的音频",
+        "No playable audio stream for this track",
+    )
+    .to_string();
+    let mut best_fallback: Option<(String, i64, String, String)> = None;
+    for (idx, &(level, default_br)) in levels.iter().enumerate() {
+        // 如果之前服务端自动降级已经拿到了比当前候选档位更高或相等的流，直接返回
+        if let Some(ref best) = best_fallback {
+            if level_rank(&best.3) >= level_rank(level) {
+                return Ok(best_fallback);
+            }
+        }
+        let payload = serde_json::json!({
+            "ids": format!("[{id}]"), "level": level, "encodeType": "flac", "csrf_token": ""
+        })
+        .to_string();
+        let resp = weapi_post("/weapi/song/enhance/player/url/v1", &payload, music_u)?;
+        let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+        if code == 301 || code == 302 {
+            // cookie 失效：换音质也无法挽回，整链中止并让前端引导重新登录
+            return Err(crate::i18n::pick(
+                "网易云登录已过期，请重新登录",
+                "NetEase Cloud session expired, please sign in again",
+            )
+            .into());
+        }
+        if code != 200 {
+            // 其它非 200（如个别档位被权益/风控拒绝）：沿阶梯继续回落，
+            // 不能整链中止——否则选高档时表现为"直接无法获取"
+            continue;
+        }
+        let first = resp.pointer("/data/0").cloned().ok_or_else(|| {
+            crate::i18n::pick(
+                "响应中没有该歌曲的数据",
+                "No track data returned in response",
+            )
+            .to_string()
+        })?;
+        let item_code = first.get("code").and_then(|c| c.as_i64()).unwrap_or(200);
+        let url = first
+            .get("url")
+            .and_then(|u| u.as_str())
+            .map(|s| s.to_string())
+            .filter(|s| !s.is_empty());
+        if let Some(u) = url {
+            let ext = u
+                .split('?')
+                .next()
+                .unwrap_or("")
+                .rsplit('.')
+                .next()
+                .unwrap_or("mp3")
+                .to_lowercase();
+            // 接口返回的 br 单位是 bps（320000 = 320kbps），统一换算成 kbps 供音质显示
+            let real_br = first
+                .get("br")
+                .and_then(|b| b.as_i64())
+                .unwrap_or(default_br)
+                / 1000;
+            // 服务端权益不足或无对应音效时降级并在 level 字段如实上报实际交付档位
+            let delivered_level = first
+                .get("level")
+                .and_then(|l| l.as_str())
+                .unwrap_or("")
+                .to_string();
+            let candidate = (u, real_br, ext, delivered_level.clone());
+            // 命中目标档位，或老接口无 level 字段：直接返回
+            if delivered_level.is_empty() || delivered_level == level {
+                return Ok(Some(candidate));
+            }
+            // 实测坑点：请求 jyeffect（高清环绕声）但曲目无环绕声时，网易云服务端会
+            // 直接跳级降到 exhigh(320k MP3)，跳过该曲目本身具备的 hires/lossless FLAC！
+            // 因此保存当前最优选，若后续阶梯中存在高于 delivered_level 的档位（如 hires），
+            // 继续尝试一次以拿回无损/Hi-Res。
+            let cand_rank = level_rank(&delivered_level);
+            if best_fallback
+                .as_ref()
+                .map_or(true, |b| cand_rank > level_rank(&b.3))
+            {
+                best_fallback = Some(candidate);
+            }
+            let has_better_next = levels[idx + 1..]
+                .iter()
+                .any(|(nl, _)| level_rank(nl) > cand_rank);
+            if !has_better_next {
+                return Ok(best_fallback);
+            }
+            continue;
+        }
+        last_hint = match item_code {
+            404 => crate::i18n::pick(
+                "该歌曲暂无版权音频（可能需要 VIP 或已下架）",
+                "Track unavailable due to copyright restrictions (may require VIP or be removed)",
+            )
+            .into(),
+            402 => crate::i18n::pick(
+                "该内容需要付费",
+                "This track requires purchase or subscription",
+            )
+            .into(),
+            600 => crate::i18n::pick(
+                "该歌曲需要 VIP 权益",
+                "VIP membership required for this track",
+            )
+            .into(),
+            _ => last_hint,
+        };
+    }
+    if best_fallback.is_some() {
+        return Ok(best_fallback);
+    }
+    Err(last_hint)
+}
+
+/// 获取歌词（LRC 文本，含逐行时间标签）
+/// 歌词文本 + 可选行级翻译（tlyric，标准 LRC）
+pub struct LyricText {
+    pub lrc: String,
+    pub trans: Option<String>,
+    pub roman: Option<String>,
+}
+
+pub fn lyric(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, String> {
+    let music_u = music_u.filter(|s| !s.is_empty());
+    let payload = serde_json::json!({
+        "id": id.to_string(), "tv": "-1", "lv": "-1",
+        "rv": "-1", "kv": "-1", "csrf_token": ""
+    })
+    .to_string();
+    let resp = weapi_post("/weapi/song/lyric", &payload, music_u)?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(crate::i18n::pick(
+            format!("获取歌词失败（code {code}）"),
+            format!("Failed to fetch lyrics (code {code})"),
+        ));
+    }
+    let trans = resp
+        .pointer("/tlyric/lyric")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| s.contains('['));
+    let roman = resp
+        .pointer("/romalrc/lyric")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| s.contains('['));
+    let lrc = resp
+        .pointer("/lrc/lyric")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| !s.trim().is_empty());
+    Ok(lrc.map(|lrc| LyricText { lrc, trans, roman }))
+}
+
+/// 获取逐字歌词（yrc），返回转换为增强 LRC 的文本
+/// （[mm:ss.xx]<mm:ss.xx>字...，时间精度 10ms 即 yrc 原始精度）。
+/// 需要开通逐字歌词权益的歌曲才有；没有时返回 None，调用方回落行级 LRC。
+pub fn lyric_yrc(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, String> {
+    let music_u = music_u.filter(|s| !s.is_empty());
+    // 逐字歌词必须走 /lyric/v1 端点（旧 /lyric 端点无 yrc 字段），
+    // yv=-1 请求逐字；需要账号有逐字权益，没有时 yrc 缺失 → 回落行级
+    let payload = serde_json::json!({
+        "id": id.to_string(), "lv": "-1", "tv": "-1",
+        "rv": "-1", "kv": "-1", "yv": "-1", "yrv": "-1", "ytc": "-1",
+        "csrf_token": ""
+    })
+    .to_string();
+    let resp = weapi_post("/weapi/song/lyric/v1?tagVer=1", &payload, music_u)?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Ok(None);
+    }
+    let yrc = resp
+        .pointer("/yrc/lyric")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.trim().is_empty());
+    let Some(yrc) = yrc else { return Ok(None) };
+    let trans = resp
+        .pointer("/tlyric/lyric")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| s.contains('['));
+    let roman = resp
+        .pointer("/romalrc/lyric")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .filter(|s| s.contains('['));
+    Ok(crate::lyrics::yrc_to_enhanced_lrc(yrc).map(|lrc| LyricText { lrc, trans, roman }))
+}
+
+/// 从 music_u 反查账号 ID（老版本登录时未存 uid 的兜底）
+pub fn resolve_uid(music_u: &str) -> Result<i64, String> {
+    let url = "https://music.163.com/api/nuser/account/get?csrf_token=";
+    let resp = ureq::get(url)
+        .set("Cookie", &cookie_header(Some(music_u)))
+        .set("User-Agent", UA)
+        .set("Referer", "https://music.163.com/")
+        .timeout(TIMEOUT)
+        .call()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("账号信息请求失败", "Account info request failed")))?;
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("账号信息读取失败", "Failed to read account info")))?;
+    let v: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("账号信息解析失败", "Failed to parse account info")))?;
+    let code = v.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(if crate::i18n::is_en() {
+            format!("Failed to fetch account info (code {code})")
+        } else {
+            format!("账号信息获取失败（code {code}）")
+        });
+    }
+    v.pointer("/account/id")
+        .and_then(|x| x.as_i64())
+        .ok_or_else(|| crate::i18n::pick("响应中缺少账号 ID", "Response missing account ID").into())
+}
+
+/// 获取登录账号的歌单列表（分页拉全：只取一页的话，超过 60 个歌单的
+/// 账号看不到后面的；“我喜欢的音乐”排在第一个，永远在列表里）
+pub fn user_playlists(
+    uid: i64,
+    music_u: &str,
+) -> Result<Vec<crate::models::UserPlaylistMeta>, String> {
+    const PAGE: i64 = 60;
+    let mut out = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut offset = 0i64;
+    loop {
+        let payload = serde_json::json!({
+            "uid": uid.to_string(),
+            "offset": offset.to_string(),
+            "limit": PAGE.to_string(),
+        })
+        .to_string();
+        let resp = weapi_post("/weapi/user/playlist", &payload, Some(music_u))?;
+        let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+        if code != 200 {
+            return Err(if crate::i18n::is_en() {
+                format!("Failed to fetch playlists (code {code})")
+            } else {
+                format!("获取歌单列表失败（code {code}）")
+            });
+        }
+        let list = resp
+            .pointer("/playlist")
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        let got = list.len() as i64;
+        for p in list {
+            let id = p.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
+            let name = p
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let count = p.get("trackCount").and_then(|v| v.as_i64()).unwrap_or(0);
+            if id != 0 && !name.is_empty() && seen.insert(id) {
+                out.push(crate::models::UserPlaylistMeta {
+                    id,
+                    name,
+                    track_count: count,
+                });
+            }
+        }
+        if got < PAGE || out.len() >= 2000 {
+            break;
+        }
+        offset += PAGE;
+    }
+    Ok(out)
+}
+
+/// 歌单/榜单全量歌曲的短 TTL 缓存：榜单分页每翻一页都全量重拉整个歌单
+///（v6 大包 + 每批 200 的详情补全，翻 3 页 = 3 次全量下载）。
+/// 榜单内容分钟级稳定，5 分钟缓存把翻页成本降为内存切片。
+/// 登录态不同不能混用缓存（可见范围/权益不同），键里带 music_u 比对。
+pub fn playlist_tracks_cached(pid: i64, music_u: &str) -> Result<Vec<NetSong>, String> {
+    static CACHE: std::sync::OnceLock<
+        std::sync::Mutex<
+            std::collections::HashMap<i64, (std::time::Instant, String, Vec<NetSong>)>,
+        >,
+    > = std::sync::OnceLock::new();
+    const TTL: Duration = Duration::from_secs(5 * 60);
+    const CAP: usize = 16;
+    let slot = CACHE.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+    if let Ok(guard) = slot.lock() {
+        if let Some((at, key_u, songs)) = guard.get(&pid) {
+            if at.elapsed() < TTL && *key_u == music_u {
+                return Ok(songs.clone());
+            }
+        }
+    }
+    let songs = playlist_tracks(pid, music_u)?;
+    if let Ok(mut guard) = slot.lock() {
+        while guard.len() >= CAP {
+            if let Some(oldest) = guard
+                .iter()
+                .min_by_key(|(_, (at, _, _))| *at)
+                .map(|(k, _)| *k)
+            {
+                guard.remove(&oldest);
+            } else {
+                break;
+            }
+        }
+        guard.insert(
+            pid,
+            (
+                std::time::Instant::now(),
+                music_u.to_string(),
+                songs.clone(),
+            ),
+        );
+    }
+    Ok(songs)
+}
+
+/// 获取歌单内的全部歌曲（明文 API v6，字段与搜索一致）。
+/// v6 详情的 tracks 数组最多只给 1000 条，超出部分（常见于“我喜欢的音乐”
+/// 这类大歌单）按 trackIds 用 v3 song/detail 分批补全，最终严格按
+/// trackIds 顺序输出。
+pub fn playlist_tracks(pid: i64, music_u: &str) -> Result<Vec<NetSong>, String> {
+    let url = format!("https://music.163.com/api/v6/playlist/detail?id={pid}&n=1000&csrf_token=");
+    let resp = ureq::get(&url)
+        .set("Cookie", &cookie_header(Some(music_u)))
+        .set("User-Agent", UA)
+        .set("Referer", "https://music.163.com/")
+        .timeout(TIMEOUT)
+        .call()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("获取歌单详情失败", "Failed to fetch playlist details")))?;
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("歌单详情读取失败", "Failed to read playlist details")))?;
+    let v: serde_json::Value = serde_json::from_str(&text).map_err(|e| {
+        format!(
+            "{}: {e} | body: {}",
+            crate::i18n::pick("歌单详情解析失败", "Failed to parse playlist details"),
+            text.chars().take(120).collect::<String>()
+        )
+    })?;
+    let code = v.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(if crate::i18n::is_en() {
+            format!("Failed to fetch playlist details (code {code})")
+        } else {
+            format!("获取歌单详情失败（code {code}）")
+        });
+    }
+    let parse_song = |t: &serde_json::Value| -> Option<NetSong> {
+        serde_json::from_value::<NetSong>(t.clone()).ok()
+    };
+    // 详情先归并到 map：v6 的 playlist/tracks（前 1000 条）优先，零请求
+    let mut by_id: std::collections::HashMap<i64, NetSong> = std::collections::HashMap::new();
+    if let Some(tracks) = v.pointer("/playlist/tracks").and_then(|x| x.as_array()) {
+        for t in tracks {
+            if let Some(song) = parse_song(t) {
+                by_id.insert(song.id, song);
+            }
+        }
+    }
+    let ids: Vec<i64> = v
+        .pointer("/playlist/trackIds")
+        .and_then(|x| x.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|t| t.get("id").and_then(|v| v.as_i64()))
+                .collect()
+        })
+        .unwrap_or_default();
+    if ids.is_empty() {
+        // 无 trackIds 的旧响应形状：直接按 tracks 顺序返回
+        let mut out = Vec::new();
+        if let Some(tracks) = v.pointer("/playlist/tracks").and_then(|x| x.as_array()) {
+            for t in tracks {
+                if let Some(song) = parse_song(t) {
+                    out.push(song);
+                }
+            }
+        }
+        return Ok(out);
+    }
+    // 缺失的详情分批补全（单批 200 个 id，URL/负载都不会过长；
+    // 失败只记日志，已有的部分照常导入）
+    let missing: Vec<i64> = ids
+        .iter()
+        .copied()
+        .filter(|id| !by_id.contains_key(id))
+        .collect();
+    for chunk in missing.chunks(200) {
+        let c = chunk
+            .iter()
+            .map(|id| format!(r#"{{"id":{id}}}"#))
+            .collect::<Vec<_>>()
+            .join(",");
+        let ids = chunk
+            .iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        let payload = serde_json::json!({ "c": format!("[{c}]"), "ids": format!("[{ids}]"), "csrf_token": "" })
+            .to_string();
+        let resp = match weapi_post("/weapi/v3/song/detail", &payload, Some(music_u)) {
+            Ok(r) => r,
+            Err(e) => {
+                eprintln!("[netease] playlist {pid}: song/detail chunk failed: {e}");
+                continue;
+            }
+        };
+        if resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0) != 200 {
+            continue;
+        }
+        if let Some(songs) = resp.pointer("/songs").and_then(|x| x.as_array()) {
+            for t in songs {
+                if let Some(song) = parse_song(t) {
+                    by_id.insert(song.id, song);
+                }
+            }
+        }
+    }
+    // 按 trackIds 顺序输出（直接收集 v6 tracks 会截断；顺序以 trackIds 为准）
+    let mut out = Vec::with_capacity(ids.len());
+    for id in &ids {
+        if let Some(song) = by_id.remove(id) {
+            out.push(song);
+        }
+    }
+    if out.len() < ids.len() {
+        eprintln!(
+            "[netease] playlist {pid}: {} of {} tracks resolved（其余已失效/无详情）",
+            out.len(),
+            ids.len()
+        );
+    }
+    Ok(out)
+}
+
+/// 创建扫码登录二维码，返回 (unikey, qr_png_base64)
+pub fn qr_create() -> Result<(String, String), String> {
+    let resp = weapi_post("/weapi/login/qrcode/unikey", r#"{"type":"1"}"#, None)?;
+    let unikey = resp
+        .get("unikey")
+        .and_then(|v| v.as_str())
+        .or_else(|| resp.pointer("/data/unikey").and_then(|v| v.as_str()))
+        .ok_or_else(|| {
+            crate::i18n::pick(
+                format!("获取登录二维码失败: {}", resp),
+                format!("Failed to get login QR code: {}", resp),
+            )
+        })?
+        .to_string();
+
+    let text = format!("https://music.163.com/login?codekey={unikey}");
+    let code = qrcode::QrCode::with_error_correction_level(text.as_bytes(), qrcode::EcLevel::M)
+        .map_err(|e| {
+            crate::i18n::pick(
+                format!("生成二维码失败: {e:?}"),
+                format!("Failed to generate QR code: {e:?}"),
+            )
+        })?;
+    let img = code
+        .render::<image::Luma<u8>>()
+        .quiet_zone(true)
+        .min_dimensions(240, 240)
+        .build();
+    let mut png_bytes = Vec::new();
+    image::DynamicImage::ImageLuma8(img)
+        .write_to(
+            &mut std::io::Cursor::new(&mut png_bytes),
+            image::ImageFormat::Png,
+        )
+        .map_err(|e| {
+            crate::i18n::pick(
+                format!("编码二维码图片失败: {e}"),
+                format!("Failed to encode QR image: {e}"),
+            )
+        })?;
+    let b64 = b64_encode(&png_bytes);
+    Ok((unikey, format!("data:image/png;base64,{b64}")))
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct QrCheckResult {
+    /// waiting | scanned | success | expired
+    pub status: String,
+    pub nickname: Option<String>,
+    pub music_u: Option<String>,
+    pub user_id: Option<i64>,
+}
+
+/// 轮询扫码状态；成功时从 Set-Cookie 提取 MUSIC_U
+pub fn qr_check(key: &str) -> Result<QrCheckResult, String> {
+    let payload = serde_json::json!({ "key": key, "type": "1" }).to_string();
+    let url = "https://music.163.com/weapi/login/qrcode/client/login";
+    let resp = ureq::post(url)
+        .set("Content-Type", "application/x-www-form-urlencoded")
+        .set("User-Agent", UA)
+        .set("Cookie", &cookie_header(None))
+        .timeout(TIMEOUT)
+        .send_string(&weapi_body(&payload)?)
+        .map_err(|e| {
+            crate::i18n::pick(
+                format!("登录状态查询失败: {e}"),
+                format!("Failed to check login status: {e}"),
+            )
+        })?;
+
+    let set_cookies: Vec<String> = resp
+        .all("Set-Cookie")
+        .into_iter()
+        .map(|s| s.to_string())
+        .collect();
+    let text = resp.into_string().map_err(|e| {
+        crate::i18n::pick(
+            format!("登录响应读取失败: {e}"),
+            format!("Failed to read login response: {e}"),
+        )
+    })?;
+    let json: serde_json::Value = serde_json::from_str(&text).map_err(|e| {
+        let head: String = text.chars().take(120).collect();
+        crate::i18n::pick(
+            format!("登录响应解析失败: {e} | body: {head}"),
+            format!("Failed to parse login response: {e} | body: {head}"),
+        )
+    })?;
+
+    let code = json.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    let status = match code {
+        800 => "expired",
+        801 => "waiting",
+        802 => "scanned",
+        803 => "success",
+        _ => "waiting",
+    };
+    if status != "success" {
+        return Ok(QrCheckResult {
+            status: status.into(),
+            nickname: None,
+            music_u: None,
+            user_id: None,
+        });
+    }
+    let music_u = set_cookies
+        .iter()
+        .find_map(|c| {
+            let seg = c.split(';').next()?;
+            seg.trim().strip_prefix("MUSIC_U=").map(|s| s.to_string())
+        })
+        .filter(|s| !s.is_empty());
+    let nickname = json
+        .pointer("/profile/nickname")
+        .and_then(|n| n.as_str())
+        .map(|s| s.to_string());
+    let user_id = json.pointer("/profile/userId").and_then(|n| n.as_i64());
+    if music_u.is_none() {
+        return Err(crate::i18n::pick(
+            "登录成功但未取到登录凭证，请重试",
+            "Signed in, but no session credential returned; please retry",
+        )
+        .into());
+    }
+    Ok(QrCheckResult {
+        status: "success".into(),
+        nickname,
+        music_u,
+        user_id,
+    })
+}
+
+/// 获取账号“我喜欢”列表的歌曲 ID
+pub fn like_list(uid: i64, music_u: &str) -> Result<Vec<i64>, String> {
+    let payload = serde_json::json!({ "uid": uid.to_string(), "csrf_token": "" }).to_string();
+    let resp = weapi_post("/weapi/song/like/get", &payload, Some(music_u))?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(if crate::i18n::is_en() {
+            format!("Failed to fetch liked songs (code {code})")
+        } else {
+            format!("获取喜欢列表失败（code {code}）")
+        });
+    }
+    Ok(resp
+        .get("ids")
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter().filter_map(|v| v.as_i64()).collect())
+        .unwrap_or_default())
+}
+
+/// 收藏 / 取消收藏（写入账号的“我喜欢”）
+pub fn like(id: i64, like: bool, music_u: &str) -> Result<(), String> {
+    let payload = serde_json::json!({
+        "trackId": id.to_string(),
+        "like": if like { "true" } else { "false" },
+        "time": "3", "csrf_token": ""
+    })
+    .to_string();
+    let resp = weapi_post("/weapi/song/like?alg=RT&time=25", &payload, Some(music_u))?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        let msg = resp
+            .get("message")
+            .and_then(|m| m.as_str())
+            .unwrap_or(crate::i18n::pick("未知错误", "Unknown error"));
+        return Err(if crate::i18n::is_en() {
+            format!("Favorite failed (code {code}): {msg}")
+        } else {
+            format!("收藏失败（code {code}）: {msg}")
+        });
+    }
+    Ok(())
+}
+
+// ---------- 榜单 / 随机推荐（匿名可用） ----------
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct NetToplist {
+    pub id: i64,
+    pub name: String,
+    pub cover: String,
+    pub update_frequency: String,
+    pub track_count: i64,
+}
+
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct NetRandomPlaylist {
+    pub id: i64,
+    pub name: String,
+    pub cover: String,
+    pub play_count: i64,
+    pub creator: String,
+    pub songs: Vec<NetSong>,
+}
+
+/// 官方榜单列表（热歌榜/新歌榜/飙升榜等，明文 /api/toplist 匿名可用）。
+/// 榜单 ID 即歌单 ID，曲目可直接用 playlist_tracks 拉取。
+pub fn toplists() -> Result<Vec<NetToplist>, String> {
+    let resp = post_form("https://music.163.com/api/toplist", "", None)?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(if crate::i18n::is_en() {
+            format!("Failed to fetch charts (code {code})")
+        } else {
+            format!("获取榜单列表失败（code {code}）")
+        });
+    }
+    let mut out = Vec::new();
+    if let Some(list) = resp.get("list").and_then(|v| v.as_array()) {
+        for t in list {
+            let id = t.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
+            let name = t
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            if id == 0 || name.is_empty() {
+                continue;
+            }
+            out.push(NetToplist {
+                id,
+                name,
+                cover: t
+                    .get("coverImgUrl")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                update_frequency: t
+                    .get("updateFrequency")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                track_count: t.get("trackCount").and_then(|v| v.as_i64()).unwrap_or(0),
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// 个性化推荐歌单（明文 /api/personalized/playlist 匿名可用），随机歌单的素材池
+fn personalized_playlists(limit: i64) -> Result<Vec<NetRandomPlaylist>, String> {
+    let url = format!("https://music.163.com/api/personalized/playlist?limit={limit}");
+    let resp = ureq::get(&url)
+        .set("Cookie", &cookie_header(None))
+        .set("User-Agent", UA)
+        .set("Referer", "https://music.163.com/")
+        .timeout(TIMEOUT)
+        .call()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("推荐歌单请求失败", "Recommended playlists request failed")))?;
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("{}: {e}", crate::i18n::pick("推荐歌单响应读取失败", "Failed to read recommended playlists response")))?;
+    let v: serde_json::Value =
+        serde_json::from_str(&text)
+            .map_err(|e| format!("{}: {e}", crate::i18n::pick("推荐歌单解析失败", "Failed to parse recommended playlists")))?;
+    if v.get("code").and_then(|c| c.as_i64()) != Some(200) {
+        let code = v.get("code").and_then(|c| c.as_i64()).unwrap_or(-1);
+        return Err(if crate::i18n::is_en() {
+            format!("Failed to fetch recommended playlists (code {code})")
+        } else {
+            format!("获取推荐歌单失败（code {code}）")
+        });
+    }
+    let mut out = Vec::new();
+    if let Some(list) = v.pointer("/result").and_then(|x| x.as_array()) {
+        for p in list {
+            let id = p.get("id").and_then(|x| x.as_i64()).unwrap_or(0);
+            let name = p
+                .get("name")
+                .and_then(|x| x.as_str())
+                .unwrap_or("")
+                .to_string();
+            if id == 0 || name.is_empty() {
+                continue;
+            }
+            out.push(NetRandomPlaylist {
+                id,
+                name,
+                cover: p
+                    .get("picUrl")
+                    .and_then(|x| x.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                play_count: p.get("playCount").and_then(|x| x.as_f64()).unwrap_or(0.0) as i64,
+                creator: p
+                    .pointer("/creator/nickname")
+                    .and_then(|x| x.as_str())
+                    .unwrap_or("")
+                    .to_string(),
+                songs: vec![],
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// 随机推荐歌单：优先从个性化推荐歌单里随机抽一个拉取曲目；个别歌单
+/// 失效/为空时换一个重试；全部失败回落官方榜单随机一张，最后用固定
+/// 榜单 ID 兜底（榜单 ID 即歌单 ID，playlist_tracks 匿名可拉）。
+pub fn random_playlist(music_u: &str) -> Result<NetRandomPlaylist, String> {
+    use rand::seq::SliceRandom;
+    let mut last_err = crate::i18n::pick("未能抽中可用歌单", "No usable playlist found").to_string();
+    if let Ok(mut pool) = personalized_playlists(30) {
+        pool.shuffle(&mut rand::thread_rng());
+        for p in pool.iter().take(3) {
+            match playlist_tracks(p.id, music_u) {
+                Ok(songs) if !songs.is_empty() => {
+                    return Ok(NetRandomPlaylist {
+                        id: p.id,
+                        name: p.name.clone(),
+                        cover: p.cover.clone(),
+                        play_count: p.play_count,
+                        creator: p.creator.clone(),
+                        songs,
+                    });
+                }
+                Ok(_) => last_err = crate::i18n::pick("抽中的歌单暂无曲目", "Selected playlist has no tracks").into(),
+                Err(e) => last_err = e,
+            }
+        }
+    }
+    if let Ok(tops) = toplists() {
+        let usable: Vec<&NetToplist> = tops.iter().filter(|t| t.track_count > 0).collect();
+        if let Some(t) = usable.choose(&mut rand::thread_rng()) {
+            match playlist_tracks(t.id, music_u) {
+                Ok(songs) if !songs.is_empty() => {
+                    return Ok(NetRandomPlaylist {
+                        id: t.id,
+                        name: t.name.clone(),
+                        cover: t.cover.clone(),
+                        play_count: 0,
+                        creator: String::new(),
+                        songs,
+                    });
+                }
+                Ok(_) => {}
+                Err(e) => last_err = e,
+            }
+        }
+    }
+    const FALLBACK: [(i64, &str, &str); 4] = [
+        (3778678, "热歌榜", "Hot Songs"),
+        (3779629, "新歌榜", "New Songs"),
+        (19723756, "飙升榜", "Rising"),
+        (25072823, "原创榜", "Original"),
+    ];
+    use rand::Rng;
+    let pick = FALLBACK[rand::thread_rng().gen_range(0..FALLBACK.len())];
+    let songs = playlist_tracks(pick.0, music_u).map_err(|e| {
+        if crate::i18n::is_en() {
+            format!("Failed to load random playlist: {last_err}; {e}")
+        } else {
+            format!("随机歌单获取失败：{last_err}；{e}")
+        }
+    })?;
+    Ok(NetRandomPlaylist {
+        id: pick.0,
+        name: crate::i18n::pick(pick.1, pick.2).to_string(),
+        cover: String::new(),
+        play_count: 0,
+        creator: String::new(),
+        songs,
+    })
+}
+
+/// 每日推荐歌曲（需登录）：/weapi/v3/discovery/recommend/songs，
+/// 按账号听歌口味生成，每天更新（约 30 首）
+pub fn daily_recommend(music_u: &str) -> Result<Vec<NetSong>, String> {
+    if music_u.is_empty() {
+        return Err(crate::i18n::pick("请先登录网易云账号", "Please sign in to NetEase Cloud Music first").into());
+    }
+    let payload = serde_json::json!({ "csrf_token": "" }).to_string();
+    let resp = weapi_post(
+        "/weapi/v3/discovery/recommend/songs",
+        &payload,
+        Some(music_u),
+    )?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(match code {
+            301 | 302 => crate::i18n::pick(
+                "网易云登录已过期，请重新登录",
+                "NetEase session expired, please log in again",
+            )
+            .into(),
+            _ => if crate::i18n::is_en() {
+                format!("Failed to fetch Daily Recommend (code {code})")
+            } else {
+                format!("获取每日推荐失败（code {code}）")
+            },
+        });
+    }
+    let songs = resp
+        .pointer("/data/dailySongs")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|s| serde_json::from_value::<NetSong>(s.clone()).ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    Ok(songs)
+}
+
+/// 私人 FM（需登录）：/weapi/v1/radio/get，每次返回一批推荐歌曲
+pub fn personal_fm(music_u: &str) -> Result<Vec<NetSong>, String> {
+    if music_u.is_empty() {
+        return Err(crate::i18n::pick("请先登录网易云账号", "Please sign in to NetEase Cloud Music first").into());
+    }
+    let payload = serde_json::json!({ "csrf_token": "" }).to_string();
+    let resp = weapi_post("/weapi/v1/radio/get", &payload, Some(music_u))?;
+    let code = resp.get("code").and_then(|c| c.as_i64()).unwrap_or(0);
+    if code != 200 {
+        return Err(match code {
+            301 | 302 => crate::i18n::pick(
+                "网易云登录已过期，请重新登录",
+                "NetEase session expired, please log in again",
+            )
+            .into(),
+            _ => if crate::i18n::is_en() {
+                format!("Failed to fetch Personal FM (code {code})")
+            } else {
+                format!("获取私人 FM 失败（code {code}）")
+            },
+        });
+    }
+    let songs = resp
+        .get("data")
+        .and_then(|v| v.as_array())
+        .map(|a| {
+            a.iter()
+                .filter_map(|s| serde_json::from_value::<NetSong>(s.clone()).ok())
+                .collect()
+        })
+        .unwrap_or_default();
+    Ok(songs)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn yrc_to_enhanced_lrc() {
+        // 真实样例格式（字节级实测自网易云 API，30 行统计核验）：
+        //   [行start,行dur](start,dur,0)字(start,dur,0)字…
+        // 元组在字**前面**，配它后面的文本段：首元组起始=行首、
+        // 末元组结束=行尾，元组精确铺满整行（不存在"尾巴字"）。
+        let yrc = "[31810,3730](31810,290,0)趁(32100,290,0)年(32390,290,0)少\n[36450,2400](36450,600,0)春(37050,1200,0)风";
+        let out = crate::lyrics::yrc_to_enhanced_lrc(yrc).expect("yrc parsed");
+        let p = crate::lyrics::parse(&out);
+        assert_eq!(p.lines.len(), 2);
+        let l1 = &p.lines[0];
+        assert_eq!(l1.text, "趁年少");
+        assert_eq!(l1.time_ms, Some(31810));
+        let ws = l1.words.as_ref().unwrap();
+        let real: Vec<&crate::models::Word> = ws.iter().filter(|w| !w.text.is_empty()).collect();
+        assert_eq!(real.len(), 3);
+        // 每个字用它**自己**元组的起止：首字起始=行首（漏加/错配都会挂在这）
+        assert_eq!(
+            (real[0].start_ms, real[0].end_ms, real[0].text.as_str()),
+            (31810, 32100, "趁")
+        );
+        assert_eq!((real[1].start_ms, real[1].end_ms), (32100, 32390));
+        assert_eq!(
+            (real[2].start_ms, real[2].end_ms, real[2].text.as_str()),
+            (32390, 32680, "少")
+        );
+        // 末字结束=自己元组的结束；行 dur 只作格式校验，不参与配对
+        let l2 = &p.lines[1];
+        assert_eq!(l2.text, "春风");
+        let real2: Vec<&crate::models::Word> = l2
+            .words
+            .as_ref()
+            .unwrap()
+            .iter()
+            .filter(|w| !w.text.is_empty())
+            .collect();
+        assert_eq!(real2.len(), 2);
+        assert_eq!(
+            (real2[0].start_ms, real2[0].end_ms, real2[0].text.as_str()),
+            (36450, 37050, "春")
+        );
+        assert_eq!((real2[1].start_ms, real2[1].end_ms), (37050, 38250));
+    }
+
+    #[test]
+    fn test_search() {
+        let r = search("晴天", 8, 0, None).expect("search failed");
+        println!("total={} songs={}", r.total, r.songs.len());
+        for s in &r.songs {
+            println!(
+                "  [{}] {} - {} (fee={}, dt={}ms, al={:?})",
+                s.id,
+                s.name,
+                s.artist_str(),
+                s.fee,
+                s.duration_ms(),
+                s.album_name()
+            );
+        }
+        assert!(!r.songs.is_empty(), "search returned no songs");
+    }
+}
+
+#[cfg(test)]
+mod cover_lyric_tests {
+    use super::*;
+
+    #[test]
+    fn test_covers_and_lyric() {
+        let r = search("晴天", 5, 0, None).expect("search failed");
+        for s in &r.songs {
+            println!(
+                "  [{}] {} pic={:?}",
+                s.id,
+                s.name,
+                s.al.pic_url.as_deref().map(|u| &u[..u.len().min(48)])
+            );
+        }
+        assert!(
+            r.songs.iter().any(|s| s.al.pic_url.is_some()),
+            "no covers resolved"
+        );
+
+        // 用有封面核对的第一首验证歌词（匿名即可拿大部分歌词）
+        let any_id = r.songs[0].id;
+        let lrc = lyric(any_id, None).expect("lyric failed");
+        match &lrc {
+            Some(t) => println!(
+                "lyric[{}] first 80 chars: {}",
+                any_id,
+                &t.lrc.chars().take(80).collect::<String>()
+            ),
+            None => println!("lyric[{}]: none", any_id),
+        }
+    }
+}
+
+#[cfg(test)]
+mod playlist_tests {
+    use super::*;
+
+    #[test]
+    fn test_playlist_detail_anonymous() {
+        // 匿名也能拿公开歌单（用云音乐官方示例歌单 ID）
+        let r = playlist_tracks(60198, "");
+        match r {
+            Ok(songs) => println!(
+                "got {} songs, first: {:?}",
+                songs.len(),
+                songs.first().map(|s| (&s.name, &s.ar))
+            ),
+            Err(e) => println!("ERR: {e}"),
+        }
+    }
+
+    #[test]
+    fn test_toplists_and_random() {
+        let tops = toplists().expect("toplists failed");
+        println!(
+            "{} toplists, first: {:?}",
+            tops.len(),
+            tops.first().map(|t| (&t.id, &t.name))
+        );
+        assert!(!tops.is_empty(), "no toplists");
+        let songs = playlist_tracks(tops[0].id, "").expect("toplist tracks failed");
+        println!("top {} songs: {}", tops[0].name, songs.len());
+        assert!(!songs.is_empty(), "toplist returned no songs");
+        let pl = random_playlist("").expect("random playlist failed");
+        println!(
+            "random playlist: {} by {} ({} songs)",
+            pl.name,
+            pl.creator,
+            pl.songs.len()
+        );
+        assert!(!pl.songs.is_empty(), "random playlist returned no songs");
+    }
+}
+
+/// Read-only follow-up to the opt-in AI upload acceptance run.
+#[test]
+#[ignore = "Reads the current app credential and checks the live cloud listing/audio"]
+fn accompaniment_cloud_live_read_only() {
+    use std::io::Read;
+    let token = crate::credentials::get("netease_music_u").expect("Current app login required");
+    // Only inspect the recent page for the explicitly named acceptance artifact.
+    let listing = weapi_post(
+        "/weapi/v1/cloud/get",
+        r#"{"limit":100,"offset":0}"#,
+        Some(&token),
+    )
+    .unwrap_or_else(|_| panic!("Cloud listing request failed (details redacted)"));
+    assert_eq!(listing["code"].as_i64(), Some(200), "Cloud listing rejected");
+    let rows = listing["data"].as_array().expect("Cloud listing data");
+    let item = rows
+        .iter()
+        .find(|row| {
+            row["songName"].as_str() == Some("RustMusic 伴奏验收（测试文件） - Instrumental")
+                || row.pointer("/simpleSong/name").and_then(|v| v.as_str())
+                    == Some("RustMusic 伴奏验收（测试文件） - Instrumental")
+        })
+        .expect("Uploaded acceptance title not found in recent cloud listing");
+    let id = item["songId"]
+        .as_i64()
+        .or_else(|| item["songId"].as_str().and_then(|s| s.parse().ok()))
+        .expect("Cloud song identity");
+    let (url, _, _, _) = song_url(id, Some(&token), "standard")
+        .unwrap_or_else(|_| panic!("Cloud audio URL request failed (details redacted)"))
+        .expect("Cloud song has no playable URL");
+    let response = ureq::get(&url)
+        .set("Range", "bytes=0-63")
+        .timeout(Duration::from_secs(20))
+        .call()
+        .unwrap_or_else(|_| panic!("Cloud audio fetch failed (URL redacted)"));
+    assert!(matches!(response.status(), 200 | 206));
+    let mut prefix = Vec::new();
+    response
+        .into_reader()
+        .take(64)
+        .read_to_end(&mut prefix)
+        .expect("Cloud audio prefix read");
+    assert!(
+        prefix.starts_with(b"RIFF")
+            || prefix.starts_with(b"fLaC")
+            || prefix.starts_with(b"ID3")
+            || prefix.windows(2).any(|b| b[0] == 0xff && b[1] & 0xe0 == 0xe0),
+        "Cloud response lacks an expected WAV/FLAC/MP3 audio signature"
+    );
+    eprintln!("Read-only cloud check: acceptance title visible, audio URL resolved, audio prefix fetched; no upload/delete/account changes; not an audible playback test");
+}
+
+/// 音质审计：无损设置下实际下发的码率/格式（需要网络 + 本机网易云登录）
+#[test]
+#[ignore]
+fn test_song_url_lossless_audit() {
+    let db_path = std::env::var("APPDATA").unwrap() + r"\com.rustmusic.app\library.db";
+    let conn =
+        rusqlite::Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .expect("打开应用数据库失败");
+    let music_u: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key='netease_music_u'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or_default();
+    let (url, br, ext, _level) = song_url(347230, Some(&music_u), "lossless")
+        .expect("song_url failed")
+        .expect("no url");
+    println!(
+        "✓ 网易云 lossless 实际下发: br={br}kbps ext={ext} url={}",
+        &url[..url.len().min(70)]
+    );
+}
+
+/// 端到端对齐回归：真实 yrc（需要网络 + 本机网易云登录）→ 转换 → 解析，
+/// 断言首字起始 ≈ 行首。此前元组错配给前一个字时，首字起始会滞后一个
+/// 字的时长，逐字染色整体不准——本断言可直接抓住该回归。
+#[test]
+#[ignore]
+fn test_yrc_word_alignment() {
+    let db_path = std::env::var("APPDATA").unwrap() + r"\com.rustmusic.app\library.db";
+    let conn =
+        rusqlite::Connection::open_with_flags(&db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .expect("打开应用数据库失败");
+    let music_u: String = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key='netease_music_u'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or_default();
+    assert!(!music_u.is_empty(), "本机应有网易云登录凭证");
+
+    // 用户最近播过的网易云曲目（本机库）+ 搜索兜底：逐个试到有 yrc 为止
+    let mut ids: Vec<i64> = vec![
+        1465288702, 1465290469, 3342319503, 3440528018, 3440529001, 3440528000, 1851652156,
+        3416333610, 2097443876, 2600493765,
+    ];
+    let songs = search("晴天", 5, 0, None).expect("search failed");
+    ids.extend(songs.songs.iter().map(|s| s.id));
+
+    let mut yrc: Option<String> = None;
+    for id in ids {
+        let payload = serde_json::json!({
+            "id": id.to_string(), "lv": "-1", "tv": "-1", "rv": "-1", "kv": "-1",
+            "yv": "-1", "yrv": "-1", "ytc": "-1", "csrf_token": ""
+        })
+        .to_string();
+        let resp = weapi_post("/weapi/song/lyric/v1?tagVer=1", &payload, Some(&music_u))
+            .expect("yrc fetch failed");
+        let t = resp
+            .pointer("/yrc/lyric")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+        if !t.trim().is_empty() {
+            yrc = Some(t.to_string());
+            break;
+        }
+    }
+    let yrc = yrc.expect("试过的曲目均无 yrc（账号无逐字权益？）");
+
+    let enhanced = crate::lyrics::yrc_to_enhanced_lrc(&yrc).expect("yrc convert");
+    let p = crate::lyrics::parse(&enhanced);
+    assert!(p.synced);
+    let checked = p
+        .lines
+        .iter()
+        .filter(|l| {
+            l.words
+                .as_ref()
+                .map(|ws| ws.iter().any(|w| !w.text.is_empty()))
+                .unwrap_or(false)
+        })
+        .count();
+    assert!(checked > 5, "逐字行过少: {checked}");
+    for l in p.lines.iter() {
+        let Some(words) = l.words.as_ref() else {
+            continue;
+        };
+        let Some(first) = words.iter().find(|w| !w.text.is_empty()) else {
+            continue;
+        };
+        assert!(
+            first.start_ms + 100 >= l.time_ms.unwrap_or(0),
+            "首字起始应≈行首：行首 {:?}，首字 {}（{}）",
+            l.time_ms,
+            first.start_ms,
+            l.text
+        );
+    }
+    println!("✓ yrc 对齐校验通过（{checked} 行逐字）");
+}
