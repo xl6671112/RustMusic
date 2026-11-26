@@ -150,6 +150,7 @@ function HostConsole() {
   const [volume, setVolume] = useState(0.8);
   const [vocalAmount, setVocalAmount] = useState(0);
   const [vocalAvailable, setVocalAvailable] = useState(false);
+  const [vocalError, setVocalError] = useState("");
   const [pitch, setPitch] = useState(0);
   const [alwaysOnTop, setAlwaysOnTop] = useState(false);
   const [pinBusy, setPinBusy] = useState(false);
@@ -512,9 +513,9 @@ function HostConsole() {
       void invoke<number>("get_vocal_removal").then((value) => {
         if (Number.isFinite(value)) setVocalAmount(Math.max(0, Math.min(100, value)));
       }).catch((reason) => setError(String(reason)));
-      void invoke<{ installed: boolean; supportedPlatform: boolean }>("vocal_removal_status")
-        .then((value) => setVocalAvailable(value.installed && value.supportedPlatform))
-        .catch(() => setVocalAvailable(false));
+      void invoke<{ installed: boolean; supportedPlatform: boolean; error?: string }>("vocal_removal_status")
+        .then((value) => { setVocalAvailable(value.installed && value.supportedPlatform); setVocalError(value.error ?? ""); })
+        .catch((reason) => { setVocalAvailable(false); setVocalError(String(reason)); });
     }).catch((reason) => setError(String(reason)));
     void refreshOutputs();
     return () => {
@@ -623,6 +624,7 @@ function HostConsole() {
             </div>
             <input aria-label="实时伴奏去人声强度" className="w-full accent-[var(--accent)] disabled:opacity-40" type="range" min="0" max="100" step="1" value={vocalAmount} disabled={!vocalAvailable} onChange={(event) => void changeVocalAmount(Number(event.currentTarget.value))} />
             <div className="mt-1 flex justify-between gap-2 text-[10px] text-[var(--ink-3)]"><span>0 · 原声</span><span className="text-right">{vocalAvailable ? "100 · 最大" : "未检测到 Remix VST"}</span></div>
+            {!vocalAvailable && vocalError && <div role="alert" className="mt-1 break-words text-[10px] text-rose-400">{vocalError}</div>}
           </div>
         </section>
 

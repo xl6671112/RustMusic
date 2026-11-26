@@ -15,6 +15,7 @@ mod db;
 mod engine;
 mod eq;
 mod vocal;
+mod remix_assets;
 mod pitch;
 mod tonality;
 mod studio_one;
@@ -249,6 +250,9 @@ fn main() {
                 }
             }
             let app_data = handle.path().app_data_dir().map_err(|e| e.to_string())?;
+            if remix_assets::is_embedded() {
+                if let Err(error) = remix_assets::prepare() { eprintln!("[remix] {error}"); }
+            }
             #[cfg(feature = "acceptance-tests")]
             let app_data = acceptance::profile_dir(app_data)?;
             std::fs::create_dir_all(app_data.join("covers")).map_err(|e| e.to_string())?;

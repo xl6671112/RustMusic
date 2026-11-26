@@ -12,6 +12,7 @@ import { clampMenuPos, fmtTime, refineMenuPos, trackArtist, trackTitle } from ".
 import CoverImg from "./CoverImg";
 import { PlaylistPickerModal, playlistEntryToPickerRow } from "../views/online/PlaylistPickerModal";
 import AccompanimentAction from "./AccompanimentAction";
+import AccompanimentBadge from "./AccompanimentBadge";
 import { openPlaylistPageEditor, localPlaylistSource } from "../playlistPages";
 
 interface MenuState {
@@ -397,6 +398,7 @@ export default function TrackList({
               >
                 {trackTitle(t)}
               </span>
+              <AccompanimentBadge kind="track" id={t.id} path={t.path} title={t.title} artist={t.artist} album={t.album} durationMs={t.duration * 1000} />
               {active && (
                 <span className="shrink-0 inline-flex">
                   <span className={`eq-bars ${playing ? "" : "paused"}`}>
@@ -670,6 +672,7 @@ export default function TrackList({
               >
                 {e.title}
               </span>
+              <AccompanimentBadge kind={e.kind} id={e.onlineId ?? undefined} title={e.title} artist={e.artist} album={e.album} durationMs={e.duration * 1000} />
               <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--shade-strong)] text-[var(--ink-3)] font-medium shrink-0">
                 {e.kind === "netease"
                   ? tr("网易云", "NetEase")

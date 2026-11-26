@@ -38,6 +38,7 @@ import { listen } from "@tauri-apps/api/event";
 import { api } from "../api";
 import AccompanimentTasks from "./AccompanimentTasks";
 import AiTrackButton from "./AiTrackButton";
+import AccompanimentBadge from "./AccompanimentBadge";
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
 const WEB_LYRICS_URL = "http://127.0.0.1:17842/lyrics";
@@ -100,7 +101,9 @@ function TrackTitleLyric() {
   return (
     <div className="player-dock-caption" onClick={() => setNowPlayingOpen(!nowPlayingOpen)}>
       <div className="flex min-w-0 items-center font-semibold text-[var(--ink)]" title={`${current.title} · ${current.artist}`}>
-        <span className="min-w-0 truncate">{current.title}<span className="ml-2 font-normal text-[var(--ink-3)]">{current.artist}</span></span>
+        <span className="min-w-0 truncate">{current.title}</span>
+        <span className="ml-1 inline-flex shrink-0"><AccompanimentBadge kind={current.kind} id={current.nid ?? current.qid ?? current.kgid ?? current.id ?? undefined} path={current.path} title={current.title} artist={current.artist} album={current.album} durationMs={current.durationMs} /></span>
+        <span className="ml-2 min-w-0 truncate font-normal text-[var(--ink-3)]">{current.artist}</span>
         {current.quality && current.quality !== "0kbps" && <span className="ml-2 shrink-0 text-[10px] text-[var(--accent-strong)]">{formatQualityLabel(current.quality)}</span>}
       </div>
       <div ref={lyricWrapRef} className={`min-w-0 overflow-hidden whitespace-nowrap text-[var(--accent-strong)] ${lyricOverflow ? "marquee-wrap" : ""}`}
@@ -519,6 +522,7 @@ export default function PlayerBar({ centered = false, aiControls }: { centered?:
   const [vocalOpen, setVocalOpen] = usePlayerPopover("vocal");
   const [vocalAmount, setVocalAmount] = useState(0);
   const [vocalInstalled, setVocalInstalled] = useState(false);
+  const [vocalError, setVocalError] = useState("");
   const [outputOpen, setOutputOpen] = usePlayerPopover("output");
   const [outputLoading, setOutputLoading] = useState(false);
   const [outputSwitching, setOutputSwitching] = useState(false);
@@ -659,9 +663,9 @@ export default function PlayerBar({ centered = false, aiControls }: { centered?:
   useEffect(() => {
     let disposed = false;
     let unlisten: (() => void) | undefined;
-    void invoke<{ installed: boolean; supportedPlatform: boolean }>("vocal_removal_status")
-      .then((status) => { if (!disposed) setVocalInstalled(status.installed && status.supportedPlatform); })
-      .catch(() => { if (!disposed) setVocalInstalled(false); });
+    void invoke<{ installed: boolean; supportedPlatform: boolean; error?: string }>("vocal_removal_status")
+      .then((status) => { if (!disposed) { setVocalInstalled(status.installed && status.supportedPlatform); setVocalError(status.error ?? ""); } })
+      .catch((reason) => { if (!disposed) { setVocalInstalled(false); setVocalError(String(reason)); } });
     void invoke<number>("get_vocal_removal")
       .then((amount) => { if (!disposed && Number.isFinite(amount)) setVocalAmount(amount); })
       .catch(() => {});
@@ -1090,7 +1094,7 @@ export default function PlayerBar({ centered = false, aiControls }: { centered?:
               className={`btn-ghost ${isSkeuo ? "w-[34px] h-[34px]" : "w-9 h-9"} shrink-0 ${vocalAmount > 0 ? "!text-[var(--accent)]" : ""}`}
               onClick={() => vocalInstalled && setVocalOpen((v) => !v)}
               disabled={!vocalInstalled}
-              title={vocalInstalled ? tr("Remix VST 去人声", "Remix VST vocal removal") : tr("未检测到 Remix VST2 插件", "Remix VST2 plugin not detected")}
+              title={vocalInstalled ? tr("Remix VST 去人声", "Remix VST vocal removal") : vocalError || tr("未检测到 Remix VST2 插件", "Remix VST2 plugin not detected")}
               aria-label={tr("Remix VST 去人声", "Remix VST vocal removal")}
             ><SlidersHorizontal size={15} /></button>
             {vocalOpen && (

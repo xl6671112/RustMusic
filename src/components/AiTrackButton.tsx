@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { useStore } from "../store";
 import type { CurrentTrack } from "../types";
+import { rememberAccompaniment } from "../accompanimentAvailability";
 import { hasPendingAccompaniment, enqueueAccompanimentTask, type AccompanimentResult, getAccompanimentTasks, subscribeAccompanimentTasks } from "../accompanimentTasks";
 
 type Stem = "instrumental" | "vocals";
@@ -46,7 +47,7 @@ export default function AiTrackButton() {
     setAccompanimentStatus(checking);
     void invoke<AccompanimentResult | null>("find_accompaniment", { query: queryFor(track) }).then((result) => {
       if (disposed) return;
-      if (result?.path) session.current = { path: track.path, result };
+      if (result?.path) { session.current = { path: track.path, result }; rememberAccompaniment(result); }
       else if (session.current?.path === track.path) session.current = undefined;
       const next = { path: track.path, checked: true, ready: !!result?.path };
       accompanimentStatusRef.current = next;

@@ -6,6 +6,7 @@ import { useStore } from "../../store";
 import { useI18n } from "../../i18n";
 import { fmtTime } from "../../utils";
 import type { OnlineRow } from "./shared";
+import AccompanimentBadge from "../../components/AccompanimentBadge";
 
 export function TrackRowItem({
   row: t,
@@ -160,6 +161,7 @@ export function TrackRowItem({
             }`}
           >
             <span className="truncate">{t.name}</span>
+            <AccompanimentBadge kind={t.kind} id={t.id} title={t.name} artist={t.artist} album={t.album} durationMs={t.durationMs} />
             {t.vip && (
               <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-[var(--accent-weak)] text-[var(--accent-strong)] font-bold shrink-0">
                 VIP

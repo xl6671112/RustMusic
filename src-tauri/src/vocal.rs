@@ -13,11 +13,11 @@ mod listening;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct VocalStatus { pub installed: bool, pub supported_platform: bool }
+pub struct VocalStatus { pub installed: bool, pub supported_platform: bool, pub error: Option<String> }
 
 pub fn status() -> VocalStatus {
-    let installed = RemixHost::open(44100).is_ok();
-    VocalStatus { installed, supported_platform: cfg!(windows) }
+    let result = RemixHost::open(44100);
+    VocalStatus { installed: result.is_ok(), supported_platform: cfg!(windows), error: result.err() }
 }
 
 pub struct VocalShared(AtomicU32);
@@ -137,15 +137,17 @@ struct Effect {
 #[cfg(windows)]
 impl RemixHost {
     fn latency(&self)->usize { self.latency }
-    fn path() -> Option<std::path::PathBuf> {
-        if let Some(p) = std::env::var_os("RUSTMUSIC_REMIX_PLUGIN") { return Some(p.into()); }
-        let portable = std::env::current_exe().ok()?.parent()?.join("plugins/Remix.dll");
-        if portable.is_file() { return Some(portable); }
+    fn path() -> Result<std::path::PathBuf, String> {
+        if let Some(p) = std::env::var_os("RUSTMUSIC_REMIX_PLUGIN") { return Ok(p.into()); }
+        if crate::remix_assets::is_embedded() { return crate::remix_assets::prepare(); }
+        let portable = std::env::current_exe().map_err(|e| e.to_string())?.parent()
+            .ok_or("Unable to locate player directory")?.join("plugins/Remix.dll");
+        if portable.is_file() { return Ok(portable); }
         let root=std::env::var_os("ProgramW6432").unwrap_or_else(||"C:\\Program Files".into());
-        Some(std::path::PathBuf::from(root).join("VstPlugIns/Acon Digital/Remix.dll"))
+        Ok(std::path::PathBuf::from(root).join("VstPlugIns/Acon Digital/Remix.dll"))
     }
     fn open(rate:u32)->Result<Self,String> {
-        let path=Self::path().ok_or("Unable to locate Remix VST2")?;
+        let path=Self::path()?;
         let lib=unsafe { libloading::Library::new(path) }.map_err(|e|e.to_string())?;
         type Entry=unsafe extern "C" fn(unsafe extern "C" fn(*mut Effect,i32,i32,isize,*mut std::ffi::c_void,f32)->isize)->*mut Effect;
         let entry:libloading::Symbol<Entry>=unsafe{lib.get(b"VSTPluginMain\0")}.map_err(|e|e.to_string())?;
@@ -157,7 +159,9 @@ impl RemixHost {
         e.user=rate as usize as *mut std::ffi::c_void;
         unsafe { (e.dispatch.unwrap())(effect,0,0,0,std::ptr::null_mut(),0.0); (e.dispatch.unwrap())(effect,10,0,0,std::ptr::null_mut(),rate as f32); (e.dispatch.unwrap())(effect,11,0,1024,std::ptr::null_mut(),0.0); for i in 0..5{(e.set.unwrap())(effect,i,0.8)} for i in 5..15{(e.set.unwrap())(effect,i,0.0)} (e.dispatch.unwrap())(effect,12,0,1,std::ptr::null_mut(),0.0); (e.dispatch.unwrap())(effect,71,0,0,std::ptr::null_mut(),0.0); }
         let latency=(e.latency.max(0) as usize).min(44100*10);
-        Ok(Self{_lib:lib,effect,input:vec![0.0;2048],output:std::array::from_fn(|_|vec![0.0;1024]),latency,amount:0.0,trim_frames:latency})
+        let host=Self{_lib:lib,effect,input:vec![0.0;2048],output:std::array::from_fn(|_|vec![0.0;1024]),latency,amount:0.0,trim_frames:latency};
+        if latency==0 { return Err("Remix realtime separation models could not be loaded".into()); }
+        Ok(host)
     }
     fn process_block(&mut self,input:&[f32],output:&mut VecDeque<f32>,amount:f32,dry:&mut VecDeque<f32>,aligned:&mut VecDeque<f32>){
         let e=unsafe{&mut *self.effect};

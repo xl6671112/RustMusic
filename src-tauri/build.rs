@@ -1,4 +1,5 @@
 fn main() {
+    embed_remix_assets();
     embed_folia_workers();
     embed_jizura_assets();
     #[cfg(windows)]
@@ -25,6 +26,34 @@ fn main() {
         ),
     )
     .expect("build player resources")
+}
+
+fn embed_remix_assets() {
+    println!("cargo:rerun-if-env-changed=RUSTMUSIC_REMIX_ASSETS");
+    println!("cargo:rerun-if-env-changed=RUSTMUSIC_REQUIRE_REMIX");
+    let directory = std::env::var_os("RUSTMUSIC_REMIX_ASSETS").map(std::path::PathBuf::from);
+    let plugin = directory.as_ref().map(|root| root.join("Remix.dll"))
+        .unwrap_or_else(|| std::path::PathBuf::from("C:/Program Files/VstPlugIns/Acon Digital/Remix.dll"));
+    let models = directory.unwrap_or_else(|| std::path::PathBuf::from("C:/ProgramData/Acon Digital/AIModels"));
+    let mut assets = vec![("Remix.dll", plugin)];
+    for name in ["VocalsSeparation.hance", "PianoSeparation.hance", "BassSeparation.hance", "DrumsSeparation.hance"] {
+        assets.push((name, models.join(name)));
+    }
+    let available = cfg!(windows) && assets.iter().all(|(_, path)| path.is_file());
+    assert!(available || std::env::var_os("RUSTMUSIC_REQUIRE_REMIX").is_none(), "Missing required licensed Remix plugin/models");
+    let mut code = String::from("&[");
+    if available {
+        for (name, path) in assets {
+            println!("cargo:rerun-if-changed={}", path.display());
+            let path = path.canonicalize().expect("Remix asset path");
+            let modified = std::fs::metadata(&path).expect("Remix asset metadata").modified().expect("Remix asset time")
+                .duration_since(std::time::UNIX_EPOCH).expect("Remix asset timestamp").as_millis();
+            code.push_str(&format!("({name:?}, include_bytes!({:?}) as &[u8], {modified}),\n", path.to_string_lossy()));
+        }
+    }
+    code.push(']');
+    let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").expect("Cargo output"));
+    std::fs::write(output.join("remix-assets.rs"), code).expect("Embed Remix assets");
 }
 
 fn embed_jizura_assets() {
