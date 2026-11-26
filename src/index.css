@@ -147,6 +147,31 @@
 }
 
 .ai-progress-fill { position: relative; overflow: hidden; }
+.lyric-selectable {
+  padding-inline: 44px;
+  border-radius: 6px;
+}
+.lyric-selectable[data-selected="true"] {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.lyric-seek-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  opacity: 1;
+  z-index: 1;
+}
+.lyric-seek-button:hover { filter: brightness(1.15); }
+.lyric-seek-button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .ai-progress-fill::after {
   content: "";
   position: absolute;

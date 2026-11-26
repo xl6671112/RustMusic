@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Disc3, Heart, Maximize2, Mic2, Minimize2, Music4 } from "lucide-react";
+import { ChevronDown, Disc3, Heart, Maximize2, Mic2, Minimize2, Music4, Play } from "lucide-react";
 import { useStore } from "../store";
 import { formatLyricSource, useI18n } from "../i18n";
 import CoverImg from "./CoverImg";
@@ -71,6 +71,7 @@ export default function NowPlaying() {
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const lastActiveRef = useRef(-1);
   const renderFrameRef = useRef<() => void>(() => {});
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
 
   // 歌词键：本地曲目 / 网易云 / QQ / 酷狗 / B站 / Navidrome
   const lyricsKey =
@@ -110,6 +111,10 @@ export default function NowPlaying() {
         : [],
     [lyrics]
   );
+
+  useEffect(() => {
+    setSelectedLine(null);
+  }, [lyricsKey, syncedLines]);
 
   // 逐帧驱动歌词渲染
   useEffect(() => {
@@ -701,12 +706,18 @@ export default function NowPlaying() {
                     ref={(el) => {
                       lineRefs.current[i] = el;
                     }}
-                    onClick={() => {
-                      if (l.timeMs == null) return;
-                      seek(l.timeMs);
-                      renderFrameRef.current();
+                    onClick={() => setSelectedLine(i)}
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setSelectedLine(i);
+                      }
                     }}
-                    className="lyric-line lyric-fill px-4 py-[9px] text-center cursor-pointer select-none transition-all duration-200"
+                    data-selected={selectedLine === i}
+                    className="lyric-line lyric-fill lyric-selectable py-[9px] text-center cursor-pointer select-none transition-all duration-200"
                   >
                     <span className="inline-block transition-transform duration-300">
                       {text}
@@ -719,6 +730,25 @@ export default function NowPlaying() {
                     <div className="lyric-fill-ov" aria-hidden>
                       <span>{text}</span>
                     </div>
+                    {selectedLine === i && (
+                      <button
+                        className="lyric-seek-button"
+                        aria-label={tr("从这一句播放", "Play from this line")}
+                        title={tr("从这一句播放", "Play from this line")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") event.stopPropagation();
+                        }}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (l.timeMs == null) return;
+                          seek(l.timeMs);
+                          renderFrameRef.current();
+                          setSelectedLine(null);
+                        }}
+                      >
+                        <Play size={16} fill="currentColor" />
+                      </button>
+                    )}
                   </div>
                 );
               })}

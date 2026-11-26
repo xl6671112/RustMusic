@@ -525,6 +525,7 @@ fn main() {
             commands::enter_mini_mode,
             commands::exit_mini_mode,
             commands::desktop_lyrics_set_always_top,
+            commands::desktop_lyrics_set_bounds,
             commands::dlyrics_menubar_line,
             commands::menubar_extension_install,
             commands::engine_preload_next,

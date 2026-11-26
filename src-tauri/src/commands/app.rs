@@ -344,6 +344,111 @@ fn extract_cover_palette_task(url: String) -> Result<Vec<String>, String> {
 }
 // ---------- 桌面歌词窗口 ----------
 
+#[cfg(windows)]
+fn clip_dlyrics_window(
+    hwnd: windows::Win32::Foundation::HWND,
+    bounds: [f64; 4],
+    scale: f64,
+    offset: [i32; 2],
+) -> Result<(), String> {
+    use windows::Win32::Graphics::Gdi::{CreateRectRgn, DeleteObject, SetWindowRgn};
+    let [left, top, right, bottom] = bounds;
+    unsafe {
+        let region = CreateRectRgn(
+            (left * scale).floor() as i32 + offset[0],
+            (top * scale).floor() as i32 + offset[1],
+            (right * scale).ceil() as i32 + offset[0],
+            (bottom * scale).ceil() as i32 + offset[1],
+        );
+        if region.is_invalid() {
+            return Err("Failed to create desktop lyric window region".into());
+        }
+        // SetWindowRgn 成功后由系统接管 region；只在失败时释放。
+        if SetWindowRgn(hwnd, Some(region), true) == 0 {
+            let _ = DeleteObject(region.into());
+            return Err("Failed to apply desktop lyric window region".into());
+        }
+    }
+    Ok(())
+}
+
+/// 原生窗口也只保留歌词和控制条的范围，透明空白不拦截底下应用的鼠标。
+#[tauri::command]
+pub async fn desktop_lyrics_set_bounds(
+    window: tauri::WebviewWindow,
+    bounds: [f64; 4],
+) -> Result<(), String> {
+    if window.label() != "desktop-lyrics" {
+        return Err("Expected desktop lyric window".into());
+    }
+    if !bounds.iter().all(|value| value.is_finite() && *value >= 0.0)
+        || bounds[2] <= bounds[0]
+        || bounds[3] <= bounds[1]
+    {
+        return Err("Invalid desktop lyric bounds".into());
+    }
+    #[cfg(windows)]
+    {
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+        let scale = window.scale_factor().map_err(|e| e.to_string())?;
+        let inner = window.inner_position().map_err(|e| e.to_string())?;
+        let outer = window.outer_position().map_err(|e| e.to_string())?;
+        clip_dlyrics_window(
+            windows::Win32::Foundation::HWND(hwnd.0 as *mut _),
+            bounds,
+            scale,
+            [inner.x - outer.x, inner.y - outer.y],
+        )?;
+    }
+    Ok(())
+}
+
+#[cfg(all(test, windows))]
+mod desktop_lyrics_tests {
+    use super::clip_dlyrics_window;
+    use windows::core::w;
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::Graphics::Gdi::{CreateRectRgn, DeleteObject, GetWindowRgn, PtInRegion, SIMPLEREGION};
+    use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, DestroyWindow, WINDOW_EX_STYLE, WS_POPUP};
+
+    #[test]
+    fn desktop_lyrics_region_excludes_blank_space_at_any_scale() {
+        struct TestWindow(HWND);
+        impl Drop for TestWindow {
+            fn drop(&mut self) {
+                unsafe { let _ = DestroyWindow(self.0); }
+            }
+        }
+        unsafe {
+            let window = TestWindow(CreateWindowExW(
+                WINDOW_EX_STYLE::default(), w!("STATIC"), w!("Lyric region regression"),
+                WS_POPUP, 0, 0, 1600, 600, None, None, None, None,
+            ).unwrap());
+            for scale in [1.0, 1.5, 2.0] {
+                let offset = [8, 8];
+                for bounds in [
+                    [200.0, 220.0, 600.0, 290.0],
+                    [200.0, 180.0, 600.0, 290.0],
+                    [340.0, 220.0, 460.0, 290.0],
+                ] {
+                    clip_dlyrics_window(window.0, bounds, scale, offset).unwrap();
+                    let region = CreateRectRgn(0, 0, 0, 0);
+                    assert_eq!(GetWindowRgn(window.0, region), SIMPLEREGION);
+                    let contains = |x: f64, y: f64| PtInRegion(
+                        region, (x * scale) as i32 + offset[0], (y * scale) as i32 + offset[1],
+                    ).as_bool();
+                    assert!(contains(400.0, 250.0), "Lyrics must remain draggable");
+                    assert!(!contains(400.0, 40.0), "Transparent space above lyrics must not intercept nearby clicks");
+                    assert!(!contains(bounds[0] - 1.0, 250.0), "Transparent side margins must not intercept clicks");
+                    assert_eq!(contains(400.0, 200.0), bounds[1] < 200.0, "The toolbar only receives input while visible");
+                    assert!(!contains(bounds[2] + 1.0, 250.0), "Shorter lyrics must release the previous window region");
+                    let _ = DeleteObject(region.into());
+                }
+            }
+        }
+    }
+}
+
 /// 几何持久化的防抖信号通道（拖动/缩放期间 Moved/Resized 事件连发，
 /// 逐事件直接写库等于每像素一次 SQLite 写）
 static DLYRICS_GEOM_TX: std::sync::Mutex<Option<std::sync::mpsc::Sender<()>>> =

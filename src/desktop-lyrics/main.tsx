@@ -2,7 +2,7 @@
  * 桌面歌词窗口入口（独立 HTML：desktop-lyrics.html）
  *
  * 形态：背景全透明（桌面只见文字）；鼠标移入时浮现半透明玻璃底 + 播放控制；
- * 全窗皆为拖拽热区（含歌词上方空白），右下角缩放；字号随窗口宽度等比缩放。
+ * 歌词与控制条可拖拽，透明空白不占用鼠标；右下角缩放，字号随窗口宽度等比缩放。
  * 暂停时进度冻结（不做外推），卡拉OK 染色停在原地。
  * 数据链路：主窗口 store emit "dlyrics://push"（250ms/帧 + 歌词加载完成）。
  * 播放控制：emit "media://control"（主窗口 store 处理，与托盘一致）。
@@ -114,6 +114,49 @@ function DesktopLyrics() {
   const posRef = useRef(0);
   const posAtRef = useRef(performance.now());
   const [, setRenderTick] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (PLATFORM !== "windows") return;
+    const content = contentRef.current;
+    if (!content) return;
+    let disposed = false;
+    let observer: ResizeObserver | undefined;
+    let frame = 0;
+    let previous = "";
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (disposed) return;
+        const rect = content.getBoundingClientRect();
+        const bounds = [
+          Math.max(0, Math.floor(rect.left) - 4),
+          Math.max(0, Math.floor(rect.top) - 4),
+          Math.min(innerWidth, Math.ceil(rect.right) + 4),
+          Math.min(innerHeight, Math.ceil(rect.bottom) + 4),
+        ];
+        const key = `${bounds.join(",")}:${devicePixelRatio}`;
+        if (rect.width <= 0 || rect.height <= 0 || key === previous) return;
+        previous = key;
+        import("@tauri-apps/api/core").then(({ invoke }) =>
+          invoke("desktop_lyrics_set_bounds", { bounds })
+        ).catch((error) => {
+          previous = "";
+          console.error("[dlyrics] Failed to update window bounds", error);
+        });
+      });
+    };
+    observer = new ResizeObserver(update);
+    observer.observe(content);
+    window.addEventListener("resize", update);
+    update();
+    return () => {
+      disposed = true;
+      observer?.disconnect();
+      window.removeEventListener("resize", update);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -395,8 +438,7 @@ function DesktopLyrics() {
       @keyframes dlyrics-glow { 0%, 100% { filter: drop-shadow(0 2px 5px rgba(0,0,0,.48)); } 50% { filter: drop-shadow(0 0 14px currentColor); } }
       ${importedFont ? `@font-face { font-family: "${importedFont}"; src: url("http://127.0.0.1:17842/fonts/${style.fontFile}"); font-display: swap; }` : ""}
     `}</style>
-    {/* 全窗拖拽热区（含歌词上方空白）；hover 才浮现半透明底与控制条。
-        拖动走系统 WM 协议（data-tauri-drag-region）——原生、零 IPC 压力 */}
+    {/* Windows 原生窗口区域随可见内容收紧，拖动仍走系统 WM 协议。 */}
     <div
       data-tauri-drag-region
       onMouseEnter={() => setHover(true)}
@@ -422,7 +464,7 @@ function DesktopLyrics() {
           窗口高度重新居中，看起来像按钮在"缩放"）。
           不加 overflow-hidden：控制条药丸在布局流内，窗口边界自然裁剪 */}
       <div className="flex-1 min-h-0 flex flex-col justify-end pb-1.5 pointer-events-none">
-        <div className="relative flex flex-col items-center self-center w-fit">
+        <div ref={contentRef} className="relative flex flex-col items-center self-center w-fit max-w-full">
         {!locked && (hover || DEBUG_HOVER) && (
           <div
             data-tauri-drag-region
@@ -496,7 +538,7 @@ function DesktopLyrics() {
           </div>
         )}
         <div
-          className="flex flex-col items-center gap-1 px-5 py-2.5 rounded-2xl pointer-events-none transition-all duration-300"
+          className="flex flex-col items-center gap-1 px-5 py-2.5 rounded-2xl max-w-full pointer-events-none transition-all duration-300"
           style={{
             background: TRANSPARENT
               ? hover
