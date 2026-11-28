@@ -204,11 +204,15 @@ pub fn musicu_signed(
             format!("Failed to read QQ Music response: {e}"),
         )
     })?;
-    serde_json::from_str(&text).map_err(|e| {
-        let snippet: String = text.chars().take(150).collect();
+    parse_musicu_response(&text)
+}
+
+fn parse_musicu_response(text: &str) -> Result<serde_json::Value, String> {
+    serde_json::from_str(text).map_err(|e| {
+        let detail = format!("{:?}, line {}, column {}", e.classify(), e.line(), e.column());
         crate::i18n::pick(
-            format!("QQ 音乐响应解析失败: {e} | body: {snippet}"),
-            format!("Failed to parse QQ Music response: {e} | body: {snippet}"),
+            format!("QQ 音乐响应解析失败: {detail}"),
+            format!("Failed to parse QQ Music response: {detail}"),
         )
     })
 }
@@ -269,17 +273,31 @@ mod login;
 mod lyric;
 mod playlists;
 mod search;
+mod session;
 mod url;
 pub use browse::*;
 pub use login::*;
 pub use lyric::*;
 pub use playlists::*;
 pub use search::*;
+pub use session::*;
 pub use url::*;
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn malformed_login_response_never_exposes_token_values() {
+        let body = r#"{"refresh_token":"private-refresh","access_token":"private-access","musickey":"private-key",broken}"#;
+        let error = parse_musicu_response(body).unwrap_err();
+        assert!(error.contains("Syntax"));
+        assert!(error.contains("line 1"));
+        for secret in ["private-refresh", "private-access", "private-key", "refresh_token", "body:"] {
+            assert!(!error.contains(secret));
+        }
+        assert_eq!(parse_musicu_response(r#"{"code":0}"#).unwrap()["code"], 0);
+    }
 
     #[test]
     fn test_wx_lp_parse() {

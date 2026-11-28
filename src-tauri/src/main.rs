@@ -34,6 +34,12 @@ mod lyrics;
 mod models;
 mod monitor;
 mod obs_lyrics;
+mod obs_lyrics_api;
+mod obs_lyrics_canvases;
+#[cfg(windows)]
+mod lyrics_capture;
+#[cfg(windows)]
+mod lyrics_capture_d3d;
 mod navidrome;
 mod net;
 mod netease;
@@ -95,6 +101,8 @@ fn is_virtual_machine() -> bool {
 }
 
 fn main() {
+    #[cfg(windows)]
+    if lyrics_capture::run_if_requested() { return; }
     // WebKitGTK 2.4x 默认的 DMABUF 渲染器在虚拟机（vmwgfx）等无 DMA-BUF
     // 支持的显卡驱动上整窗黑屏（界面与音频均正常，仅画面不绘制）。
     // 未显式设置时禁用它，回退旧渲染路径；真机有 DMABUF 支持时两种路径
@@ -357,7 +365,9 @@ fn main() {
                 dlyrics_locked: AtomicBool::new(false),
             });
 
+            obs_lyrics_canvases::init(&app.state::<AppState>());
             obs_lyrics::start_server(eng, obs_settings, app_data.join("lyrics-fonts"));
+            obs_lyrics_api::start(app.handle().clone());
 
             let mhandle = handle.clone();
             std::thread::spawn(move || monitor(mhandle));
@@ -401,6 +411,18 @@ fn main() {
             obs_lyrics::publish_obs_lyrics,
             obs_lyrics::get_obs_lyrics_settings,
             obs_lyrics::set_obs_lyrics_settings,
+            obs_lyrics::validate_obs_lyrics_template,
+            obs_lyrics::get_obs_lyrics_templates,
+            obs_lyrics::set_obs_lyrics_templates,
+            obs_lyrics_api::get_obs_lyrics_api,
+            obs_lyrics_api::set_obs_lyrics_api_enabled,
+            obs_lyrics_api::rotate_obs_lyrics_api_key,
+            obs_lyrics_canvases::get_obs_lyrics_canvases,
+            obs_lyrics_canvases::set_obs_lyrics_canvases,
+            obs_lyrics_canvases::open_obs_lyrics_canvas,
+            obs_lyrics_canvases::close_obs_lyrics_canvas,
+            obs_lyrics_canvases::get_open_obs_lyrics_canvases,
+            obs_lyrics_canvases::set_obs_lyrics_canvas_visibility,
             obs_lyrics::import_obs_lyrics_font,
             obs_lyrics::import_folia_image,
             commands::set_vocal_removal,

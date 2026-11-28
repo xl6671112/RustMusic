@@ -23,6 +23,7 @@ type ConsoleState = {
   accompanimentChecked: boolean;
   accompanimentReady: boolean;
 };
+type ElectricState = { available: boolean; strength: number };
 type StudioOneHost = { pid: number; thread: number; name: string; title: string; hidden: boolean };
 type StudioOneChannel = {
   token: string;
@@ -148,6 +149,7 @@ function HostConsole() {
   const [outputPreference, setOutputPreference] = useState<string | null>(null);
   const [outputBusy, setOutputBusy] = useState(false);
   const [volume, setVolume] = useState(0.8);
+  const [electric, setElectric] = useState<ElectricState>({ available: false, strength: 50 });
   const [vocalAmount, setVocalAmount] = useState(0);
   const [vocalAvailable, setVocalAvailable] = useState(false);
   const [vocalError, setVocalError] = useState("");
@@ -177,6 +179,7 @@ function HostConsole() {
   const [error, setError] = useState("");
   const requestTimer = useRef<number[]>([]);
   const volumeTimer = useRef<number>();
+  const electricTimer = useRef<number>();
   const studioOneFaderWrites = useRef(new Map<string, { value: number; queued: boolean }>());
   const refreshStudioOne = useRef(() => {});
   const studioOneGroups = groupStudioOneChannels(studioOneChannels);
@@ -491,6 +494,10 @@ function HostConsole() {
           setVolume(Math.max(0, Math.min(1, payload)));
         }
       }),
+      listen<ElectricState>("host-console://electric-state", ({ payload }) => {
+        setElectric({ available: payload.available, strength: Math.max(0, Math.min(100, payload.strength)) });
+      }),
+      listen<string>("host-console://electric-error", ({ payload }) => setError(payload)),
       listen<number>("player://pitch", ({ payload }) => {
         if (Number.isFinite(payload)) setPitch(Math.max(-12, Math.min(12, Math.round(payload))));
       }),
@@ -524,6 +531,7 @@ function HostConsole() {
       requestTimer.current.forEach(window.clearTimeout);
       requestTimer.current = [];
       if (volumeTimer.current != null) window.clearTimeout(volumeTimer.current);
+      if (electricTimer.current != null) window.clearTimeout(electricTimer.current);
     };
   }, []);
 
@@ -554,6 +562,14 @@ function HostConsole() {
     if (volumeTimer.current != null) window.clearTimeout(volumeTimer.current);
     volumeTimer.current = window.setTimeout(() => {
       void api.setVolume(next).catch((reason) => setError(String(reason)));
+    }, 120);
+  };
+  const changeElectricStrength = (value: number) => {
+    const strength = Math.max(0, Math.min(100, value));
+    setElectric((state) => ({ ...state, strength }));
+    if (electricTimer.current != null) window.clearTimeout(electricTimer.current);
+    electricTimer.current = window.setTimeout(() => {
+      void emit("host-console://electric-strength", strength).catch((reason) => setError(String(reason)));
     }, 120);
   };
   const changePitch = async (semitones: number) => {
@@ -628,7 +644,7 @@ function HostConsole() {
           </div>
         </section>
 
-        <section aria-label="变调" className="min-w-0 space-y-2.5 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
+        <section aria-label="变调和电音强度" className="min-w-0 space-y-2.5 rounded-xl border border-[var(--line)] bg-[var(--shade)] p-3">
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-medium text-[var(--ink-2)]">
               <span className="flex items-center gap-2"><Mic2 size={14} />变调</span>
@@ -646,6 +662,14 @@ function HostConsole() {
               <button type="button" className="flex h-6 items-center justify-center gap-1 rounded-md px-1.5 hover:bg-[var(--shade-strong)] disabled:opacity-40" disabled={pitch === 0} onClick={() => void changePitch(0)}><RotateCcw size={11} />还原原调</button>
               <span>+12</span>
             </div>
+          </div>
+          <div className="border-t border-[var(--line)] pt-2.5">
+            <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-medium text-[var(--ink-2)]">
+              <span className="flex items-center gap-2"><AudioLines size={14} />电音强度</span>
+              <span className="tabular-nums text-[var(--ink)]">{Math.round(electric.strength)}%</span>
+            </div>
+            <input aria-label="电音修音强度" className="w-full accent-[var(--accent)] disabled:opacity-40" type="range" min="0" max="100" step="1" value={electric.strength} disabled={!electric.available} onChange={(event) => changeElectricStrength(Number(event.currentTarget.value))} />
+            <div className="mt-1 flex justify-between gap-2 text-[10px] text-[var(--ink-3)]"><span>自然</span><span className="text-right">{electric.available ? "数值越高，修音越快" : "未检测到可控制的电音插件"}</span></div>
           </div>
         </section>
       </div>

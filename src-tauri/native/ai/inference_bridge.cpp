@@ -6,11 +6,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <string>
 #include <vector>
 
 struct AiSession {
     HMODULE runtime = nullptr;
+    HMODULE directml = nullptr;
     const OrtApi* api = nullptr;
     OrtEnv* env = nullptr;
     OrtSessionOptions* options = nullptr;
@@ -25,6 +27,12 @@ struct AiSession {
 static void set_error(char* buffer, size_t capacity, const char* text) {
     if (!buffer || capacity == 0) return;
     strncpy_s(buffer, capacity, text ? text : "Unknown inference error", _TRUNCATE);
+}
+
+static void set_load_error(char* buffer, size_t capacity, const wchar_t* path, DWORD code) {
+    const std::string message = "Could not load " + std::filesystem::path(path).u8string()
+        + " (Windows error " + std::to_string(code) + ")";
+    set_error(buffer, capacity, message.c_str());
 }
 
 static bool check_status(AiSession* state, OrtStatus* status, char* error, size_t capacity) {
@@ -49,12 +57,14 @@ extern "C" __declspec(dllexport) int __cdecl rm_ai_create(
         if (state->options && state->api) state->api->ReleaseSessionOptions(state->options);
         if (state->env && state->api) state->api->ReleaseEnv(state->env);
         if (state->runtime) FreeLibrary(state->runtime);
+        if (state->directml) FreeLibrary(state->directml);
         delete state;
         return 0;
     };
-    state->runtime = LoadLibraryW(runtime_path);
+    const DWORD load_flags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
+    state->runtime = LoadLibraryExW(runtime_path, nullptr, load_flags);
     if (!state->runtime) {
-        set_error(error, error_capacity, "Could not load onnxruntime.dll");
+        set_load_error(error, error_capacity, runtime_path, GetLastError());
         return fail();
     }
     using GetApiBase = const OrtApiBase*(ORT_API_CALL*)();
@@ -79,6 +89,13 @@ extern "C" __declspec(dllexport) int __cdecl rm_ai_create(
         using AppendDml = OrtStatus*(ORT_API_CALL*)(OrtSessionOptions*, int);
         auto append_dml = reinterpret_cast<AppendDml>(GetProcAddress(state->runtime, "OrtSessionOptionsAppendExecutionProvider_DML"));
         if (append_dml) {
+            // DirectML is delay-loaded; keep its packaged copy loaded for the session.
+            const auto directml_path = std::filesystem::path(runtime_path).parent_path() / L"DirectML.dll";
+            state->directml = LoadLibraryExW(directml_path.c_str(), nullptr, load_flags);
+            if (!state->directml) {
+                set_load_error(error, error_capacity, directml_path.c_str(), GetLastError());
+                return fail();
+            }
             if (!check_status(state, state->api->SetSessionExecutionMode(state->options, ORT_SEQUENTIAL), error, error_capacity)
                 || !check_status(state, state->api->DisableMemPattern(state->options), error, error_capacity)
                 || !check_status(state, append_dml(state->options, 0), error, error_capacity)) {
@@ -198,5 +215,6 @@ extern "C" __declspec(dllexport) void __cdecl rm_ai_destroy(void* handle) {
     if (state->options) state->api->ReleaseSessionOptions(state->options);
     if (state->env) state->api->ReleaseEnv(state->env);
     if (state->runtime) FreeLibrary(state->runtime);
+    if (state->directml) FreeLibrary(state->directml);
     delete state;
 }

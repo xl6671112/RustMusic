@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RustMusic 本机歌词 API</title>
+<style>
+body{margin:0;background:#fafafa;color:#242424;font:15px/1.8 system-ui,sans-serif}
+main{max-width:920px;margin:auto;padding:32px 24px}h1{font-size:26px}h2{font-size:19px;margin-top:32px}
+pre{padding:16px;background:#efefef;overflow:auto;border-radius:6px}code{font-family:Consolas,monospace}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ddd;padding:10px;text-align:left;vertical-align:top}a{color:#007e71}
+</style>
+<main>
+<h1>RustMusic 本机 OBS 歌词 API</h1>
+<p>此页可直接交给电脑上的 AI 工具读取。控制范围：普通歌词、自定义 HTML、Folia、JIZURA 与已保存模板。修改成功后立即保存并同步 OBS。</p>
+<p>地址：<code>http://127.0.0.1:17844</code> · <a href="/openapi.json">OpenAPI 文档与全部字段</a></p>
+<h2>认证</h2>
+<p>在播放器歌词设置中复制 API Key。除了此页和 OpenAPI，其余接口均须携带 <code>Authorization: Bearer YOUR_API_KEY</code>。只能由本机工具直接调用，不接受网页跨域请求。关闭开关后全部控制接口返回 503，更换密钥后旧密钥立即失效。文档中不会显示密钥。</p>
+<h2>先读取，再修改</h2>
+<pre>curl http://127.0.0.1:17844/settings -H "Authorization: Bearer YOUR_API_KEY"
+curl -X PATCH http://127.0.0.1:17844/settings -H "Authorization: Bearer YOUR_API_KEY" -H "Content-Type: application/json" --data '{"color":"#66ffcc","size":48}'</pre>
+<p>PATCH 递归合并对象，保留未提供的字段；数组整体替换。不支持用 null 删除字段。设置通过播放器校验后保存。请求正文最大 8 MB，使用 Content-Length；不支持分块请求。styleSettings 由接口自动同步，请修改顶层外观字段。</p>
+<h2>接口</h2>
+<table>
+<tr><th>方法与路径</th><th>用途</th></tr>
+<tr><td>GET /settings</td><td>读取当前完整歌词设置</td></tr>
+<tr><td>PATCH /settings</td><td>部分修改，立即保存与应用</td></tr>
+<tr><td>GET /catalog/folia</td><td>19 种模式的真实默认动画参数，以及可调整字段的上下限、开关和选项</td></tr>
+<tr><td>GET /catalog/jizura</td><td>JIZURA 默认项目、效果选项、字体、配色完整目录</td></tr>
+<tr><td>GET /templates</td><td>读取本地模板，返回 id、name、settings</td></tr>
+<tr><td>POST /templates</td><td>正文 {"name":"我的模板"} 保存当前设置；可附加完整 settings 对象。最多 100 个模板，同名返回 409。</td></tr>
+<tr><td>POST /templates/{id}/apply</td><td>立即应用模板，无需正文</td></tr>
+<tr><td>DELETE /templates/{id}</td><td>删除指定模板</td></tr>
+</table>
+<h2>普通歌词与 HTML</h2>
+<p>preset 可选 classic、karaoke、neon、minimal、stage、nowplaying、nowplaying-liquid、nowplaying-skeuo、nowplaying-fly、aurora、hologram、ripple、danmaku；mode 可选 current、current-next、multi。size 12–120 整数，width 240–3000 整数，weight 400/600/700/800，align left/center/right，color 使用 #RRGGBB，strokeWidth 0–8，lineHeight 1–3，letterSpacing -2–20，translationSize 10–80，rows 1–8，offsetY -500–500。</p>
+<p>支持 motion、widget、css、htmlTuningEnabled、customHtmlEnabled、customHtml、customHtmlValues、font、fontFile、fontName、stroke、shadow、particleDissolve 与粒子参数、rawEffectsEnabled 与配色、bounceTrailType、bounceTrailDuration、bounceTrailLength。完整字段、数值范围与结构见 OpenAPI。</p>
+<p>自定义 HTML 包含 <code>data-rustmusic-slot="current"</code>，最大 12000 字符；不嵌套 iframe/object/embed/base/form。字体和图片使用播放器已导入的文件 ID。</p>
+<pre>{"preset":"classic","customHtmlEnabled":true,"customHtml":"&lt;div data-rustmusic-slot=\"current\"&gt;&lt;/div&gt;","htmlTuningEnabled":true,"color":"#ffffff"}</pre>
+<h2>Folia</h2>
+<p>preset 使用 folia- 加模式名：cadenza、cappella、claddagh、classic、diorama、fume、hanabi、lumiere、machi、metaphor、monet、nebbia、partita、pendolo、prompt、sonnet、still、tempera、tilt。</p>
+<p>先 GET /catalog/folia，读取目标模式的 defaults 和 fields。fields 的 type 为 number、boolean 或 choice；number 的 min/max/step、choice 的 options 均来自原版动画定义。prompt 和 still 原版没有独立动画参数。</p>
+<p>foliaAppearance 保存外观，foliaTunings[模式] 保存动画参数，foliaTuningEnabled[模式] 为 false 时使用原版动画。</p>
+<pre>{"preset":"folia-hanabi","customHtmlEnabled":false,"officialStyleId":"","officialCss":"","foliaAppearance":{"primaryColor":"#ffffff","accentColor":"#50e3c2","secondaryColor":"#ffca77","glowColors":{"hanabi":"#50e3c2"}},"foliaTunings":{"hanabi":{"sparkAmount":1.2,"glow":1.4}},"foliaTuningEnabled":{"hanabi":true}}</pre>
+<p>glowColors 的键是模式名，颜色使用 #RRGGBB。lyricsFontScale/subtitleFontScale 为 0.85–1.4，visualizerOpacity/subtitleOverlayOpacity 为 0.2–1。fontFile/subtitleFontFile 引用已导入字体；foliaAssets 分组为 monet、emoji、avatar、tempera，每组最多 30 张图片，引用已有图片 ID。</p>
+<h2>JIZURA</h2>
+<p>先 GET /catalog/jizura，读取 defaults 和可选项。jizura.project 保存视觉项目：style、fx、enabled、colors、fonts、locks、seed 等；支持原版全部效果组合。修改可只传需要改变的嵌套字段。</p>
+<p>fx.motion/glitch/chroma/decor/density/texture/bgSwitch 为 0–1。enabled[分类][效果 id] 是布尔值，分类与 id 使用目录中的 groups。自定义 colors 使用 enabled 控制 bg/fg/sub，accentOn 控制 accent/ghostA/ghostB。不要把分析数据、歌曲标识或逐行绑定改成其他歌曲。</p>
+<pre>{"preset":"jizura","customHtmlEnabled":false,"officialStyleId":"","officialCss":"","jizura":{"transparent":true,"project":{"style":"noir","fx":{"motion":0.6,"glitch":0.2},"colors":{"accentOn":true,"accent":"#50e3c2"}}}}</pre>
+<h2>错误与核实</h2>
+<p>错误返回 JSON {"error":"原因"}。400 参数或正文无效，401 密钥错误，403 来源/Host 无效，404 接口或模板不存在，409 模板同名，413 正文过大，415 类型错误，503 已关闭。每次修改后再 GET /settings 核实结果；不要不断重试 400 或 401。API 只调整歌词，不提供运行程序、文件读写或账户控制。</p>
+</main>
+</html>

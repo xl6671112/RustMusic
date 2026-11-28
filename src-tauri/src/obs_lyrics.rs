@@ -40,7 +40,7 @@ fn uses_folia_renderer(value: &Value) -> bool {
         .and_then(Value::as_str)
         .is_some_and(|preset| preset.starts_with("folia-"))
 }
-fn uses_audio_visualizer(value: &Value) -> bool {
+pub(crate) fn uses_audio_visualizer(value: &Value) -> bool {
     uses_folia_renderer(value) || value.get("preset").and_then(Value::as_str) == Some("jizura")
 }
 const FOLIA_PAGE: &str = r#"<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/folia.css"><title>Folia Lyrics</title></head><body><div id="root"></div><script type="module" src="/folia.js"></script></body></html>"#;
@@ -85,12 +85,16 @@ pub fn get_obs_lyrics_settings(state: State<'_, AppState>) -> Result<String, Str
 
 #[tauri::command]
 pub fn set_obs_lyrics_settings(state: State<'_, AppState>, settings: String) -> Result<(), String> {
+    update_settings(&state, settings)
+}
+
+pub(crate) fn update_settings(state: &AppState, settings: String) -> Result<(), String> {
     let value: Value =
         serde_json::from_str(&settings).map_err(|_| "Invalid OBS lyrics settings JSON")?;
     validate_settings(&value)?;
     let conn = state.db.lock();
     conn.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value", ["obs_lyrics_settings", &settings]).map_err(|e| e.to_string())?;
-    state.engine.fx.set_obs_enabled(uses_audio_visualizer(&value));
+    state.engine.fx.set_obs_enabled(uses_audio_visualizer(&value) || crate::obs_lyrics_canvases::uses_audio_visualizer());
     if let Ok(mut cache) = settings_cache().lock() {
         *cache = value;
     }
@@ -102,6 +106,57 @@ pub async fn import_obs_lyrics_font(state: State<'_, AppState>, name: String, da
     let directory = state.app_data.join("lyrics-fonts");
     tauri::async_runtime::spawn_blocking(move || store_font(&directory, &name, &data))
         .await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub fn validate_obs_lyrics_template(settings: Value) -> Result<(), String> {
+    if settings.to_string().len() > 8 * 1024 * 1024 {
+        return Err("歌词模板设置最大 8 MB".into());
+    }
+    for key in ["customHtml", "stroke", "particleColor", "rawShadow", "rawAccent", "rawGlow", "rawStroke", "bounceTrailType", "lyricTimeline"] {
+        if settings.get(key).is_some_and(|value| !value.is_string()) { return Err(format!("模板字段格式无效：{key}")); }
+    }
+    for key in ["customHtmlEnabled", "autoUpdateStyles"] {
+        if settings.get(key).is_some_and(|value| !value.is_boolean()) { return Err(format!("模板字段格式无效：{key}")); }
+    }
+    if settings.get("customHtml").and_then(Value::as_str).is_some_and(|html| html.chars().count() > 12_000)
+        || settings.get("customHtmlValues").is_some_and(|values| !values.is_object()) {
+        return Err("模板 HTML 或可调参数无效".into());
+    }
+    validate_settings(&settings)
+}
+
+#[tauri::command]
+pub fn get_obs_lyrics_templates(state: State<'_, AppState>) -> Result<String, String> {
+    let conn = state.db.lock();
+    conn.query_row("SELECT value FROM settings WHERE key='obs_lyrics_templates'", [], |row| row.get(0))
+        .or_else(|error| if matches!(error, rusqlite::Error::QueryReturnedNoRows) { Ok("[]".into()) } else { Err(error) })
+        .map_err(|error| error.to_string())
+}
+
+pub(crate) fn validate_templates(raw: &str) -> Result<(), String> {
+    if raw.len() > 64 * 1024 * 1024 { return Err("已保存模板总大小超过 64 MB".into()); }
+    let value: Value = serde_json::from_str(raw).map_err(|_| "歌词模板格式无效")?;
+    let templates = value.as_array().ok_or("歌词模板格式无效")?;
+    if templates.len() > 100 { return Err("最多保存 100 个歌词模板".into()); }
+    let mut ids = std::collections::HashSet::new();
+    for template in templates {
+        let id = template.get("id").and_then(Value::as_str).ok_or("模板编号无效")?;
+        let name = template.get("name").and_then(Value::as_str).ok_or("模板名称无效")?;
+        if id.is_empty() || id.len() > 80 || !ids.insert(id) || name.trim().is_empty() || name.chars().count() > 80 {
+            return Err("模板编号重复或名称无效".into());
+        }
+        validate_obs_lyrics_template(template.get("settings").cloned().ok_or("模板缺少设置")?)?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_obs_lyrics_templates(state: State<'_, AppState>, templates: String) -> Result<(), String> {
+    validate_templates(&templates)?;
+    state.db.lock().execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+        ["obs_lyrics_templates", &templates]).map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 fn font_mime(id: &str) -> Option<&'static str> {
@@ -385,12 +440,13 @@ fn validate_settings(v: &Value) -> Result<(), String> {
 pub fn start_server(engine: std::sync::Arc<crate::engine::Engine>, initial_settings: String, font_directory: PathBuf) {
     if let Ok(value) = serde_json::from_str::<Value>(&initial_settings) {
         if validate_settings(&value).is_ok() {
-            engine.fx.set_obs_enabled(uses_audio_visualizer(&value));
+            engine.fx.set_obs_enabled(uses_audio_visualizer(&value) || crate::obs_lyrics_canvases::uses_audio_visualizer());
             if let Ok(mut cache) = settings_cache().lock() {
                 *cache = value;
             }
         }
     }
+    if crate::obs_lyrics_canvases::uses_audio_visualizer() { engine.fx.set_obs_enabled(true); }
     thread::Builder::new()
         .name("obs-lyrics-http".into())
         .spawn(move || {
@@ -424,7 +480,9 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
     let first = lines.next().unwrap_or("");
     let mut parts = first.split_whitespace();
     let method = parts.next().unwrap_or("");
-    let path = parts.next().unwrap_or("/");
+    let request_path = parts.next().unwrap_or("/");
+    let (path, query) = request_path.split_once('?').unwrap_or((request_path, ""));
+    let canvas_id = query.strip_prefix("canvas=").filter(|id| !id.is_empty() && id.len() <= 80 && id.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-'));
     let host = lines
         .find_map(|l| {
             l.split_once(':')
@@ -443,6 +501,16 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
     }
     if let Some(id) = path.strip_prefix("/fonts/") {
         serve_asset(&mut stream, read_font(font_directory, id));
+        return;
+    }
+    if let Some(id) = path.strip_prefix("/canvas/") {
+        if let Some((settings, enabled)) = crate::obs_lyrics_canvases::settings(id) {
+            let paused = format!(r#"<!doctype html><html><meta charset="utf-8"><title>歌词画布已暂停</title><body style="margin:0;background:transparent"><script>async function poll(){{try{{const r=await fetch('/state?canvas={id}',{{cache:'no-store'}});const s=await r.json();if(s.canvasEnabled){{location.reload();return}}}}catch{{}}setTimeout(poll,1000)}}poll();</script></body></html>"#);
+            let body = if enabled { lyrics_page_for_settings(&settings) } else { &paused };
+            let _ = write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n{body}", body.len());
+        } else {
+            let _ = write!(stream, "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        }
         return;
     }
     if let Some(id) = path.strip_prefix("/folia-images/") {
@@ -524,6 +592,11 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
                 .lock()
                 .map(|s| s.clone())
                 .unwrap_or_else(|_| json!({}));
+            if let Some(id) = canvas_id {
+                let canvas = crate::obs_lyrics_canvases::settings(id);
+                v["canvasEnabled"] = json!(canvas.as_ref().is_some_and(|(_, enabled)| *enabled));
+                v["settings"] = canvas.map(|(settings, _)| settings).unwrap_or(Value::Null);
+            }
             v["audioSpectrum"] = crate::fx::latest_frame();
             v["playbackRate"] = json!(engine.speed());
             let native = engine.current.read().clone();
@@ -574,6 +647,22 @@ fn serve(mut stream: TcpStream, engine: &crate::engine::Engine, font_directory: 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_templates_validate_every_snapshot_without_changing_active_settings() {
+        let settings = test_settings("folia-hanabi");
+        let mut templates = json!([{"id":"one","name":"花火","settings":settings}]);
+        assert!(validate_templates(&templates.to_string()).is_ok());
+        templates[0]["settings"]["size"] = json!(999);
+        assert!(validate_templates(&templates.to_string()).is_err(), "a malformed imported template must not enter the saved collection");
+        templates[0]["settings"] = test_settings("jizura");
+        let duplicate = templates[0].clone();
+        templates.as_array_mut().unwrap().push(duplicate);
+        assert!(validate_templates(&templates.to_string()).is_err(), "duplicate IDs must not replace another user's saved template");
+        let mut invalid = test_settings("classic");
+        invalid["customHtml"] = json!({"unexpected":"object"});
+        assert!(validate_obs_lyrics_template(invalid).is_err(), "shared HTML must remain text rather than crash the editor");
+    }
 
     fn test_settings(preset: &str) -> Value {
         json!({

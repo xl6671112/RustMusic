@@ -217,9 +217,11 @@ pub async fn netease_lyric(state: State<'_, AppState>, id: i64) -> Result<Lyrics
         let conn = state.db.lock();
         db::get_lyrics_cache(&conn, "netease", &id.to_string())
     };
-    if let Some(json) = cached {
-        if let Ok(p) = serde_json::from_str::<LyricsPayload>(&json) {
-            return Ok(p);
+    if let Some(json) = cached.as_deref() {
+        if db::lyrics_cache_is_current(json) {
+            if let Ok(p) = serde_json::from_str::<LyricsPayload>(json) {
+                return Ok(p);
+            }
         }
     }
     // 优先逐字歌词（yrc）：染色推进贴合实际演唱节奏；无则回落行级。
@@ -257,7 +259,17 @@ pub async fn netease_lyric(state: State<'_, AppState>, id: i64) -> Result<Lyrics
         }
         Ok(payload)
     })
-    .await?;
+    .await;
+    let payload = match payload {
+        Ok(p) if !p.lines.is_empty() => p,
+        result => {
+            // Keep the old lyrics usable offline; only successful refreshes get a version marker.
+            if let Some(p) = cached.and_then(|json| serde_json::from_str::<LyricsPayload>(&json).ok()) {
+                return Ok(p);
+            }
+            return result;
+        }
+    };
     if !payload.lines.is_empty() {
         // 空结果不缓存：瞬时网络失败不至于把“无歌词”固化
         if let Ok(json) = serde_json::to_string(&payload) {

@@ -303,7 +303,21 @@ pub fn get_lyrics_cache(conn: &Connection, kind: &str, rid: &str) -> Option<Stri
     .ok()
 }
 
+pub fn lyrics_cache_is_current(payload: &str) -> bool {
+    serde_json::from_str::<serde_json::Value>(payload)
+        .ok()
+        .and_then(|v| v.get("_romanizationVersion").and_then(|v| v.as_u64()))
+        == Some(1)
+}
+
 pub fn set_lyrics_cache(conn: &Connection, kind: &str, rid: &str, payload: &str) {
+    let Ok(mut payload) = serde_json::from_str::<serde_json::Value>(payload) else {
+        return;
+    };
+    let Some(object) = payload.as_object_mut() else { return };
+    // Older caches predate provider romanization support; refresh once, even if none is available.
+    object.insert("_romanizationVersion".into(), serde_json::json!(1));
+    let payload = payload.to_string();
     let _ = conn.execute(
         "INSERT INTO lyrics_cache(kind, rid, payload) VALUES(?1, ?2, ?3)
          ON CONFLICT(kind, rid) DO UPDATE SET payload = excluded.payload",
@@ -1523,6 +1537,23 @@ pub fn reorder_playlist(conn: &Connection, pid: i64, rowids: &[i64]) {
 #[cfg(test)]
 mod migration_tests {
     use super::*;
+
+    #[test]
+    fn lyrics_cache_refreshes_legacy_payload_once_even_when_provider_has_no_romanization() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE lyrics_cache (kind TEXT NOT NULL, rid TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(kind, rid));").unwrap();
+        let old = r#"{"synced":true,"lines":[{"timeMs":1000,"text":"안녕","trans":"你好"}]}"#;
+        conn.execute("INSERT INTO lyrics_cache VALUES('netease', '1', ?1)", params![old]).unwrap();
+        let cached = get_lyrics_cache(&conn, "netease", "1").unwrap();
+        assert!(!lyrics_cache_is_current(&cached), "old lyrics need one retry for missing provider fields");
+        assert_eq!(cached, old, "the old lyrics must remain available if the network fails");
+        set_lyrics_cache(&conn, "netease", "1", old);
+        let refreshed = get_lyrics_cache(&conn, "netease", "1").unwrap();
+        assert!(lyrics_cache_is_current(&refreshed), "legitimate missing romanization must not cause endless requests");
+        let payload: crate::models::LyricsPayload = serde_json::from_str(&refreshed).unwrap();
+        assert_eq!(payload.lines[0].trans.as_deref(), Some("你好"));
+        assert!(payload.lines[0].roman.is_none());
+    }
 
     #[test]
     fn merging_managed_folder_children_preserves_tracks_and_custom_folders() {

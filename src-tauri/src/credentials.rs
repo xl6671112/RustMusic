@@ -14,8 +14,9 @@ use crate::db;
 const SERVICE: &str = "RustMusic";
 
 /// 走 keyring 的 token 键
-const KEYS: [&str; 5] = [
+const KEYS: [&str; 6] = [
     "qq_musickey",
+    "qq_wx_refresh_token",
     "kg_token",
     "netease_music_u",
     "bili_sessdata",

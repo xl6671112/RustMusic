@@ -20,6 +20,26 @@ fn decode_b64_lrc(v: &serde_json::Value) -> Option<String> {
     (!s.is_empty()).then_some(s)
 }
 
+fn decode_alternate(v: &serde_json::Value) -> Option<String> {
+    let encoded = v.as_str().filter(|s| !s.is_empty())?;
+    // PlayLyricInfo encrypts roma/trans just like lyric; the legacy endpoint uses base64.
+    let text = crate::qrc::decrypt(encoded).ok().or_else(|| decode_b64_lrc(v))?;
+    let content = crate::qrc::extract_lyric_content(&text).unwrap_or(text).replace("\\n", "\n");
+    let lrc = if crate::qrc::is_qrc(&content) {
+        crate::qrc::to_lrc(&content)
+    } else {
+        content
+    };
+    crate::lyrics::parse(&lrc).lines.iter()
+        .any(|line| line.time_ms.is_some() && !line.text.trim().is_empty())
+        .then_some(lrc)
+}
+
+fn romanization(data: &serde_json::Value) -> Option<String> {
+    data.get("roma").and_then(decode_alternate)
+        .or_else(|| data.get("romalrc").and_then(decode_alternate))
+}
+
 pub fn lyric(songmid: &str) -> Result<Option<LyricTrans>, String> {
     let url = format!(
         "https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?songmid={}&g_tk=5381&format=json",
@@ -30,8 +50,8 @@ pub fn lyric(songmid: &str) -> Result<Option<LyricTrans>, String> {
         serde_json::from_str(&text).map_err(|e| format!("{}: {e}", crate::i18n::pick("歌词解析失败", "Failed to parse lyrics")))?;
     let lrc = resp.get("lyric").and_then(|v| decode_b64_lrc(v));
     // 响应里的 trans 字段是官方翻译（同为 base64 LRC）——此前被直接丢弃
-    let trans = resp.get("trans").and_then(|v| decode_b64_lrc(v));
-    let roman = resp.get("romalrc").and_then(|v| decode_b64_lrc(v));
+    let trans = resp.get("trans").and_then(decode_alternate);
+    let roman = romanization(&resp);
     Ok(lrc.map(|lrc| LyricTrans { lrc, trans, roman }))
 }
 
@@ -53,7 +73,7 @@ pub fn lyric_qrc(
                 "songMid": songmid,
                 "qrc": 1,            // 1 = 请求逐字（QRC），0 = 行级
                 "qrc_tts": 0,
-                "romalrc": 1,
+                "roma": 1,
                 "trans": 1
             }
         }
@@ -98,11 +118,35 @@ pub fn lyric_qrc(
         return Ok(None);
     }
     // 响应同步带回的官方翻译（base64 LRC；trans=1 时与逐字数据并列）
-    let trans = resp
-        .pointer("/req_1/data/trans")
-        .and_then(|v| decode_b64_lrc(v));
-    let roman = resp
-        .pointer("/req_1/data/romalrc")
-        .and_then(|v| decode_b64_lrc(v));
+    let trans = resp.pointer("/req_1/data/trans").and_then(decode_alternate);
+    let roman = resp.pointer("/req_1/data").and_then(romanization);
     Ok(Some((enhanced, trans, roman)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn encoded(text: &str) -> serde_json::Value {
+        serde_json::Value::String(base64::engine::general_purpose::STANDARD.encode(text))
+    }
+
+    #[test]
+    fn romanization_reads_qq_roma_and_legacy_romalrc() {
+        let response = serde_json::json!({"roma": encoded("[00:01.00]annyeong")});
+        assert_eq!(romanization(&response).as_deref(), Some("[00:01.00]annyeong"));
+        let legacy = serde_json::json!({"roma": "", "romalrc": encoded("[00:01.00]konnichiwa")});
+        assert_eq!(romanization(&legacy).as_deref(), Some("[00:01.00]konnichiwa"));
+        assert!(romanization(&serde_json::json!({"trans": encoded("[00:01.00]你好")})).is_none());
+    }
+
+    #[test]
+    fn romanization_normalizes_qq_word_timing_before_matching_source_lines() {
+        let roman = encoded("<QrcInfos><Lyric_1 LyricContent=\"[1000,1000]kimi (1000,500)no koe(1500,500)\" /></QrcInfos>");
+        let decoded = decode_alternate(&roman).unwrap();
+        let mut parsed = crate::lyrics::parse("[00:01.00]君の声");
+        crate::lyrics::attach_romanizations(&mut parsed, &decoded);
+        assert_eq!(parsed.lines[0].roman.as_deref(), Some("kimi no koe"));
+        assert!(!decoded.contains("(1000,500)"));
+    }
 }

@@ -38,6 +38,7 @@ type LyricInput = {
 };
 
 type OverlayState = {
+  canvasEnabled?: boolean;
   trackKey?: string | null;
   title?: string;
   artist?: string;
@@ -347,6 +348,7 @@ function App() {
       altMode: value.altMode,
       lyrics: value.lyrics,
       settings: value.settings,
+      canvasEnabled: value.canvasEnabled,
     });
     const publish = (value: OverlayState) => {
       live.current = { state: value, receivedAt: performance.now() };
@@ -364,10 +366,13 @@ function App() {
     };
     const poll = async () => {
       try {
-        const response = await fetch("/state", { cache: "no-store" });
+        const canvasId = /^\/canvas\/([a-zA-Z0-9-]+)$/.exec(location.pathname)?.[1];
+        const response = await fetch("/state" + (canvasId ? "?canvas=" + canvasId : ""), { cache: "no-store" });
         if (!response.ok) throw new Error(`Folia state request failed: ${response.status}`);
         const next = await response.json() as OverlayState;
-        if ((location.pathname === "/lyrics" || location.pathname === "/lyrics/") && !previewSettings.current && !next.settings?.preset?.startsWith("folia-")) {
+        document.documentElement.style.visibility = next.canvasEnabled === false ? "hidden" : "";
+        if (canvasId && next.canvasEnabled === false) { location.reload(); return; }
+        if ((canvasId || location.pathname === "/lyrics" || location.pathname === "/lyrics/") && !previewSettings.current && !next.settings?.preset?.startsWith("folia-")) {
           location.reload();
           return;
         }
@@ -393,7 +398,7 @@ function App() {
       window.parent.postMessage({ type: "folia-tuning-defaults", defaults: getFoliaTuningDefaults() }, "*");
     }
   }, []);
-  return state ? <FoliaOverlay state={state} live={live} /> : null;
+  return state && state.canvasEnabled !== false ? <FoliaOverlay state={state} live={live} /> : null;
 }
 
 const root = document.getElementById("root");

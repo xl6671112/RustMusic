@@ -75,7 +75,7 @@ impl FxShared {
         self.sync_enabled();
     }
 
-    /// OBS Folia 样式需要同一频谱流，但不能与播放器皮肤的开关互相覆盖。
+    /// OBS 音频响应样式需要同一频谱流，但不能与播放器皮肤的开关互相覆盖。
     pub fn set_obs_enabled(&self, on: bool) {
         self.obs_enabled.store(on, Ordering::Relaxed);
         self.sync_enabled();

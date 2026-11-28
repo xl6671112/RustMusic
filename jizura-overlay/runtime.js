@@ -17,7 +17,7 @@
     errorLabel.hidden = !error;
   }
   function resize() {
-    if (!plan) return;
+    if (!plan || state.canvasEnabled === false) return;
     const desiredHeight = Math.max(240, Math.min(2160, Number(settings.project?.res) || 1080));
     const scale = desiredHeight / Math.min(plan.W, plan.H);
     const width = Math.round(plan.W * scale / 2) * 2, height = Math.round(plan.H * scale / 2) * 2;
@@ -59,7 +59,8 @@
   function update(next) {
     state = next;
     settings = preview || state.settings?.jizura || {};
-    if (!preview && /^\/lyrics\/?$/.test(location.pathname) && state.settings?.preset !== "jizura") {
+    document.documentElement.style.visibility = state.canvasEnabled === false ? "hidden" : "";
+    if (!preview && (/^\/lyrics\/?$/.test(location.pathname) || /^\/canvas\//.test(location.pathname)) && state.settings?.preset !== "jizura") {
       location.reload();
       return;
     }
@@ -96,9 +97,12 @@
   async function poll() {
     if (stopped) return;
     try {
-      const response = await fetch("/state", { cache: "no-store", signal: AbortSignal.timeout(2500) });
+      const canvasId = /^\/canvas\/([a-zA-Z0-9-]+)$/.exec(location.pathname)?.[1];
+      const response = await fetch("/state" + (canvasId ? "?canvas=" + canvasId : ""), { cache: "no-store", signal: AbortSignal.timeout(2500) });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      update(await response.json());
+      const next = await response.json();
+      if (canvasId && next.canvasEnabled === false) { location.reload(); return; }
+      update(next);
       fail("");
     } catch (reason) {
       fail(`歌词连接失败：${String(reason)}`);

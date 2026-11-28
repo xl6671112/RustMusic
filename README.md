@@ -7,7 +7,7 @@
 ## 构建
 
 ```powershell
-git submodule update --init
+git -c core.autocrlf=false submodule update --init
 npm ci
 npm ci --prefix folia-overlay
 npm run build

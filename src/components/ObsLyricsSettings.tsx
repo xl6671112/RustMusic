@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { Copy, Download, Eye, EyeOff, Plus, RotateCw, Share2 } from "lucide-react";
 
 import { defaultStyleValues, initial, loadLyricsSettings, presets, styleFields, styleKey, widgets, type Config, type StyleField } from "../obsLyricsPresets";
 import { fetchStyles, saveLyricsSettings, type StylePack } from "../obsLyricsUpdates";
@@ -9,6 +11,9 @@ import LyricsFontPicker from "./LyricsFontPicker";
 import { JIZURA_STYLES, createJizuraSettings } from "../jizuraSettings";
 import { useStore } from "../store";
 import { exportFoliaPackage, importFoliaPackage } from "../foliaPackage";
+import ObsLyricsApiSettings from "./ObsLyricsApiSettings";
+import ObsLyricsCanvases from "./ObsLyricsCanvases";
+import { importLyricsTemplateLink, readLyricsTemplates, shareLyricsTemplate, templateSnapshot, updateLyricsTemplates, type LyricsTemplate } from "../obsLyricsTemplates";
 const JizuraSettings=lazy(()=>import("./JizuraSettings"));
 export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>void}){
   const lyricsAltMode=useStore(s=>s.lyricsAltMode),setLyricsAltMode=useStore(s=>s.setLyricsAltMode);
@@ -17,6 +22,54 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
   const [draft,setDraft]=useState(initial),[loaded,setLoaded]=useState(false),[status,setStatus]=useState(""),[saving,setSaving]=useState(false),[foliaDefaults,setFoliaDefaults]=useState<Record<string,Record<string,unknown>>>({});const frame=useRef<HTMLIFrameElement>(null),customPreview=useRef<HTMLIFrameElement>(null),foliaImport=useRef<HTMLInputElement>(null);
   const [foliaExpanded,setFoliaExpanded]=useState(false);
   const [htmlExpanded,setHtmlExpanded]=useState(false);
+  const [sceneEnabled,setSceneEnabled]=useState<boolean|null>(null);
+  const [primaryWindow,setPrimaryWindow]=useState<{visible:boolean}|null>(null),[primaryLoaded,setPrimaryLoaded]=useState(false),[primaryBusy,setPrimaryBusy]=useState(false);
+  const primaryPending=useRef(false);
+  useEffect(()=>{
+    let disposed=false,unlisten:(()=>void)|undefined;
+    void(async()=>{
+      try {
+        const remove=await listen<{id:string;open:boolean;visible:boolean;error?:string}>("obs-lyrics-canvas-window",({payload})=>{
+          if(disposed||payload.id!=="primary")return;
+          setPrimaryWindow(payload.open?{visible:payload.visible}:null);
+          if(payload.error)setStatus(`歌词窗口出错：${payload.error}`);
+        });
+        if(disposed){remove();return}unlisten=remove;
+        const windows=await invoke<{id:string;visible:boolean}[]>("get_open_obs_lyrics_canvases");
+        if(!disposed){setPrimaryWindow(windows.find(window=>window.id==="primary")??null);setPrimaryLoaded(true)}
+      }catch(error){if(!disposed)setStatus(`读取歌词窗口失败：${String(error)}`)}
+    })();
+    return()=>{disposed=true;unlisten?.()};
+  },[]);
+  async function controlPrimary(command:"open"|"close"|"show"|"hide"){
+    if(primaryPending.current||!primaryLoaded)return;
+    primaryPending.current=true;setPrimaryBusy(true);
+    try {
+      if(command==="open"||command==="close")await invoke(command==="open"?"open_obs_lyrics_canvas":"close_obs_lyrics_canvas",{id:"primary"});
+      else await invoke("set_obs_lyrics_canvas_visibility",{id:"primary",visible:command==="show"});
+      setStatus(command==="hide"?"歌词窗口已隐藏并回收内存":command==="close"?"歌词窗口已关闭":command==="show"?"歌词窗口已显示":"歌词窗口已打开");
+    }catch(error){setStatus(`歌词窗口操作失败：${String(error)}`)}finally{primaryPending.current=false;setPrimaryBusy(false)}
+  }
+  const [styleTemplates,setStyleTemplates]=useState<LyricsTemplate[] | null>(null),[styleName,setStyleName]=useState("");
+  const [creatingStyle,setCreatingStyle]=useState(false);
+  const [importExpanded,setImportExpanded]=useState(false),[importLink,setImportLink]=useState(""),[shareLink,setShareLink]=useState("");
+  const [templateBusy,setTemplateBusy]=useState(false);
+  const creatingStylePending=useRef(false);
+  const templatePending=useRef(false);
+  async function refreshTemplates(){
+    try {setStyleTemplates(await readLyricsTemplates())}
+    catch(error){setStatus(`读取歌词风格失败：${String(error)}`)}
+  }
+  useEffect(()=>{
+    void refreshTemplates();
+    let disposed=false,unlisten:(()=>void)|undefined;
+    const refresh=()=>{void refreshTemplates()};
+    window.addEventListener("obs-lyrics-templates-changed",refresh);
+    void listen("obs-lyrics-templates-changed",refresh).then(remove=>{if(disposed)remove();else unlisten=remove}).catch(error=>{if(!disposed)setStatus(`风格同步暂不可用：${String(error)}`)});
+    return()=>{disposed=true;unlisten?.();window.removeEventListener("obs-lyrics-templates-changed",refresh)};
+  },[]);
+  useEffect(()=>{setShareLink("")},[draft.localStyleId]);
+  useEffect(()=>{if(styleTemplates&&draft.localStyleId&&!styleTemplates.some(template=>template.id===draft.localStyleId))setDraft(value=>loadLyricsSettings({...value,localStyleId:undefined}))},[styleTemplates,draft.localStyleId]);
   const [foliaHeight,setFoliaHeight]=useState(160);
   const [foliaPackageBusy,setFoliaPackageBusy]=useState(false);
   const foliaPanel=useRef<HTMLIFrameElement>(null);
@@ -60,6 +113,15 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
     return()=>window.removeEventListener("message",receive);
   },[]);
   useEffect(()=>{invoke<string>("get_obs_lyrics_settings").then(raw=>{if(raw)try{setDraft(loadLyricsSettings(JSON.parse(raw)))}catch{}}).catch(e=>setStatus(`加载失败：${String(e)}`)).finally(()=>setLoaded(true))},[]);
+  useEffect(()=>{
+    let disposed=false;
+    const off=listen("obs-lyrics-settings-changed",()=>{
+      void invoke<string>("get_obs_lyrics_settings").then(raw=>{
+        if(!disposed&&raw){setDraft(loadLyricsSettings(JSON.parse(raw)));setStatus("AI 已更新歌词设置")}
+      }).catch(error=>{if(!disposed)setStatus(`读取 AI 设置失败：${String(error)}`)});
+    });
+    return()=>{disposed=true;void off.then(unlisten=>unlisten()).catch(()=>{})};
+  },[]);
   useEffect(()=>{if(loaded)onReady?.(true)},[loaded,onReady]);
   useEffect(()=>{void checkStyles()},[]);
   useEffect(()=>{frame.current?.contentWindow?.postMessage({type:"obs-preview-settings",settings:draft},"http://127.0.0.1:17842")},[draft,loaded]);
@@ -70,16 +132,97 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
   const foliaMode=draft.preset.replace(/^folia-/,"");
   const foliaTuning=draft.foliaTunings?.[foliaMode]??foliaDefaults[foliaMode]??{};
   const foliaEnabled=draft.foliaTuningEnabled?.[foliaMode]!==false;
-  async function save(){setSaving(true);try{setDraft(await saveLyricsSettings(draft));setStatus("已保存")}catch(e){setStatus(String(e))}finally{setSaving(false)}}
+  async function storeNewStyle(settings:Config){
+    let sourceName=presets.find(([id])=>id===settings.preset)?.[1]??"自定义 HTML";
+    if(settings.officialStyleId)sourceName=pack.styles.find(style=>style.id===settings.officialStyleId)?.name??"官网风格";
+    if(settings.preset==="jizura")sourceName=`JIZURA · ${JIZURA_STYLES.find(style=>style.id===settings.jizura?.project?.style)?.label??"歌词"}`;
+    if(settings.localStyleId)sourceName=styleTemplates?.find(style=>style.id===settings.localStyleId)?.name??"歌词";
+    const baseName=styleName.trim()||`${[...sourceName].slice(0,77).join("")} 副本`;
+    if([...baseName].length>80)throw new Error("风格名称需为 1–80 字");
+    const template={id:crypto.randomUUID(),name:baseName,settings:templateSnapshot(settings)};
+    const next=await updateLyricsTemplates(latest=>{
+      if(latest.length>=100)throw new Error("最多保存 100 个歌词风格");
+      if(styleName.trim()&&latest.some(item=>item.name===baseName))throw new Error("已有同名歌词风格，请换一个名称");
+      for(let index=2;latest.some(item=>item.name===template.name);index++){
+        const suffix=` (${index})`;
+        template.name=[...baseName].slice(0,80-suffix.length).join("")+suffix;
+      }
+      return [...latest,template];
+    });
+    setStyleTemplates(next);setStyleName("");
+    return {...settings,preset:template.settings.preset,customHtmlEnabled:template.settings.customHtmlEnabled,localStyleId:template.id};
+  }
+  async function save(){
+    if(creatingStylePending.current||styleTemplates===null)return;
+    creatingStylePending.current=true;setSaving(true);
+    try {
+      const settings=draft.localStyleId?draft:await storeNewStyle(draft);
+      setDraft(settings);
+      const saved=await saveLyricsSettings(settings);
+      setDraft(saved);
+      if(saved.localStyleId){
+        try {
+          await updateLyricsTemplates(latest=>{
+            if(!latest.some(template=>template.id===saved.localStyleId))throw new Error("该风格已删除，请重新选择歌词风格");
+            return latest.map(template=>template.id===saved.localStyleId?{...template,settings:templateSnapshot(saved)}:template);
+          });
+        } catch(error){throw new Error(`当前歌词设置已保存，但自定义风格更新失败：${String(error)}`)}
+      }
+      setStatus("已保存");
+    }catch(e){setStatus(String(e))}finally{creatingStylePending.current=false;setSaving(false)}
+  }
+  async function createStyle(){
+    if(creatingStylePending.current||styleTemplates===null)return;
+    creatingStylePending.current=true;setCreatingStyle(true);
+    try {
+      setDraft(await storeNewStyle(draft));
+      setStatus("已另存为新的歌词风格，保存设置后生效");
+    }catch(error){setStatus(String(error))}finally{creatingStylePending.current=false;setCreatingStyle(false)}
+  }
+  async function shareStyle(){
+    const selected=styleTemplates?.find(template=>template.id===draft.localStyleId);
+    if(!selected||templatePending.current)return;
+    templatePending.current=true;setTemplateBusy(true);
+    try {
+      const link=await shareLyricsTemplate({...selected,settings:templateSnapshot(draft)});
+      setShareLink(link);
+      try {await navigator.clipboard.writeText(link);setStatus("歌词风格分享链接已复制")}
+      catch {setStatus("分享链接已生成，可选中复制")}
+    }catch(error){setStatus(`分享失败：${String(error)}`)}finally{templatePending.current=false;setTemplateBusy(false)}
+  }
+  async function importStyle(){
+    if(templatePending.current||creatingStylePending.current||styleTemplates===null)return;
+    templatePending.current=true;setTemplateBusy(true);
+    try {
+      const template=await importLyricsTemplateLink(importLink),base=template.name;
+      const next=await updateLyricsTemplates(latest=>{
+        if(latest.length>=100)throw new Error("最多保存 100 个歌词风格");
+        for(let index=2;latest.some(item=>item.name===template.name);index++){
+          const suffix=` (${index})`;
+          template.name=[...base].slice(0,80-suffix.length).join("")+suffix;
+        }
+        return [...latest,template];
+      });
+      setStyleTemplates(next);applyStyle({...structuredClone(template.settings),localStyleId:template.id});
+      setImportLink("");setImportExpanded(false);setShareLink("");setStatus(`已导入“${template.name}”，保存设置后生效`);
+    }catch(error){setStatus(`导入失败：${String(error)}`)}finally{templatePending.current=false;setTemplateBusy(false)}
+  }
   function field<K extends keyof Config>(key:K,value:Config[K]){setDraft(v=>{const next={...v,[key]:value};if((styleFields as readonly string[]).includes(key)){const active=styleKey(v),saved={...(v.styleSettings||{})};saved[active]={...(saved[active]||{}),[key]:value};next.styleSettings=saved}return next});setStatus("有未保存的修改")}
+  function applyStyle(settings:Config){setDraft(previous=>({...settings,styleSettings:{...previous.styleSettings,[styleKey(settings)]:Object.fromEntries(styleFields.map(key=>[key,settings[key]]))}}))}
   function selectStyle(value:string){
+    if(value.startsWith("template:")){
+      const template=styleTemplates?.find(item=>`template:${item.id}`===value);
+      if(template){applyStyle({...structuredClone(template.settings),localStyleId:template.id});setStatus("有未保存的修改")}
+      return;
+    }
     setDraft(v=>{
       const saved={...(v.styleSettings||{})},previous=styleKey(v);
       saved[previous]=Object.fromEntries(styleFields.map(key=>[key,v[key]])) as NonNullable<Config["styleSettings"]>[string];
       const style=value.startsWith("official:")?pack.styles.find(x=>`official:${x.id}`===value):undefined;
-      const target=value.startsWith("jizura:")?{...v,preset:"jizura",jizura:createJizuraSettings(value.slice(7),v.jizura),customHtmlEnabled:false,officialStyleId:"",officialStyleVersion:"",officialCss:""}:style?{...v,preset:"classic",customHtmlEnabled:false,officialStyleId:style.id,officialStyleVersion:pack.version,officialCss:style.css}:value.startsWith("official:")?v:{...v,preset:value,customHtmlEnabled:value==="custom-html",officialStyleId:"",officialStyleVersion:"",officialCss:""};
-      const key=styleKey(target),restore=saved[key]||{...Object.fromEntries(styleFields.map(field=>[field,initial[field]])),...defaultStyleValues(style?"official":value)};
-      return {...target,...restore,styleSettings:saved};
+      const base={...initial,autoUpdateStyles:v.autoUpdateStyles};
+      const target=value.startsWith("jizura:")?{...base,preset:"jizura",jizura:createJizuraSettings(value.slice(7))}:style?{...base,officialStyleId:style.id,officialStyleVersion:pack.version,officialCss:style.css}:value.startsWith("official:")?{...base,officialStyleId:v.officialStyleId,officialStyleVersion:v.officialStyleVersion,officialCss:v.officialCss}:{...base,preset:value,customHtmlEnabled:value==="custom-html"};
+      const restore={...Object.fromEntries(styleFields.map(field=>[field,initial[field]])),...defaultStyleValues(style?"official":value)};
+      return {...target,...restore,localStyleId:undefined,customHtml:value==="custom-html"&&!target.customHtml.trim()?lyricHtmlExample:target.customHtml,styleSettings:saved};
     });
     setStatus("有未保存的修改");
   }
@@ -114,25 +257,55 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
   const postCustomPreview=()=>customPreview.current?.contentWindow?.postMessage({type:"rustmusic-lyrics-state",state:{settings:draft.customHtmlValues,current:{text:"让每句歌词都有自己的光",words:[{text:"让每句",progress:100},{text:"歌词",progress:55},{text:"都有自己的光",progress:0}]},translation:"A little light in every line",next:"跟着旋律继续向前",title:"喜欢的旋律",artist:"RustMusic",playing:true,progress:0.55,preset:"custom",motion:true,mode:"current-next"}},"*");
   return <section className="anim-row glass rounded-2xl p-5" style={{["--row-idx" as string]:9}}>
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><h3 className="text-[14px] font-semibold text-[var(--ink)]">OBS 透明歌词</h3><p className="mt-1 text-[11px] leading-relaxed text-[var(--ink-3)]">{isolatedSelected?"将下方统一地址添加到 OBS 浏览器来源，保存后生效。":"将下方统一地址添加到 OBS 浏览器来源，普通样式和自定义 HTML 在此编辑。"}</p></div>
+      <div><h3 className="text-[14px] font-semibold text-[var(--ink)]">OBS 透明歌词</h3>{sceneEnabled===false&&<p className="mt-1 text-[11px] leading-relaxed text-[var(--ink-3)]">{isolatedSelected?"将下方统一地址添加到 OBS 浏览器来源，保存后生效。":"将下方统一地址添加到 OBS 浏览器来源，普通样式和自定义 HTML 在此编辑。"}</p>}</div>
+      {sceneEnabled===false&&<div className="flex min-w-0 flex-wrap items-center gap-2">
+      <label className="flex items-center gap-2 text-[12px] text-[var(--ink-2)]"><input type="checkbox" aria-label="启用歌词窗口" className="accent-[var(--accent)]" checked={!!primaryWindow} disabled={!primaryLoaded||primaryBusy} onChange={event=>void controlPrimary(event.currentTarget.checked?"open":"close")}/>启用窗口</label>
+      {primaryWindow&&<>
+        <button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="显示歌词窗口" aria-label="显示歌词窗口" disabled={primaryBusy||primaryWindow.visible} onClick={()=>void controlPrimary("show")}><Eye size={15}/></button>
+        <button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="隐藏歌词窗口并回收内存" aria-label="隐藏歌词窗口" disabled={primaryBusy||!primaryWindow.visible} onClick={()=>void controlPrimary("hide")}><EyeOff size={15}/></button>
+      </>}
       <button type="button" className={ctl+" shrink-0"} onClick={()=>{void navigator.clipboard.writeText(lyricsUrl).then(()=>setStatus("地址已复制")).catch(e=>setStatus(String(e)))}}>复制歌词地址</button>
+      </div>}
     </div>
-    <code className="mt-3 block break-all rounded-lg border border-[var(--line)] bg-[var(--shade)] px-3 py-2.5 text-[11px] text-[var(--ink-2)]">{lyricsUrl}</code>
+    <ObsLyricsCanvases onStatus={setStatus} onEnabledChange={setSceneEnabled}/>
+    {sceneEnabled===null&&<p role="status" className="mt-3 text-[12px] text-[var(--ink-3)]">正在读取歌词模式…</p>}
+    {sceneEnabled===false&&<code className="mt-3 block break-all rounded-lg border border-[var(--line)] bg-[var(--shade)] px-3 py-2.5 text-[11px] text-[var(--ink-2)]">{lyricsUrl}</code>}
+    <ObsLyricsApiSettings/>
+    {sceneEnabled===false&&<>
     {!isolatedSelected&&<><div className="mt-4 flex flex-wrap items-center gap-2">
       <button type="button" className={ctl} onClick={()=>void checkStyles()}>获取官网歌词风格</button>
     </div>
     <label className="mt-3 flex items-start gap-2 text-[12px] text-[var(--ink-2)]"><input className="mt-0.5 accent-[var(--accent)]" type="checkbox" checked={draft.autoUpdateStyles!==false} onChange={e=>field("autoUpdateStyles",e.target.checked)}/><span>自动更新已选官网风格<span className="mt-1 block text-[11px] text-[var(--ink-3)]">启动及使用期间自动检查；自定义歌词 HTML 保持不变。更改后点击保存。</span></span></label></>}
     <div className="mt-5 grid grid-cols-2 gap-3 text-[12px] text-[var(--ink-2)]">
-      <div className="min-w-0 space-y-1.5">
-        <label className="block">歌词风格<select aria-label="歌词风格" className={ctl+" mt-1.5 block w-full"} value={draft.officialStyleId?`official:${draft.officialStyleId}`:draft.preset==="jizura"?`jizura:${draft.jizura?.project?.style??"noir"}`:draft.preset} onChange={e=>selectStyle(e.target.value)}>
+      <div className="col-span-2 min-w-0 space-y-1.5 sm:col-span-1">
+        <label htmlFor="lyrics-style-select" className="block">歌词风格</label>
+        <div className="flex min-w-0 gap-2">
+        <select id="lyrics-style-select" aria-label="歌词风格" className={ctl+" block w-0 flex-1"} value={draft.localStyleId&&styleTemplates?.some(template=>template.id===draft.localStyleId)?`template:${draft.localStyleId}`:draft.officialStyleId?`official:${draft.officialStyleId}`:draft.preset==="jizura"?`jizura:${draft.jizura?.project?.style??"noir"}`:draft.customHtmlEnabled?"custom-html":draft.preset} onChange={e=>selectStyle(e.target.value)}>
+          {!!styleTemplates?.length&&<optgroup label="我的歌词风格">{styleTemplates.map(template=><option key={template.id} value={`template:${template.id}`}>{template.name}</option>)}</optgroup>}
           <optgroup label="播放器歌词样式">{presets.filter(([key])=>!key.startsWith("folia-")).map(([k,n])=><option key={k} value={k}>{n}</option>)}</optgroup>
           <optgroup label="Folia 原版效果">{presets.filter(([key])=>key.startsWith("folia-")).map(([k,n])=><option key={k} value={k}>{n}</option>)}</optgroup>
           <optgroup label="JIZURA 原版效果">{JIZURA_STYLES.map(style=><option key={style.id} value={`jizura:${style.id}`}>JIZURA · {style.label}</option>)}</optgroup>
           <optgroup label="自定义 HTML"><option value="custom-html">自定义 HTML</option></optgroup>
           {draft.officialStyleId&&!pack.styles.some(x=>x.id===draft.officialStyleId)&&<optgroup label="官网歌词样式"><option value={`official:${draft.officialStyleId}`}>已保存的官网风格</option></optgroup>}
           {pack.styles.length>0&&<optgroup label="官网歌词样式">{pack.styles.map(x=><option key={`official:${x.id}`} value={`official:${x.id}`}>{x.name} · 官网</option>)}</optgroup>}
-        </select></label>
-        {!isolatedSelected&&<button type="button" className={`${ctl} w-full`} onClick={()=>{setDraft(v=>({...v,preset:"custom-html",customHtmlEnabled:true,officialStyleId:"",officialStyleVersion:"",officialCss:"",customHtml:v.customHtml.trim()?v.customHtml:lyricHtmlExample}));setStatus("自定义歌词样式已新建，检查预览后保存设置")}}>新建歌词样式</button>}
+        </select>
+        {draft.localStyleId&&styleTemplates?.some(template=>template.id===draft.localStyleId)&&<button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="分享歌词风格" aria-label="分享歌词风格" disabled={templateBusy||creatingStyle||saving} onClick={()=>void shareStyle()}><Share2 size={15}/></button>}
+        {styleTemplates===null&&<button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="重新读取歌词风格" aria-label="重新读取歌词风格" onClick={()=>void refreshTemplates()}><RotateCw size={15}/></button>}
+        </div>
+        <div className="flex min-w-0 flex-wrap gap-2">
+          <input aria-label="新歌词风格名称" className={ctl+" flex-1 basis-32"} placeholder="新风格名称（可选）" value={styleName} disabled={styleTemplates===null||creatingStyle||saving} onChange={event=>setStyleName(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void createStyle()}}}/>
+          <div className="flex shrink-0 gap-2"><button type="button" className={ctl+" inline-flex shrink-0 items-center gap-1.5"} disabled={styleTemplates===null||creatingStyle||saving} onClick={()=>void createStyle()}><Plus size={14}/>另存为新风格</button>
+          <button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="导入歌词风格" aria-label="导入歌词风格" aria-expanded={importExpanded} aria-controls="lyrics-style-import" disabled={styleTemplates===null||creatingStyle||saving||templateBusy} onClick={()=>setImportExpanded(value=>!value)}><Download size={15}/></button>
+          </div>
+        </div>
+        {importExpanded&&<div id="lyrics-style-import" className="flex min-w-0 flex-wrap gap-2">
+          <input type="url" aria-label="歌词风格分享链接" className={ctl+" w-0 flex-1 basis-40"} placeholder="粘贴分享链接" value={importLink} disabled={templateBusy} onChange={event=>setImportLink(event.target.value)} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();void importStyle()}}}/>
+          <button type="button" className={ctl+" inline-flex shrink-0 items-center gap-1.5"} disabled={templateBusy||!importLink.trim()} onClick={()=>void importStyle()}><Download size={14}/>导入链接</button>
+        </div>}
+        {shareLink&&<div className="flex min-w-0 gap-2">
+          <input readOnly aria-label="生成的风格分享链接" className={ctl+" w-0 flex-1"} value={shareLink} onFocus={event=>event.currentTarget.select()}/>
+          <button type="button" className={ctl+" inline-flex w-9 shrink-0 items-center justify-center !px-0"} title="复制风格分享链接" aria-label="复制风格分享链接" onClick={()=>void navigator.clipboard.writeText(shareLink).then(()=>setStatus("歌词风格分享链接已复制")).catch(()=>setStatus("请选中分享链接复制"))}><Copy size={15}/></button>
+        </div>}
       </div>
       {!isolatedSelected&&<>
       <label className="min-w-0 space-y-1.5">显示方式<select className={ctl+" block w-full"} value={draft.mode} onChange={e=>field("mode",e.target.value)}><option value="current">当前句</option><option value="current-next">当前句＋下一句</option><option value="multi">滚动多行</option></select></label>
@@ -244,9 +417,10 @@ export default function ObsLyricsSettings({onReady}:{onReady?:(ready:boolean)=>v
     </div>
     <p className="mt-2 text-[10px] leading-relaxed text-[var(--ink-3)]">透明网格仅用于预览；没有播放歌曲或当前没有歌词时，此处保持空白。</p>
     <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-[var(--line)] pt-4">
-      <button type="button" disabled={saving} className={ctl+" !border-transparent !bg-[var(--accent)] !text-[var(--accent-on)] font-medium"} onClick={save}>{saving?"保存中…":"保存设置"}</button>
+      <button type="button" disabled={saving||creatingStyle||styleTemplates===null} className={ctl+" !border-transparent !bg-[var(--accent)] !text-[var(--accent-on)] font-medium"} onClick={save}>{saving?"保存中…":"保存设置"}</button>
       <button type="button" className={ctl} onClick={()=>{if(window.confirm("确定重置歌词样式和自定义歌词 HTML？此操作会覆盖当前设置。")){setDraft({...initial});setStatus("重置待保存")}}}>重置…</button>
       <span role="status" className="min-w-0 break-words text-[11px] text-[var(--ink-3)]">{status}</span>
     </div>
+    </>}
   </section>;
 }

@@ -11,6 +11,43 @@ use crate::AppState;
 
 use super::{engine_clone, notify_quality_fallback};
 
+static QQ_SESSION_LOCK: parking_lot::Mutex<()> = parking_lot::Mutex::new(());
+
+fn load_qq_session(state: &State<AppState>) -> Result<crate::qq::QqSession, String> {
+    let musicid = {
+        let conn = state.db.lock();
+        db::get_setting(&conn, "qq_musicid").unwrap_or_default()
+    };
+    let saved = crate::credentials::get("qq_session")
+        .and_then(|json| serde_json::from_str::<crate::qq::QqSession>(&json).ok())
+        .filter(|session| session.musicid == musicid && !session.musickey.is_empty());
+    let session = saved.unwrap_or_else(|| {
+        crate::qq::QqSession::legacy(
+            musicid,
+            crate::credentials::get("qq_musickey").unwrap_or_default(),
+        )
+    });
+    if session.musicid.is_empty() || session.musickey.is_empty() {
+        return Err(crate::i18n::pick(
+            "未登录 QQ 音乐账号，无法获取播放链接，请先扫码登录",
+            "Not signed in to QQ Music. Scan QR code to sign in first.",
+        ).into());
+    }
+    Ok(session)
+}
+
+fn store_qq_session(state: &State<AppState>, session: &crate::qq::QqSession) -> Result<(), String> {
+    let json = serde_json::to_string(session).map_err(|e| e.to_string())?;
+    // One secure entry keeps the account and all rotating tokens together across restarts.
+    crate::credentials::set("qq_session", &json)?;
+    let conn = state.db.lock();
+    db::set_setting(&conn, "qq_musicid", &session.musicid);
+    if crate::credentials::set("qq_musickey", &session.musickey).is_err() {
+        eprintln!("[qq] failed to update legacy credential mirror; complete session is saved");
+    }
+    Ok(())
+}
+
 // ---------- QQ 音乐在线曲库 ----------
 
 #[derive(serde::Deserialize)]
@@ -34,21 +71,48 @@ pub struct QqPlayReq {
 }
 
 pub(crate) fn qq_credential(state: &State<AppState>) -> Result<(String, String), String> {
-    let (musicid, musickey) = {
-        let conn = state.db.lock();
-        (
-            db::get_setting(&conn, "qq_musicid").unwrap_or_default(),
-            crate::credentials::get("qq_musickey").unwrap_or_default(),
-        )
+    let _guard = QQ_SESSION_LOCK.lock();
+    let session = load_qq_session(state)?;
+    Ok((session.musicid, session.musickey))
+}
+
+pub(crate) fn qq_song_url(
+    state: &State<AppState>, songmid: &str, media_mid: &str, quality: &str, vip: bool,
+) -> Result<(String, String, &'static str), String> {
+    let (session, renewal_attempted) = {
+        let _guard = QQ_SESSION_LOCK.lock();
+        let session = load_qq_session(state)?;
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default().as_secs();
+        if session.refresh_due(now) {
+            match session.refresh() {
+                Ok(next) => { store_qq_session(state, &next)?; (next, true) }
+                Err(_) => {
+                    eprintln!("[qq] session renewal failed; retaining stored credentials");
+                    (session, true)
+                }
+            }
+        } else { (session, false) }
     };
-    if musicid.is_empty() || musickey.is_empty() {
-        return Err(crate::i18n::pick(
-            "未登录 QQ 音乐账号，无法获取播放链接，请先扫码登录",
-            "Not signed in to QQ Music. Scan QR code to sign in first.",
-        )
-        .into());
-    }
-    Ok((musicid, musickey))
+    crate::qq::with_session_retry(&session, renewal_attempted, |session| {
+        crate::qq::song_url_authenticated(songmid, media_mid, &session.musicid, &session.musickey, quality, vip)
+    }, |error| {
+        let _guard = QQ_SESSION_LOCK.lock();
+        let current = load_qq_session(state)?;
+        if current.musicid != session.musicid {
+            return Err(crate::i18n::pick("QQ 音乐账号已切换，请重新播放", "QQ Music account changed. Please play again.").into());
+        }
+        if current.musickey != session.musickey {
+            Ok(current)
+        } else {
+            if !current.can_refresh() {
+                return Err(error.to_string());
+            }
+            let next = current.refresh()?;
+            store_qq_session(state, &next)?;
+            Ok(next)
+        }
+    })
 }
 
 #[tauri::command]
@@ -66,17 +130,15 @@ pub async fn qq_play(app: AppHandle, track: QqPlayReq) -> Result<(), String> {
 /// 同步任务体：取链是阻塞网络调用（经 blocking 在专用线程池执行）
 fn qq_play_task(app: &AppHandle, track: QqPlayReq) -> Result<(), String> {
     let state = app.state::<AppState>();
-    let (musicid, musickey) = qq_credential(&state)?;
     let quality_setting = {
         let conn = state.db.lock();
         super::source_quality(&conn, "qq")
     };
     let quality = super::resolve_quality("qq", &quality_setting);
-    let (url, _ext, quality_label) = crate::qq::song_url(
+    let (url, _ext, quality_label) = qq_song_url(
+        &state,
         &track.songmid,
         &track.media_mid,
-        &musicid,
-        &musickey,
         &quality,
         track.vip,
     )?;
@@ -125,23 +187,27 @@ fn qq_play_task(app: &AppHandle, track: QqPlayReq) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn qq_lyric(
-    state: State<'_, AppState>,
+    app: AppHandle,
     songmid: String,
 ) -> Result<LyricsPayload, String> {
+    let state = app.state::<AppState>();
     let cached = {
         let conn = state.db.lock();
         db::get_lyrics_cache(&conn, "qq", &songmid)
     };
-    if let Some(json) = cached {
-        if let Ok(p) = serde_json::from_str::<LyricsPayload>(&json) {
-            return Ok(p);
+    if let Some(json) = cached.as_deref() {
+        if db::lyrics_cache_is_current(json) {
+            if let Ok(p) = serde_json::from_str::<LyricsPayload>(json) {
+                return Ok(p);
+            }
         }
     }
     // 优先逐字歌词（QRC，需登录）；失败回落匿名行级接口
-    // 凭据先取好再进阻塞线程（State 不能跨线程移动）；songmid 闭包内外各用一次，克隆入闭包
-    let cred = qq_credential(&state).ok();
+    let task_app = app.clone();
     let songmid_for_task = songmid.clone();
     let payload = super::blocking(move || -> Result<LyricsPayload, String> {
+        let state = task_app.state::<AppState>();
+        let cred = qq_credential(&state).ok();
         let songmid = songmid_for_task;
         if let Some((musicid, musickey)) = &cred {
             if let Ok(Some((enhanced, trans, roman))) = crate::qq::lyric_qrc(&songmid, musicid, musickey) {
@@ -177,7 +243,16 @@ pub async fn qq_lyric(
         }
         Ok(payload)
     })
-    .await?;
+    .await;
+    let payload = match payload {
+        Ok(p) if !p.lines.is_empty() => p,
+        result => {
+            if let Some(p) = cached.and_then(|json| serde_json::from_str::<LyricsPayload>(&json).ok()) {
+                return Ok(p);
+            }
+            return result;
+        }
+    };
     if !payload.lines.is_empty() {
         if let Ok(json) = serde_json::to_string(&payload) {
             let conn = state.db.lock();
@@ -192,27 +267,21 @@ fn save_qq_credential(state: &State<AppState>, r: &crate::qq::QqQrCheck) -> Resu
         return Ok(());
     }
     if let (Some(musicid), Some(musickey)) = (&r.musicid, &r.musickey) {
-        let conn = state.db.lock();
-        db::set_setting(&conn, "qq_musicid", musicid);
-        crate::credentials::set("qq_musickey", &musickey).map_err(|e| {
+        let _guard = QQ_SESSION_LOCK.lock();
+        let session = r.session.clone()
+            .unwrap_or_else(|| crate::qq::QqSession::legacy(musicid.clone(), musickey.clone()));
+        store_qq_session(state, &session).map_err(|e| {
             crate::i18n::pick(
                 format!("登录成功但凭据保存失败: {e}"),
                 format!("Signed in, but failed to save credentials: {e}"),
             )
         })?;
+        let conn = state.db.lock();
         // 拉取“我喜欢/收藏”夹需要加密 uin（登录响应里带，错过就没了）
-        if let Some(euin) = &r.encrypt_uin {
-            db::set_setting(&conn, "qq_encrypt_uin", euin);
-        }
-        if let Some(nick) = &r.nickname {
-            db::set_setting(&conn, "qq_nickname", nick);
-        }
-        // 微信链路续期凭证落库（当前版本暂不发起续期请求，先留存备用）
-        if let Some(rt) = &r.refresh_token {
-            if !rt.is_empty() {
-                db::set_setting(&conn, "qq_wx_refresh_token", rt);
-            }
-        }
+        db::set_setting(&conn, "qq_encrypt_uin", r.encrypt_uin.as_deref().unwrap_or(""));
+        db::set_setting(&conn, "qq_nickname", r.nickname.as_deref().unwrap_or(""));
+        db::set_setting(&conn, "qq_wx_refresh_token", "");
+        crate::credentials::clear("qq_wx_refresh_token");
     }
     Ok(())
 }
@@ -225,12 +294,14 @@ pub async fn qq_qr_create() -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 pub async fn qq_qr_check(
-    state: State<'_, AppState>,
+    app: AppHandle,
     qrsig: String,
 ) -> Result<serde_json::Value, String> {
-    let r = super::blocking(move || crate::qq::qr_check(&qrsig)).await?;
-    save_qq_credential(&state, &r)?;
-    Ok(json!({ "status": r.status, "nickname": r.nickname }))
+    super::blocking(move || {
+        let r = crate::qq::qr_check(&qrsig)?;
+        save_qq_credential(&app.state::<AppState>(), &r)?;
+        Ok(json!({ "status": r.status, "nickname": r.nickname }))
+    }).await
 }
 
 #[tauri::command]
@@ -242,30 +313,42 @@ pub async fn qq_wx_qr_create() -> Result<serde_json::Value, String> {
 /// 微信扫码状态：一次调用 = 一次长轮询（服务端挂起约 15s），前端循环调用
 #[tauri::command]
 pub async fn qq_wx_qr_check(
-    state: State<'_, AppState>,
+    app: AppHandle,
     uuid: String,
 ) -> Result<serde_json::Value, String> {
-    let r = super::blocking(move || crate::qq::wx_qr_check(&uuid)).await?;
-    save_qq_credential(&state, &r)?;
-    Ok(json!({ "status": r.status, "nickname": r.nickname }))
+    super::blocking(move || {
+        let r = crate::qq::wx_qr_check(&uuid)?;
+        save_qq_credential(&app.state::<AppState>(), &r)?;
+        Ok(json!({ "status": r.status, "nickname": r.nickname }))
+    }).await
 }
 
 #[tauri::command]
-pub async fn qq_status(state: State<'_, AppState>) -> Result<serde_json::Value, String> {
-    let conn = state.db.lock();
-    let musicid = db::get_setting(&conn, "qq_musicid").unwrap_or_default();
-    let nickname = db::get_setting(&conn, "qq_nickname").unwrap_or_default();
-    Ok(json!({ "loggedIn": !musicid.is_empty(), "nickname": nickname }))
+pub async fn qq_status(app: AppHandle) -> Result<serde_json::Value, String> {
+    super::blocking(move || {
+        let state = app.state::<AppState>();
+        let logged_in = qq_credential(&state).is_ok();
+        let conn = state.db.lock();
+        let nickname = db::get_setting(&conn, "qq_nickname").unwrap_or_default();
+        Ok(json!({ "loggedIn": logged_in, "nickname": nickname }))
+    }).await
 }
 
 #[tauri::command]
-pub async fn qq_logout(state: State<'_, AppState>) -> Result<(), String> {
-    let conn = state.db.lock();
-    db::set_setting(&conn, "qq_musicid", "");
-    crate::credentials::clear("qq_musickey");
-    db::set_setting(&conn, "qq_encrypt_uin", "");
-    db::set_setting(&conn, "qq_nickname", "");
-    Ok(())
+pub async fn qq_logout(app: AppHandle) -> Result<(), String> {
+    super::blocking(move || {
+        let state = app.state::<AppState>();
+        let _guard = QQ_SESSION_LOCK.lock();
+        let conn = state.db.lock();
+        db::set_setting(&conn, "qq_musicid", "");
+        crate::credentials::clear("qq_musickey");
+        crate::credentials::clear("qq_session");
+        crate::credentials::clear("qq_wx_refresh_token");
+        db::set_setting(&conn, "qq_wx_refresh_token", "");
+        db::set_setting(&conn, "qq_encrypt_uin", "");
+        db::set_setting(&conn, "qq_nickname", "");
+        Ok(())
+    }).await
 }
 
 // ---------- 榜单 / 随机推荐（网易云、QQ，匿名可用） ----------
@@ -293,10 +376,12 @@ pub async fn qq_random_playlist() -> Result<crate::qq::QqPublicPlaylist, String>
 
 #[tauri::command]
 pub async fn qq_user_playlists(
-    state: State<'_, AppState>,
+    app: AppHandle,
 ) -> Result<Vec<crate::models::UserPlaylistMeta>, String> {
-    let (musicid, musickey) = qq_credential(&state)?;
-    super::blocking(move || crate::qq::user_playlists(&musicid, &musickey)).await
+    super::blocking(move || {
+        let (musicid, musickey) = qq_credential(&app.state::<AppState>())?;
+        crate::qq::user_playlists(&musicid, &musickey)
+    }).await
 }
 
 /// 导入 QQ 音乐歌单：远程 dissid 拉曲目 → 查找/合并/创建本地播放列表。

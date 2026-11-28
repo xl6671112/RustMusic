@@ -1,7 +1,7 @@
 //! 本地歌词读取（同目录 .lrc 优先，其次内嵌标签）
 
 use lofty::prelude::*;
-use tauri::State;
+use tauri::{AppHandle, State};
 
 use crate::db;
 use crate::lyrics;
@@ -36,6 +36,7 @@ fn read_lrc_text(path: &std::path::Path) -> Option<String> {
 
 #[tauri::command]
 pub async fn get_lyrics(
+    app: AppHandle,
     state: State<'_, AppState>,
     track_id: i64,
 ) -> Result<LyricsPayload, String> {
@@ -65,7 +66,7 @@ pub async fn get_lyrics(
         let online = if let Some(id) = source.strip_prefix("netease-").and_then(|id| id.parse().ok()) {
             super::netease_lyric(state, id).await
         } else if let Some(id) = source.strip_prefix("qq-") {
-            super::qq_lyric(state, id.to_owned()).await
+            super::qq_lyric(app, id.to_owned()).await
         } else {
             Ok(LyricsPayload::new(false, vec![]))
         };

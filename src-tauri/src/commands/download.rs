@@ -10,7 +10,7 @@ use crate::AppState;
 
 use super::kugou::{kg_prepare, kugou_hashes_enriched};
 use super::netease::netease_cookie;
-use super::qq::qq_credential;
+use super::qq::qq_song_url;
 // ---------- 在线歌曲收藏到本地 / 歌单导入 ----------
 
 #[derive(serde::Deserialize)]
@@ -169,9 +169,8 @@ fn download_online_internal(app: &AppHandle, req: OnlineSaveReq, accompaniment: 
             (u, ext, Some(label))
         }
         "qq" => {
-            let (musicid, musickey) = qq_credential(&state)?;
             let (u, ext, label) =
-                crate::qq::song_url(&req.id, &req.media_mid, &musicid, &musickey, &quality, true)?;
+                qq_song_url(&state, &req.id, &req.media_mid, &quality, true)?;
             (u, ext, Some(label.to_string()))
         }
         "kugou" => {

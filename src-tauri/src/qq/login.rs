@@ -93,9 +93,10 @@ pub struct QqQrCheck {
     pub musicid: Option<String>,
     pub musickey: Option<String>,
     pub encrypt_uin: Option<String>,
-    /// 微信链路的续期凭证（wxrefresh_token）。此前直接丢弃——官方客户端
-    /// 靠它定期换新 qm_keyst，本地留存为后续续期能力打基础（issue#8-5）
+    /// Legacy WeChat cookie, retained for existing stored logins.
     pub refresh_token: Option<String>,
+    #[serde(skip)]
+    pub session: Option<QqSession>,
 }
 
 /// 轮询扫码状态；成功时完成 check_sig → OAuth → QQLogin 换取播放凭证
@@ -126,6 +127,7 @@ pub fn qr_check(qrsig: &str) -> Result<QqQrCheck, String> {
             musickey: None,
             encrypt_uin: None,
             refresh_token: None,
+            session: None,
         });
     }
 
@@ -202,16 +204,12 @@ pub fn qr_check(qrsig: &str) -> Result<QqQrCheck, String> {
                 }
             })
         };
-        let mut raw_log = String::new();
         let mut login_resp: Option<serde_json::Value> = None;
         let mut credential: Option<(String, String)> = None;
 
         if let Ok(v) = musicu_signed(&make_payload(), None) {
             login_resp = Some(v.clone());
-            match find_credential(&v) {
-                Some(c) => credential = Some(c),
-                None => raw_log = serde_json::to_string(&v).unwrap_or_default(),
-            }
+            credential = find_credential(&v);
         }
         if credential.is_none() {
             let url = "https://u.y.qq.com/cgi-bin/musicu.fcg";
@@ -226,10 +224,7 @@ pub fn qr_check(qrsig: &str) -> Result<QqQrCheck, String> {
                     if let Ok(text) = r.into_string() {
                         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&text) {
                             login_resp = Some(v.clone());
-                            match find_credential(&v) {
-                                Some(c) => credential = Some(c),
-                                None => raw_log = text,
-                            }
+                            credential = find_credential(&v);
                         }
                     }
                 }
@@ -237,10 +232,9 @@ pub fn qr_check(qrsig: &str) -> Result<QqQrCheck, String> {
         }
 
         let (musicid, musickey) = credential.ok_or_else(|| {
-            format!(
-                "{} | {}",
+            missing_credential_error(
                 crate::i18n::pick("登录响应缺少凭证", "Login response missing credentials"),
-                raw_log.chars().take(200).collect::<String>()
+                login_resp.as_ref(),
             )
         })?;
         let nickname = args.get(5).cloned();
@@ -258,7 +252,39 @@ pub fn qr_check(qrsig: &str) -> Result<QqQrCheck, String> {
             musickey: Some(musickey),
             encrypt_uin,
             refresh_token,
+            session: login_resp.as_ref().and_then(QqSession::from_response),
         })
+    }
+}
+
+fn missing_credential_error(message: &str, response: Option<&serde_json::Value>) -> String {
+    let code = response
+        .and_then(|v| v.pointer("/req_1/code").or_else(|| v.pointer("/req/code")).or_else(|| v.get("code")))
+        .and_then(serde_json::Value::as_i64);
+    match code {
+        Some(code) => format!("{message} (code: {code})"),
+        None => message.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod credential_error_tests {
+    use super::*;
+
+    #[test]
+    fn missing_credentials_reports_only_numeric_codes_even_when_tokens_remain() {
+        for response in [
+            serde_json::json!({"req_1":{"code":104401,"data":{"refresh_token":"private-refresh","access_token":"private-access"}}}),
+            serde_json::json!({"req":{"code":104401,"data":{"musickey":"private-key","unionid":"private-account"}}}),
+        ] {
+            assert_eq!(
+                missing_credential_error("Missing credentials", Some(&response)),
+                "Missing credentials (code: 104401)",
+            );
+        }
+        let response = serde_json::json!({"code":"private-response","message":"private-message"});
+        assert_eq!(missing_credential_error("Missing credentials", Some(&response)), "Missing credentials");
+        assert_eq!(missing_credential_error("Missing credentials", None), "Missing credentials");
     }
 }
 
@@ -419,14 +445,9 @@ fn wx_exchange(code: &str) -> Result<QqQrCheck, String> {
             match (id, key) {
                 (Some(id), Some(key)) if !id.is_empty() && !key.is_empty() => (id, key),
                 _ => {
-                    return Err(format!(
-                        "{} | {}",
+                    return Err(missing_credential_error(
                         crate::i18n::pick("微信登录响应缺少凭证", "WeChat login response missing credentials"),
-                        serde_json::to_string(&body)
-                            .unwrap_or_default()
-                            .chars()
-                            .take(200)
-                            .collect::<String>()
+                        Some(&body),
                     ))
                 }
             }
@@ -438,6 +459,12 @@ fn wx_exchange(code: &str) -> Result<QqQrCheck, String> {
     let encrypt_uin = find_str_anywhere(&body, "encryptUin");
     let refresh_token = cookie_value(&cookies, "wxrefresh_token")
         .or_else(|| find_str_anywhere(&body, "wxrefresh_token"));
+    let mut session = QqSession::from_response(&body)
+        .unwrap_or_else(|| QqSession::legacy(musicid.clone(), musickey.clone()));
+    session.login_type = 1;
+    if session.refresh_token.is_empty() {
+        session.refresh_token = refresh_token.clone().unwrap_or_default();
+    }
     Ok(QqQrCheck {
         status: "success".into(),
         nickname,
@@ -445,6 +472,7 @@ fn wx_exchange(code: &str) -> Result<QqQrCheck, String> {
         musickey: Some(musickey),
         encrypt_uin,
         refresh_token,
+        session: Some(session),
     })
 }
 
@@ -473,6 +501,7 @@ pub fn wx_qr_check(uuid: &str) -> Result<QqQrCheck, String> {
             musickey: None,
             encrypt_uin: None,
             refresh_token: None,
+            session: None,
         }),
         404 => Ok(QqQrCheck {
             status: "scanned".into(),
@@ -481,6 +510,7 @@ pub fn wx_qr_check(uuid: &str) -> Result<QqQrCheck, String> {
             musickey: None,
             encrypt_uin: None,
             refresh_token: None,
+            session: None,
         }),
         402 => Ok(QqQrCheck {
             status: "expired".into(),
@@ -489,6 +519,7 @@ pub fn wx_qr_check(uuid: &str) -> Result<QqQrCheck, String> {
             musickey: None,
             encrypt_uin: None,
             refresh_token: None,
+            session: None,
         }),
         405 if !code.is_empty() => wx_exchange(&code),
         _ => {
@@ -501,7 +532,8 @@ pub fn wx_qr_check(uuid: &str) -> Result<QqQrCheck, String> {
                     musicid: None,
                     musickey: None,
                     encrypt_uin: None,
-            refresh_token: None,
+                    refresh_token: None,
+                    session: None,
                 })
             }
         }

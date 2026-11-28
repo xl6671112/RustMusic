@@ -831,6 +831,15 @@ pub struct LyricText {
     pub roman: Option<String>,
 }
 
+fn lyric_alternate(resp: &serde_json::Value, primary: &str, fallback: &str) -> Option<String> {
+    [primary, fallback].iter().find_map(|path| {
+        resp.pointer(path)
+            .and_then(|v| v.as_str())
+            .filter(|s| s.contains('['))
+            .map(str::to_string)
+    })
+}
+
 pub fn lyric(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, String> {
     let music_u = music_u.filter(|s| !s.is_empty());
     let payload = serde_json::json!({
@@ -846,16 +855,8 @@ pub fn lyric(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, String
             format!("Failed to fetch lyrics (code {code})"),
         ));
     }
-    let trans = resp
-        .pointer("/tlyric/lyric")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .filter(|s| s.contains('['));
-    let roman = resp
-        .pointer("/romalrc/lyric")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .filter(|s| s.contains('['));
+    let trans = lyric_alternate(&resp, "/tlyric/lyric", "/ytlrc/lyric");
+    let roman = lyric_alternate(&resp, "/romalrc/lyric", "/yromalrc/lyric");
     let lrc = resp
         .pointer("/lrc/lyric")
         .and_then(|v| v.as_str())
@@ -873,7 +874,7 @@ pub fn lyric_yrc(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, St
     // yv=-1 请求逐字；需要账号有逐字权益，没有时 yrc 缺失 → 回落行级
     let payload = serde_json::json!({
         "id": id.to_string(), "lv": "-1", "tv": "-1",
-        "rv": "-1", "kv": "-1", "yv": "-1", "yrv": "-1", "ytc": "-1",
+        "rv": "-1", "kv": "-1", "yv": "-1", "yrv": "-1", "ytv": "-1",
         "csrf_token": ""
     })
     .to_string();
@@ -887,16 +888,8 @@ pub fn lyric_yrc(id: i64, music_u: Option<&str>) -> Result<Option<LyricText>, St
         .and_then(|v| v.as_str())
         .filter(|s| !s.trim().is_empty());
     let Some(yrc) = yrc else { return Ok(None) };
-    let trans = resp
-        .pointer("/tlyric/lyric")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .filter(|s| s.contains('['));
-    let roman = resp
-        .pointer("/romalrc/lyric")
-        .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
-        .filter(|s| s.contains('['));
+    let trans = lyric_alternate(&resp, "/ytlrc/lyric", "/tlyric/lyric");
+    let roman = lyric_alternate(&resp, "/yromalrc/lyric", "/romalrc/lyric");
     Ok(crate::lyrics::yrc_to_enhanced_lrc(yrc).map(|lrc| LyricText { lrc, trans, roman }))
 }
 
@@ -1593,6 +1586,27 @@ pub fn personal_fm(music_u: &str) -> Result<Vec<NetSong>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn lyric_romanization_reads_new_fields_and_falls_back_to_legacy() {
+        let response = serde_json::json!({
+            "yromalrc": {"lyric": "[1000,500](1000,500,0)kimi"},
+            "romalrc": {"lyric": "[00:01.00]kimi"},
+            "ytlrc": {"lyric": "[00:01.00]你"}
+        });
+        assert_eq!(lyric_alternate(&response, "/yromalrc/lyric", "/romalrc/lyric").as_deref(),
+            Some("[1000,500](1000,500,0)kimi"));
+        assert_eq!(lyric_alternate(&response, "/ytlrc/lyric", "/tlyric/lyric").as_deref(),
+            Some("[00:01.00]你"));
+        let legacy = serde_json::json!({
+            "yromalrc": {"lyric": ""},
+            "romalrc": {"lyric": "[00:10.960]gwit bang mang i"}
+        });
+        assert_eq!(lyric_alternate(&legacy, "/yromalrc/lyric", "/romalrc/lyric").as_deref(),
+            Some("[00:10.960]gwit bang mang i"));
+        assert!(lyric_alternate(&serde_json::json!({}), "/yromalrc/lyric", "/romalrc/lyric").is_none());
+    }
+
     #[test]
     fn yrc_to_enhanced_lrc() {
         // 真实样例格式（字节级实测自网易云 API，30 行统计核验）：

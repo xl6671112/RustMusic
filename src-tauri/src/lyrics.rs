@@ -329,7 +329,13 @@ fn attach_alternate_lines(parsed: &mut Parsed, text: &str, roman: bool) {
     if text.trim().is_empty() {
         return;
     }
-    let mut cand: Vec<(u64, String)> = parse(text)
+    let mut alternate = parse(text);
+    if !alternate.synced {
+        if let Some(enhanced) = yrc_to_enhanced_lrc(text) {
+            alternate = parse(&enhanced);
+        }
+    }
+    let mut cand: Vec<(u64, String)> = alternate
         .lines
         .into_iter()
         .filter_map(|l| l.time_ms.map(|t| (t, l.text)))
@@ -412,6 +418,35 @@ mod tests {
         assert_eq!(parsed.lines[0].roman.as_deref(), Some("Ni hao"));
         assert_eq!(parsed.lines[1].trans.as_deref(), Some("Goodbye"));
         assert_eq!(parsed.lines[1].roman.as_deref(), Some("Zai jian"));
+    }
+
+    #[test]
+    fn korean_provider_romanization_is_not_lost_when_translation_is_present() {
+        let mut parsed = parse("[00:10.960]귓 방 망 이\n[00:14.450]어장크기 넓혀가는 바쁜 오빠들");
+        attach_translations(&mut parsed, "[00:10.960]耳光\n[00:14.450]为了扩大渔场忙碌的哥哥们");
+        attach_romanizations(&mut parsed, "[00:10.960]gwit bang mang i\n[00:14.450]eo zang keu gi neol hyeo ga neun ba bbeun o bba deul");
+        assert_eq!(parsed.lines[0].roman.as_deref(), Some("gwit bang mang i"));
+        assert_eq!(parsed.lines[0].trans.as_deref(), Some("耳光"));
+        assert!(parsed.lines[1].roman.is_some());
+    }
+
+    #[test]
+    fn japanese_word_level_romanization_uses_line_timestamps() {
+        let mut parsed = parse("[00:01.00]君の声\n[00:03.00]聞こえる");
+        attach_romanizations(&mut parsed,
+            "[1000,1800](1000,400,0)kimi (1400,300,0)no (1700,1100,0)koe\n[3000,1000](3000,1000,0)kikoeru");
+        assert_eq!(parsed.lines[0].roman.as_deref(), Some("kimi no koe"));
+        assert_eq!(parsed.lines[1].roman.as_deref(), Some("kikoeru"));
+        assert!(parsed.lines[0].trans.is_none());
+    }
+
+    #[test]
+    fn missing_provider_romanization_does_not_copy_translation_or_cross_match_lines() {
+        let mut parsed = parse("[00:01.00]안녕\n[00:05.00]こんにちは");
+        attach_translations(&mut parsed, "[00:01.00]你好");
+        attach_romanizations(&mut parsed, "[00:05.00]konnichiwa");
+        assert!(parsed.lines[0].roman.is_none());
+        assert_eq!(parsed.lines[1].roman.as_deref(), Some("konnichiwa"));
     }
 
     #[test]

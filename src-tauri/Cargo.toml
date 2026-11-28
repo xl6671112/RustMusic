@@ -1,6 +1,6 @@
 [package]
 name = "rustmusic"
-version = "1.1.8"
+version = "1.1.9"
 description = "RustMusic - 精美的高性能音乐播放器"
 authors = ["RustMusic"]
 license = "AGPL-3.0-only"
@@ -20,7 +20,7 @@ cc = "1"
 tauri-build = { version = "~2.6", features = [] }
 
 [dependencies]
-tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset", "macos-private-api"] }
+tauri = { version = "~2.11", features = ["tray-icon", "protocol-asset", "macos-private-api", "unstable"] }
 tauri-plugin-dialog = "~2.7"
 tauri-plugin-global-shortcut = "~2.3"
 serde = { version = "1", features = ["derive"] }
@@ -69,7 +69,7 @@ ed25519-dalek = "2"
 [target.'cfg(windows)'.dependencies]
 # WebView2 TrySuspend：托盘隐藏时挂起渲染进程回收内存
 webview2-com = "0.38"
-windows = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Direct2D", "Win32_Graphics_Direct2D_Common", "Win32_Graphics_DirectWrite", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_NetworkManagement_IpHelper", "Win32_System_Com", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading", "Win32_System_ProcessStatus", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_UI_Accessibility", "Win32_UI_HiDpi", "Win32_UI_WindowsAndMessaging"] }
+windows = { version = "0.61", features = ["Foundation", "Graphics_Capture", "Graphics_DirectX_Direct3D11", "System", "UI_Composition", "Win32_System_WinRT", "Win32_System_WinRT_Direct3D11", "Win32_Graphics_Direct3D_Fxc", "Win32_Foundation", "Win32_Graphics_Direct3D", "Win32_Graphics_Direct3D11", "Win32_UI_Controls", "Win32_Graphics_Direct2D", "Win32_Graphics_Direct2D_Common", "Win32_Graphics_DirectWrite", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common", "Win32_Graphics_Dwm", "Win32_Graphics_Gdi", "Win32_NetworkManagement_IpHelper", "Win32_System_Com", "Win32_System_Diagnostics_ToolHelp", "Win32_System_Threading", "Win32_System_ProcessStatus", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_UI_Accessibility", "Win32_UI_HiDpi", "Win32_UI_WindowsAndMessaging"] }
 # 任务栏歌词 D2D 绘制原点（Vector2）；windows 传递依赖，显式声明以便直接使用
 windows-numerics = "0.2"
 # WASAPI 独占输出与 win 错误类型（仅 Windows）

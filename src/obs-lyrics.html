@@ -257,5 +257,6 @@ const applyBaseSettings=applySettings;applySettings=function(x={}){
 };
 addEventListener('message',e=>{if(e.source!==parent||e.data?.type!=='obs-preview-settings'||!e.data.settings)return;previewSettings=e.data.settings;styleSignature='';applySettings(previewSettings)});
 const WEB_LYRICS_FRAME_INTERVAL_MS=33;
-async function tick(){const startedAt=performance.now();try{const r=await fetch('/state',{cache:'no-store'});const s=await r.json();if(!previewSettings&&(location.pathname==='/lyrics'||location.pathname==='/lyrics/')&&(s.settings?.preset?.startsWith('folia-')||s.settings?.preset==='jizura')){location.reload();return}if(!previewSettings)applySettings(s.settings);render(s)}catch{}setTimeout(tick,Math.max(0,WEB_LYRICS_FRAME_INTERVAL_MS-(performance.now()-startedAt)))}tick();
+const canvasId=/^\/canvas\/([a-zA-Z0-9-]+)$/.exec(location.pathname)?.[1];
+async function tick(){const startedAt=performance.now();try{const r=await fetch('/state'+(canvasId?'?canvas='+canvasId:''),{cache:'no-store'});const s=await r.json();document.documentElement.style.visibility=s.canvasEnabled===false?'hidden':'';if(canvasId&&s.canvasEnabled===false){location.reload();return}if(!previewSettings&&(canvasId||location.pathname==='/lyrics'||location.pathname==='/lyrics/')&&(s.settings?.preset?.startsWith('folia-')||s.settings?.preset==='jizura')){location.reload();return}if(!previewSettings)applySettings(s.settings);render(s)}catch{}setTimeout(tick,Math.max(0,WEB_LYRICS_FRAME_INTERVAL_MS-(performance.now()-startedAt)))}tick();
 </script></body></html>

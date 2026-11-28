@@ -2,6 +2,78 @@
 
 use super::*;
 
+fn session_expired_error() -> String {
+    crate::i18n::pick(
+        "QQ 音乐登录已过期，请重新登录",
+        "QQ Music session expired, please sign in again",
+    ).into()
+}
+
+fn vip_entitlement_error() -> String {
+    crate::i18n::pick(
+        "该曲目需要 QQ 音乐 VIP 权益（请确认已登录且会员状态有效）",
+        "This track requires QQ Music VIP (verify you are signed in with active membership)",
+    ).into()
+}
+
+pub enum QqUrlError {
+    SessionExpired,
+    Entitlement,
+    Other(String),
+}
+
+impl QqUrlError {
+    pub fn needs_refresh(&self) -> bool {
+        matches!(self, Self::SessionExpired | Self::Entitlement)
+    }
+}
+
+fn session_expired_response(response: &serde_json::Value) -> bool {
+    [response.get("code"), response.pointer("/req_1/code")]
+        .into_iter().flatten()
+        .any(|code| matches!(code.as_i64(), Some(1000 | 104009 | 104400 | 104401)))
+}
+
+impl From<String> for QqUrlError {
+    fn from(error: String) -> Self { Self::Other(error) }
+}
+
+impl From<&str> for QqUrlError {
+    fn from(error: &str) -> Self { Self::Other(error.into()) }
+}
+
+impl std::fmt::Display for QqUrlError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SessionExpired => f.write_str(&session_expired_error()),
+            Self::Entitlement => f.write_str(&vip_entitlement_error()),
+            Self::Other(error) => f.write_str(error),
+        }
+    }
+}
+
+#[cfg(test)]
+mod session_error_tests {
+    use super::*;
+
+    #[test]
+    fn only_authentication_failures_trigger_one_session_renewal() {
+        assert!(QqUrlError::SessionExpired.needs_refresh());
+        assert!(QqUrlError::Entitlement.needs_refresh());
+        assert!(!QqUrlError::Other("network timeout".into()).needs_refresh());
+        assert!(!QqUrlError::Other("copyright unavailable".into()).needs_refresh());
+    }
+
+    #[test]
+    fn both_envelope_and_vkey_expiry_codes_are_recognized() {
+        for code in [1000, 104009, 104400, 104401] {
+            assert!(session_expired_response(&serde_json::json!({"code":code})));
+            assert!(session_expired_response(&serde_json::json!({"req_1":{"code":code}})));
+        }
+        assert!(!session_expired_response(&serde_json::json!({"code":0,"req_1":{"code":0}})));
+    }
+}
+
 // ---------- 播放链接（需登录 cookie） ----------
 
 pub(super) fn credential_cookie(musicid: &str, musickey: &str) -> String {
@@ -130,6 +202,18 @@ pub fn song_url(
     quality: &str,
     vip: bool,
 ) -> Result<(String, String, &'static str), String> {
+    song_url_authenticated(songmid, media_mid, musicid, musickey, quality, vip)
+        .map_err(|e| e.to_string())
+}
+
+pub fn song_url_authenticated(
+    songmid: &str,
+    media_mid: &str,
+    musicid: &str,
+    musickey: &str,
+    quality: &str,
+    vip: bool,
+) -> Result<(String, String, &'static str), QqUrlError> {
     let cookie = credential_cookie(musicid, musickey);
 
     // 1. 通过 UniformRuleCtrl.CgiGetTrackInfo 获取曲目真实 file 元数据与各档位文件大小。
@@ -283,12 +367,8 @@ pub fn song_url(
     });
     let resp = musicu_signed(&payload, Some(&cookie))?;
     let code = resp.pointer("/req_1/code").and_then(|c| c.as_i64());
-    if code == Some(104009) {
-        return Err(crate::i18n::pick(
-            "QQ 音乐登录已过期，请重新登录",
-            "QQ Music session expired, please sign in again",
-        )
-        .into());
+    if session_expired_response(&resp) {
+        return Err(QqUrlError::SessionExpired);
     }
     let all_ok_but_no_url = code == Some(0);
     let sip = resp
@@ -334,11 +414,7 @@ pub fn song_url(
     let last_resp = serde_json::to_string(&resp).unwrap_or_default();
     Err(if all_ok_but_no_url {
         if vip {
-            crate::i18n::pick(
-                "该曲目需要 QQ 音乐 VIP 权益（请确认已登录且会员状态有效）",
-                "This track requires QQ Music VIP (verify you are signed in with active membership)",
-            )
-            .into()
+            QqUrlError::Entitlement
         } else {
             crate::i18n::pick(
                 "该歌曲在 QQ 音乐无版权或已下架",
@@ -351,6 +427,6 @@ pub fn song_url(
         crate::i18n::pick(
             format!("该歌曲暂无可播放链接（接口异常，可稍后重试）| {head}"),
             format!("No playable URL right now (API error, try again later) | {head}"),
-        )
+        ).into()
     })
 }

@@ -1,15 +1,14 @@
 {
   "name": "rustmusic",
   "private": true,
-  "version": "1.1.8",
+  "version": "1.1.9",
   "license": "AGPL-3.0-only",
   "type": "module",
   "scripts": {
     "predev": "npm run build:jizura",
     "dev": "vite",
-    "build": "npm run build:jizura && tsc --noEmit && vite build && npm run build:folia-overlay",
+    "build": "node scripts/apply-folia-patches.mjs && node docs/generate-lyrics-api-catalog.mjs && npm run build:jizura && tsc --noEmit && vite build && npm run build:folia-overlay",
     "build:jizura": "node scripts/build-jizura.mjs",
-    "prebuild:folia-overlay": "node scripts/apply-folia-patches.mjs",
     "build:folia-overlay": "vite build --config folia-overlay/vite.config.ts",
     "preview": "vite preview",
     "tauri": "tauri"
